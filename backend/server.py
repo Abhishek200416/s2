@@ -639,6 +639,43 @@ async def get_runbooks(company_id: Optional[str] = None):
     runbooks = await db.runbooks.find(query, {"_id": 0}).to_list(100)
     return runbooks
 
+class RunbookCreate(BaseModel):
+    name: str
+    description: str
+    risk_level: str
+    signature: str
+    actions: List[str] = []
+    health_checks: Dict[str, Any] = {}
+    auto_approve: bool = False
+    company_id: str
+
+@api_router.post("/runbooks", response_model=Runbook)
+async def create_runbook(runbook_data: RunbookCreate):
+    runbook = Runbook(**runbook_data.model_dump())
+    await db.runbooks.insert_one(runbook.model_dump())
+    return runbook
+
+@api_router.put("/runbooks/{runbook_id}", response_model=Runbook)
+async def update_runbook(runbook_id: str, runbook_data: RunbookCreate):
+    existing = await db.runbooks.find_one({"id": runbook_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Runbook not found")
+    
+    await db.runbooks.update_one(
+        {"id": runbook_id},
+        {"$set": runbook_data.model_dump()}
+    )
+    
+    updated = await db.runbooks.find_one({"id": runbook_id}, {"_id": 0})
+    return Runbook(**updated)
+
+@api_router.delete("/runbooks/{runbook_id}")
+async def delete_runbook(runbook_id: str):
+    result = await db.runbooks.delete_one({"id": runbook_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Runbook not found")
+    return {"message": "Runbook deleted successfully"}
+
 
 # Patch Routes
 @api_router.get("/patches", response_model=List[PatchPlan])
