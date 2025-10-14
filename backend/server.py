@@ -873,7 +873,6 @@ async def get_audit_logs(incident_id: Optional[str] = None, limit: int = 100):
 
 # Webhook & Integration Routes
 class WebhookAlert(BaseModel):
-    company_id: str
     asset_name: str
     signature: str
     severity: str
@@ -881,12 +880,14 @@ class WebhookAlert(BaseModel):
     tool_source: str = "External"
 
 @api_router.post("/webhooks/alerts")
-async def receive_webhook_alert(alert_data: WebhookAlert):
+async def receive_webhook_alert(alert_data: WebhookAlert, api_key: str):
     """Webhook endpoint for external monitoring tools to send alerts"""
-    # Find company and asset
-    company = await db.companies.find_one({"id": alert_data.company_id})
+    # Validate API key and get company
+    company = await db.companies.find_one({"api_key": api_key})
     if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
+        raise HTTPException(status_code=401, detail="Invalid API key")
+    
+    company_id = company["id"]
     
     # Find asset by name
     asset = None
@@ -900,7 +901,7 @@ async def receive_webhook_alert(alert_data: WebhookAlert):
     
     # Create alert
     alert = Alert(
-        company_id=alert_data.company_id,
+        company_id=company_id,
         asset_id=asset["id"],
         asset_name=alert_data.asset_name,
         signature=alert_data.signature,
@@ -914,7 +915,7 @@ async def receive_webhook_alert(alert_data: WebhookAlert):
     # Log activity
     activity = {
         "id": str(uuid.uuid4()),
-        "company_id": alert_data.company_id,
+        "company_id": company_id,
         "type": "alert_received",
         "message": f"New {alert_data.severity} alert: {alert_data.message}",
         "timestamp": datetime.now(timezone.utc).isoformat()
