@@ -277,6 +277,39 @@ frontend:
              - Zabbix webhook configuration
              - Prometheus Alertmanager setup
              - AWS CloudWatch with SNS + Lambda
+      - working: true
+        agent: "main"
+        comment: |
+          MAJOR REDESIGN: Completely revamped Integration Settings to focus on client onboarding workflow:
+          1. Integration Overview tab:
+             - Clear 3-step workflow: Add Company → Get API Key → Send Alerts
+             - Explains what happens after integration (AI correlation, technician assignment, resolution tracking)
+             - Key benefits for MSPs and clients
+          2. Add New Company tab:
+             - Step-by-step guide to onboard new client companies
+             - Explains company creation process
+             - Shows what details to share with clients (webhook URL, API key, integration docs)
+             - Important notes about API key security
+          3. API Keys tab (existing):
+             - Display and manage API keys
+             - Regenerate keys with security best practices
+          4. Send Alerts tab (improved Webhook):
+             - Clear instructions for clients to send alerts
+             - Webhook endpoint and example requests
+             - Request format documentation
+          5. Technician Routing tab (NEW):
+             - Complete workflow: Alerts → AI Correlation → Incidents → Technician Assignment → Resolution
+             - Manual and automated assignment options
+             - What technicians can do (view, action, close)
+             - System integration capabilities (AWS SSM, runbooks)
+             - Best practices for incident management
+          6. Tool Integrations tab:
+             - Monitoring tool setup guides (Datadog, Zabbix, Prometheus, CloudWatch)
+          
+          Page now makes it crystal clear this is about:
+          - MSPs adding new companies/clients to Alert Whisperer
+          - Complete onboarding and integration flow
+          - How alerts get routed to technicians for handling
 
   - task: "Add navigation to Profile and Integration Settings"
     implemented: true
