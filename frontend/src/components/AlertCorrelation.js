@@ -50,8 +50,6 @@ const AlertCorrelation = ({ companyId, companyName }) => {
     return colors[severity] || colors.low;
   };
 
-  const activeAlerts = alerts.filter(a => a.status === 'active');
-
   return (
     <div className="space-y-6" data-testid="alert-correlation">
       {/* Header */}
