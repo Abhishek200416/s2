@@ -372,6 +372,51 @@ agent_communication:
       - Added navigation routes
       
       Ready for testing. Backend is running on port 8001, frontend on port 3000.
+  - agent: "main"
+    message: |
+      MAJOR UPDATE: Completely redesigned company onboarding and added technician management!
+      
+      ✅ Company Management Improvements:
+         - When creating a company, immediately shows API key and integration instructions in a beautiful modal
+         - Added "View Integration" button (key icon) on each company card to see API key anytime
+         - Integration dialog shows:
+           * API key with copy button
+           * Webhook URL with copy button
+           * Example cURL request with copy button
+           * What happens next (alerts → correlation → technician assignment)
+           * Security best practices
+      
+      ✅ NEW: Technicians Management Page (/technicians):
+         - Complete CRUD operations for technicians
+         - Add new technicians with name, email, password
+         - Edit technician details (name, email, optionally update password)
+         - Delete technicians (with confirmation)
+         - Beautiful card-based UI showing all technicians
+         - Role badges and creation dates
+         - Info section explaining technician permissions
+      
+      ✅ Navigation Changes:
+         - Removed "Integration Settings" from header (no longer needed as separate page)
+         - Added "Technicians" button in header
+         - Removed "Integrations" from user dropdown menu
+         - Cleaner navigation focused on actual management tasks
+      
+      ✅ Backend API Additions:
+         - GET /api/users - List all users (admin only)
+         - POST /api/users - Create new user/technician (admin only)
+         - PUT /api/users/{user_id} - Update user details (admin only)
+         - DELETE /api/users/{user_id} - Delete user (admin only)
+         - All endpoints include proper admin permission checks
+      
+      The system now has a complete flow:
+      1. Admin adds company → sees API key immediately
+      2. Admin adds technicians who will handle alerts
+      3. Company sends alerts using their API key
+      4. Alerts are correlated into incidents
+      5. Admin assigns incidents to technicians
+      6. Technicians resolve incidents
+      
+      All services running successfully!
   - agent: "testing"
     message: |
       BACKEND TESTING COMPLETE - ALL TESTS PASSED (15/15 - 100% Success Rate)
