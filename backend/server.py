@@ -457,6 +457,27 @@ async def delete_company(company_id: str):
     
     return {"message": "Company deleted successfully"}
 
+@api_router.post("/companies/{company_id}/regenerate-api-key", response_model=Company)
+async def regenerate_api_key(company_id: str):
+    """Regenerate API key for a company"""
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Generate new API key
+    new_api_key = generate_api_key()
+    
+    await db.companies.update_one(
+        {"id": company_id},
+        {"$set": {
+            "api_key": new_api_key,
+            "api_key_created_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    updated = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    return Company(**updated)
+
 
 # Alert Routes
 @api_router.get("/alerts", response_model=List[Alert])
