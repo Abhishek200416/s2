@@ -708,7 +708,6 @@ const IntegrationSettings = ({ companyId }) => {
               <h2 className="text-2xl font-bold text-white mb-2">Monitoring Tool Integrations</h2>
               <p className="text-slate-400">Configure popular monitoring tools to send alerts to Alert Whisperer</p>
             </div>
-          <TabsContent value="guides">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Datadog */}
               <Card className="bg-slate-900/50 border-slate-800">
