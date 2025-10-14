@@ -14,6 +14,8 @@ import google.generativeai as genai
 from passlib.context import CryptContext
 import jwt
 from jwt import PyJWTError
+import secrets
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
 ROOT_DIR = Path(__file__).parent
