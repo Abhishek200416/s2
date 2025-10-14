@@ -702,88 +702,12 @@ const IntegrationSettings = ({ companyId }) => {
             </Card>
           </TabsContent>
 
-          {/* Tool Integrations Tab (renamed from guides) */}
+          {/* Tool Integrations Tab */}
           <TabsContent value="guides">
-            <Card className="bg-slate-900/50 border-slate-800">
-              <CardHeader>
-                <CardTitle className="text-white">AWS Systems Manager Setup</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Configure secure remote access to your infrastructure using AWS SSM
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Step 1 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">Step 1: Create IAM Role</h3>
-                  <p className="text-slate-400 mb-3">Create an IAM role that allows Alert Whisperer to execute commands via SSM</p>
-                  <pre className="p-4 bg-slate-900 border border-slate-700 rounded-lg overflow-x-auto text-sm">
-                    <code className="text-cyan-300">{`{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ssm:SendCommand",
-        "ssm:GetCommandInvocation",
-        "ssm:ListCommandInvocations"
-      ],
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "ssm:resourceTag/Environment": "production"
-        }
-      }
-    }
-  ]
-}`}</code>
-                  </pre>
-                </div>
-
-                {/* Step 2 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">Step 2: Install SSM Agent</h3>
-                  <p className="text-slate-400 mb-3">Install SSM Agent on your EC2 instances</p>
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-300">Ubuntu/Debian:</p>
-                    <pre className="p-3 bg-slate-900 border border-slate-700 rounded text-sm">
-                      <code className="text-cyan-300">sudo snap install amazon-ssm-agent --classic</code>
-                    </pre>
-                    <p className="text-sm text-slate-300 mt-4">Amazon Linux 2:</p>
-                    <pre className="p-3 bg-slate-900 border border-slate-700 rounded text-sm">
-                      <code className="text-cyan-300">sudo yum install -y amazon-ssm-agent</code>
-                    </pre>
-                  </div>
-                </div>
-
-                {/* Step 3 */}
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">Step 3: Run Commands</h3>
-                  <p className="text-slate-400 mb-3">Execute runbooks via SSM Run Command</p>
-                  <pre className="p-4 bg-slate-900 border border-slate-700 rounded-lg overflow-x-auto text-sm">
-                    <code className="text-cyan-300">{`aws ssm send-command \\
-  --instance-ids "i-1234567890abcdef0" \\
-  --document-name "AWS-RunShellScript" \\
-  --parameters 'commands=["systemctl restart nginx"]' \\
-  --comment "Alert Whisperer: Restart nginx service"`}</code>
-                  </pre>
-                </div>
-
-                {/* Best Practices */}
-                <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
-                  <h4 className="text-cyan-400 font-semibold mb-2">Best Practices</h4>
-                  <ul className="text-sm text-cyan-200/80 space-y-1">
-                    <li>• Use least-privilege IAM policies</li>
-                    <li>• Enable SSM Session Manager for secure shell access</li>
-                    <li>• Tag resources for granular access control</li>
-                    <li>• Enable CloudWatch logging for audit trails</li>
-                    <li>• Use Automation Documents for complex workflows</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Integration Guides Tab */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">Monitoring Tool Integrations</h2>
+              <p className="text-slate-400">Configure popular monitoring tools to send alerts to Alert Whisperer</p>
+            </div>
           <TabsContent value="guides">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Datadog */}
