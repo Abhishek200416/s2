@@ -124,6 +124,195 @@ const IntegrationSettings = ({ companyId }) => {
             </TabsTrigger>
           </TabsList>
 
+          {/* Overview Tab */}
+          <TabsContent value="overview">
+            <Card className="bg-slate-900/50 border-slate-800 mb-6">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl">Complete Integration Workflow</CardTitle>
+                <CardDescription className="text-slate-400 text-base">
+                  Follow these steps to integrate new client companies and start receiving their alerts
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Workflow Steps */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-5 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <div className="w-8 h-8 rounded-full bg-cyan-500 text-white flex items-center justify-center font-bold mr-3">1</div>
+                      <h3 className="text-lg font-semibold text-white">Add Company</h3>
+                    </div>
+                    <p className="text-sm text-slate-300">Create a new client company account in Alert Whisperer</p>
+                  </div>
+                  
+                  <div className="p-5 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <div className="w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold mr-3">2</div>
+                      <h3 className="text-lg font-semibold text-white">Get API Key</h3>
+                    </div>
+                    <p className="text-sm text-slate-300">Each company automatically receives a unique API key</p>
+                  </div>
+                  
+                  <div className="p-5 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-lg">
+                    <div className="flex items-center mb-3">
+                      <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-3">3</div>
+                      <h3 className="text-lg font-semibold text-white">Send Alerts</h3>
+                    </div>
+                    <p className="text-sm text-slate-300">Company uses API key to send alerts from their systems</p>
+                  </div>
+                </div>
+
+                {/* What Happens Next */}
+                <div className="p-6 bg-slate-800/50 rounded-lg border border-slate-700">
+                  <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+                    <Workflow className="w-5 h-5 mr-2 text-cyan-400" />
+                    What Happens After Integration?
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">Alerts are Received</p>
+                        <p className="text-sm text-slate-400">Your Alert Whisperer system receives and stores all incoming alerts from the company</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">AI Correlation & Analysis</p>
+                        <p className="text-sm text-slate-400">Similar alerts are automatically correlated into incidents for easier management</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">Technician Assignment</p>
+                        <p className="text-sm text-slate-400">Incidents can be assigned to technicians who handle and resolve them</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">Resolution Tracking</p>
+                        <p className="text-sm text-slate-400">Track progress, add notes, and maintain a complete audit trail</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Key Benefits */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <h4 className="text-blue-400 font-semibold mb-2">For MSPs</h4>
+                    <ul className="text-sm text-slate-300 space-y-1">
+                      <li>• Centralized alert management for all clients</li>
+                      <li>• Automated incident correlation</li>
+                      <li>• Easy technician assignment and tracking</li>
+                      <li>• Multi-company dashboard view</li>
+                    </ul>
+                  </div>
+                  <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <h4 className="text-green-400 font-semibold mb-2">For Clients</h4>
+                    <ul className="text-sm text-slate-300 space-y-1">
+                      <li>• Simple webhook integration</li>
+                      <li>• Works with existing monitoring tools</li>
+                      <li>• Secure API key authentication</li>
+                      <li>• No software installation required</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Company Onboarding Tab */}
+          <TabsContent value="onboarding">
+            <Card className="bg-slate-900/50 border-slate-800">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl flex items-center">
+                  <Building2 className="w-6 h-6 mr-2 text-cyan-400" />
+                  How to Add a New Client Company
+                </CardTitle>
+                <CardDescription className="text-slate-400 text-base">
+                  Step-by-step guide to onboard new companies into Alert Whisperer
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Step-by-step instructions */}
+                <div className="space-y-6">
+                  <div className="border-l-4 border-cyan-500 pl-6 py-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Step 1: Navigate to Companies</h3>
+                    <p className="text-slate-300 mb-2">Go to the <strong>Companies</strong> page from the main navigation menu</p>
+                  </div>
+
+                  <div className="border-l-4 border-cyan-500 pl-6 py-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Step 2: Add New Company</h3>
+                    <p className="text-slate-300 mb-2">Click the <strong>"Add Company"</strong> button</p>
+                    <p className="text-sm text-slate-400">Fill in the company details:</p>
+                    <ul className="text-sm text-slate-400 mt-1 ml-4 space-y-1">
+                      <li>• Company Name (e.g., "Acme Corporation")</li>
+                      <li>• Company ID (unique identifier, e.g., "comp-acme")</li>
+                      <li>• Contact Email</li>
+                      <li>• Phone Number (optional)</li>
+                    </ul>
+                  </div>
+
+                  <div className="border-l-4 border-cyan-500 pl-6 py-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Step 3: API Key is Auto-Generated</h3>
+                    <p className="text-slate-300 mb-2">When you create the company, an <strong>API key is automatically generated</strong></p>
+                    <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded">
+                      <p className="text-sm text-green-300">✓ The API key is unique to this company</p>
+                      <p className="text-sm text-green-300">✓ It's used to authenticate all alert submissions</p>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-cyan-500 pl-6 py-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Step 4: Share Integration Details with Client</h3>
+                    <p className="text-slate-300 mb-3">Provide the following to your client:</p>
+                    <div className="space-y-2">
+                      <div className="p-3 bg-slate-800/50 rounded border border-slate-700">
+                        <p className="text-sm text-slate-400 mb-1">Webhook URL:</p>
+                        <code className="text-cyan-400 text-sm">{webhookUrl}</code>
+                      </div>
+                      <div className="p-3 bg-slate-800/50 rounded border border-slate-700">
+                        <p className="text-sm text-slate-400 mb-1">Their API Key:</p>
+                        <code className="text-amber-400 text-sm">Found in API Keys tab after company creation</code>
+                      </div>
+                      <div className="p-3 bg-slate-800/50 rounded border border-slate-700">
+                        <p className="text-sm text-slate-400 mb-1">Integration Instructions:</p>
+                        <p className="text-slate-300 text-sm">Share the "Send Alerts" and "Tool Integrations" tabs with them</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-l-4 border-green-500 pl-6 py-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Step 5: Client Configures Their Systems</h3>
+                    <p className="text-slate-300 mb-2">The client configures their monitoring tools to send alerts to your webhook</p>
+                    <ul className="text-sm text-slate-400 mt-2 ml-4 space-y-1">
+                      <li>• They use the webhook URL with their API key</li>
+                      <li>• Alerts start flowing into Alert Whisperer automatically</li>
+                      <li>• You can see their alerts in the dashboard immediately</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Important Notes */}
+                <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <h4 className="text-amber-400 font-semibold mb-3 flex items-center text-lg">
+                    <Terminal className="w-5 h-5 mr-2" />
+                    Important Notes
+                  </h4>
+                  <ul className="text-sm text-amber-200/90 space-y-2">
+                    <li>• Each company must have a unique Company ID</li>
+                    <li>• API keys are sensitive - share them securely (encrypted email, password manager)</li>
+                    <li>• You can regenerate API keys anytime from the API Keys tab</li>
+                    <li>• Regenerating a key will invalidate the old one</li>
+                    <li>• Test the integration by sending a test alert (see "Send Alerts" tab)</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* API Keys Tab */}
           <TabsContent value="api-keys">
             <Card className="bg-slate-900/50 border-slate-800">
