@@ -751,6 +751,100 @@ async def get_audit_logs(incident_id: Optional[str] = None, limit: int = 100):
     return logs
 
 
+# Webhook & Integration Routes
+class WebhookAlert(BaseModel):
+    company_id: str
+    asset_name: str
+    signature: str
+    severity: str
+    message: str
+    tool_source: str = "External"
+
+@api_router.post("/webhooks/alerts")
+async def receive_webhook_alert(alert_data: WebhookAlert):
+    """Webhook endpoint for external monitoring tools to send alerts"""
+    # Find company and asset
+    company = await db.companies.find_one({"id": alert_data.company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Find asset by name
+    asset = None
+    for a in company.get("assets", []):
+        if a["name"] == alert_data.asset_name:
+            asset = a
+            break
+    
+    if not asset:
+        raise HTTPException(status_code=404, detail=f"Asset {alert_data.asset_name} not found")
+    
+    # Create alert
+    alert = Alert(
+        company_id=alert_data.company_id,
+        asset_id=asset["id"],
+        asset_name=alert_data.asset_name,
+        signature=alert_data.signature,
+        severity=alert_data.severity,
+        message=alert_data.message,
+        tool_source=alert_data.tool_source
+    )
+    
+    await db.alerts.insert_one(alert.model_dump())
+    
+    # Log activity
+    activity = {
+        "id": str(uuid.uuid4()),
+        "company_id": alert_data.company_id,
+        "type": "alert_received",
+        "message": f"New {alert_data.severity} alert: {alert_data.message}",
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.activities.insert_one(activity)
+    
+    return {"message": "Alert received", "alert_id": alert.id}
+
+
+# Activity Feed Routes
+@api_router.get("/activities")
+async def get_activities(company_id: Optional[str] = None, limit: int = 50):
+    """Get real-time activity feed"""
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    
+    activities = await db.activities.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return activities
+
+
+# Real-time Stats Route
+@api_router.get("/realtime/stats/{company_id}")
+async def get_realtime_stats(company_id: str):
+    """Get real-time statistics for live dashboard updates"""
+    # Get counts
+    active_alerts = await db.alerts.count_documents({"company_id": company_id, "status": "active"})
+    total_incidents = await db.incidents.count_documents({"company_id": company_id})
+    active_incidents = await db.incidents.count_documents({"company_id": company_id, "status": {"$in": ["new", "in_progress"]}})
+    resolved_incidents = await db.incidents.count_documents({"company_id": company_id, "status": "resolved"})
+    
+    # Get recent activity
+    recent_activities = await db.activities.find(
+        {"company_id": company_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(10).to_list(10)
+    
+    # Get KPIs
+    kpi = await db.kpis.find_one({"company_id": company_id}, {"_id": 0})
+    
+    return {
+        "active_alerts": active_alerts,
+        "total_incidents": total_incidents,
+        "active_incidents": active_incidents,
+        "resolved_incidents": resolved_incidents,
+        "recent_activities": recent_activities,
+        "kpis": kpi if kpi else {}
+    }
+
+
 # ============= Seed Data Route =============
 @api_router.post("/seed")
 async def seed_database():
