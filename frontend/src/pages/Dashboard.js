@@ -113,13 +113,13 @@ const Dashboard = ({ user, onLogout }) => {
 
             <div className="flex items-center gap-4">
               <Button
-                onClick={() => navigate('/integrations')}
+                onClick={() => navigate('/technicians')}
                 variant="outline"
                 size="sm"
                 className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
               >
                 <Settings className="w-4 h-4 mr-2" />
-                Integrations
+                Technicians
               </Button>
               
               <DropdownMenu>
@@ -145,13 +145,6 @@ const Dashboard = ({ user, onLogout }) => {
                   >
                     <User className="w-4 h-4 mr-2" />
                     Profile Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => navigate('/integrations')}
-                    className="text-slate-300 focus:bg-slate-800 focus:text-white cursor-pointer"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Integrations
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-slate-800" />
                   <DropdownMenuItem 
