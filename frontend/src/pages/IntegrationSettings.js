@@ -72,13 +72,28 @@ const IntegrationSettings = ({ companyId }) => {
   return (
     <div className="min-h-screen bg-slate-950 py-8">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Integration Settings</h1>
-          <p className="text-slate-400">Connect your monitoring tools and manage integrations</p>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-3">Client Company Integration</h1>
+          <p className="text-lg text-slate-300 mb-2">How to Onboard New Companies & Receive Their Alerts</p>
+          <p className="text-slate-400">Complete guide to integrating client companies into your Alert Whisperer system</p>
         </div>
 
-        <Tabs defaultValue="api-keys" className="space-y-6">
+        <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-slate-900/50 border border-slate-800">
+            <TabsTrigger 
+              value="overview"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <Workflow className="w-4 h-4 mr-2" />
+              Integration Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="onboarding"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              Add New Company
+            </TabsTrigger>
             <TabsTrigger 
               value="api-keys"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
@@ -87,25 +102,25 @@ const IntegrationSettings = ({ companyId }) => {
               API Keys
             </TabsTrigger>
             <TabsTrigger 
-              value="webhooks"
+              value="send-alerts"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
             >
-              <Code className="w-4 h-4 mr-2" />
-              Webhook Integration
+              <Send className="w-4 h-4 mr-2" />
+              Send Alerts
             </TabsTrigger>
             <TabsTrigger 
-              value="aws"
+              value="technicians"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
             >
-              <Cloud className="w-4 h-4 mr-2" />
-              AWS Setup
+              <Users className="w-4 h-4 mr-2" />
+              Technician Routing
             </TabsTrigger>
             <TabsTrigger 
               value="guides"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
             >
               <BookOpen className="w-4 h-4 mr-2" />
-              Integration Guides
+              Tool Integrations
             </TabsTrigger>
           </TabsList>
 
