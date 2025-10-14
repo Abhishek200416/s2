@@ -70,14 +70,6 @@ const AlertCorrelation = ({ companyId, companyName }) => {
         <CardContent>
           <div className="flex gap-3">
             <Button
-              onClick={generateAlerts}
-              disabled={generating}
-              className="bg-slate-700 hover:bg-slate-600 text-white"
-              data-testid="generate-alerts-button"
-            >
-              {generating ? 'Generating...' : 'Generate 50 Sample Alerts'}
-            </Button>
-            <Button
               onClick={correlateAlerts}
               disabled={correlating || activeAlerts.length === 0}
               className="bg-cyan-600 hover:bg-cyan-700 text-white"
