@@ -87,6 +87,22 @@ function App() {
                 <Navigate to="/login" replace />
             } 
           />
+          <Route 
+            path="/profile" 
+            element={
+              isAuthenticated ? 
+                <Profile user={user} onLogout={handleLogout} onUpdate={handleUserUpdate} /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
+            path="/integrations" 
+            element={
+              isAuthenticated ? 
+                <IntegrationSettings companyId={user?.company_ids?.[0]} /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
         </Routes>
       </BrowserRouter>
     </div>
