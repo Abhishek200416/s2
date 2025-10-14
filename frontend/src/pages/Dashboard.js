@@ -27,6 +27,7 @@ import CompanyManagement from '../components/CompanyManagement';
 import ActivityFeed from '../components/ActivityFeed';
 
 const Dashboard = ({ user, onLogout }) => {
+  const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [kpis, setKpis] = useState(null);
