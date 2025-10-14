@@ -6,14 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Plus, Edit, Trash2, Server } from 'lucide-react';
+import { Building2, Plus, Edit, Trash2, Server, Key, Copy, Check, Send, Code } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CompanyManagement = ({ onCompanyChange }) => {
   const [companies, setCompanies] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
+  const [newlyCreatedCompany, setNewlyCreatedCompany] = useState(null);
+  const [copiedItem, setCopiedItem] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     policy: { auto_approve_low_risk: true, maintenance_window: 'Sat 22:00-02:00' },
@@ -36,11 +39,17 @@ const CompanyManagement = ({ onCompanyChange }) => {
 
   const createCompany = async () => {
     try {
-      await api.post('/companies', formData);
+      const response = await api.post('/companies', formData);
+      const createdCompany = response.data;
       toast.success('Company created successfully');
       setShowCreateDialog(false);
       resetForm();
       await loadCompanies();
+      
+      // Show integration dialog with API key
+      setNewlyCreatedCompany(createdCompany);
+      setShowIntegrationDialog(true);
+      
       if (onCompanyChange) onCompanyChange();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create company');
@@ -123,6 +132,25 @@ const CompanyManagement = ({ onCompanyChange }) => {
     setShowEditDialog(true);
   };
 
+  const viewIntegration = (company) => {
+    setNewlyCreatedCompany(company);
+    setShowIntegrationDialog(true);
+  };
+
+  const handleCopy = async (text, itemName) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(itemName);
+      toast.success('Copied to clipboard');
+      setTimeout(() => setCopiedItem(null), 2000);
+    } catch (error) {
+      toast.error('Failed to copy');
+    }
+  };
+
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+  const webhookUrl = `${backendUrl}/api/webhooks/alerts`;
+
   return (
     <div className="space-y-6" data-testid="company-management">
       <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30">
@@ -174,7 +202,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Assets</Label>
+                    <Label>Assets (Optional)</Label>
                     <div className="grid grid-cols-4 gap-2">
                       <Input
                         placeholder="Name"
@@ -219,7 +247,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
                   </div>
 
                   <Button onClick={createCompany} className="w-full bg-blue-600 hover:bg-blue-700">
-                    Create Company
+                    Create Company & Get API Key
                   </Button>
                 </div>
               </DialogContent>
@@ -240,6 +268,15 @@ const CompanyManagement = ({ onCompanyChange }) => {
                   </CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    onClick={() => viewIntegration(company)}
+                    size="sm"
+                    variant="ghost"
+                    className="text-emerald-400 hover:text-emerald-300"
+                    title="View Integration"
+                  >
+                    <Key className="w-4 h-4" />
+                  </Button>
                   <Button
                     onClick={() => openEditDialog(company)}
                     size="sm"
@@ -293,12 +330,163 @@ const CompanyManagement = ({ onCompanyChange }) => {
         ))}
       </div>
 
+      {/* Integration Dialog - Shows API Key and Integration Instructions */}
+      <Dialog open={showIntegrationDialog} onOpenChange={setShowIntegrationDialog}>
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <Key className="w-6 h-6 text-emerald-400" />
+              {newlyCreatedCompany?.name} - Integration Setup
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Share these details with your client to integrate their monitoring tools
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 mt-4">
+            {/* Step 1: API Key */}
+            <div className="p-5 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border border-emerald-500/30 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-white text-sm font-bold">1</span>
+                  API Key
+                </h3>
+              </div>
+              <p className="text-sm text-slate-300 mb-3">This unique key authenticates all alerts from this company</p>
+              <div className="flex items-center gap-2 p-3 bg-slate-800/70 rounded border border-slate-700">
+                <code className="flex-1 text-emerald-400 font-mono text-sm overflow-x-auto">
+                  {newlyCreatedCompany?.api_key || 'No API key available'}
+                </code>
+                <Button
+                  onClick={() => handleCopy(newlyCreatedCompany?.api_key, 'api-key')}
+                  size="sm"
+                  variant="ghost"
+                  className="text-slate-400 hover:text-white"
+                >
+                  {copiedItem === 'api-key' ? (
+                    <Check className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Step 2: Webhook URL */}
+            <div className="p-5 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-sm font-bold">2</span>
+                  Webhook Endpoint
+                </h3>
+              </div>
+              <p className="text-sm text-slate-300 mb-3">Configure monitoring tools to send alerts to this URL</p>
+              <div className="flex items-center gap-2 p-3 bg-slate-800/70 rounded border border-slate-700">
+                <code className="flex-1 text-blue-400 font-mono text-sm overflow-x-auto">
+                  {webhookUrl}
+                </code>
+                <Button
+                  onClick={() => handleCopy(webhookUrl, 'webhook-url')}
+                  size="sm"
+                  variant="ghost"
+                  className="text-slate-400 hover:text-white"
+                >
+                  {copiedItem === 'webhook-url' ? (
+                    <Check className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Step 3: Example Request */}
+            <div className="p-5 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-500 text-white text-sm font-bold">3</span>
+                  Example Integration
+                </h3>
+              </div>
+              <p className="text-sm text-slate-300 mb-3">Test the integration with this cURL command:</p>
+              <div className="relative">
+                <pre className="p-4 bg-slate-800/70 border border-slate-700 rounded text-xs overflow-x-auto">
+                  <code className="text-purple-300">{`curl -X POST "${webhookUrl}?api_key=${newlyCreatedCompany?.api_key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "asset_name": "server-01",
+    "signature": "high_cpu_usage",
+    "severity": "high",
+    "message": "CPU usage above 90%",
+    "tool_source": "Monitoring System"
+  }'`}</code>
+                </pre>
+                <Button
+                  onClick={() => handleCopy(`curl -X POST "${webhookUrl}?api_key=${newlyCreatedCompany?.api_key}" -H "Content-Type: application/json" -d '{"asset_name": "server-01", "signature": "high_cpu_usage", "severity": "high", "message": "CPU usage above 90%", "tool_source": "Monitoring System"}'`, 'curl')}
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 text-slate-400 hover:text-white"
+                >
+                  {copiedItem === 'curl' ? (
+                    <Check className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* What Happens Next */}
+            <div className="p-5 bg-gradient-to-r from-cyan-500/10 to-teal-500/10 border border-cyan-500/30 rounded-lg">
+              <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                <Send className="w-5 h-5 text-cyan-400" />
+                What Happens Next?
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 mt-2"></span>
+                  <div>
+                    <p className="text-white font-medium">Alerts are Received</p>
+                    <p className="text-sm text-slate-400">All alerts sent with this API key are automatically received and stored</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 mt-2"></span>
+                  <div>
+                    <p className="text-white font-medium">AI Correlation</p>
+                    <p className="text-sm text-slate-400">Similar alerts are grouped into incidents for easier management</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 mt-2"></span>
+                  <div>
+                    <p className="text-white font-medium">Technician Assignment</p>
+                    <p className="text-sm text-slate-400">Incidents can be assigned to your technicians for resolution</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Security Note */}
+            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+              <h4 className="text-amber-400 font-semibold mb-2 text-sm">🔒 Security Best Practices</h4>
+              <ul className="text-xs text-amber-200/80 space-y-1">
+                <li>• Keep the API key confidential - treat it like a password</li>
+                <li>• Share via secure channels (encrypted email, password manager)</li>
+                <li>• Regenerate if compromised (click the key icon on company card)</li>
+                <li>• Always use HTTPS for API requests</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Company</DialogTitle>
-            <DialogDescription className="text-slate-400">Update company information</DialogDescription>
+            <DialogDescription className="text-slate-400">Update company details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div>
@@ -306,6 +494,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., Acme Corp"
                 className="bg-slate-800 border-slate-700 text-white"
               />
             </div>
@@ -313,11 +502,12 @@ const CompanyManagement = ({ onCompanyChange }) => {
             <div>
               <Label>Maintenance Window</Label>
               <Input
-                value={formData.policy?.maintenance_window || ''}
+                value={formData.policy.maintenance_window}
                 onChange={(e) => setFormData({
                   ...formData,
                   policy: { ...formData.policy, maintenance_window: e.target.value }
                 })}
+                placeholder="e.g., Sat 22:00-02:00"
                 className="bg-slate-800 border-slate-700 text-white"
               />
             </div>
@@ -348,8 +538,8 @@ const CompanyManagement = ({ onCompanyChange }) => {
                 </Button>
               </div>
 
-              {formData.assets && formData.assets.length > 0 && (
-                <div className="mt-2 space-y-1 max-h-40 overflow-y-auto">
+              {formData.assets.length > 0 && (
+                <div className="mt-2 space-y-1">
                   {formData.assets.map((asset, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-slate-800 rounded">
                       <span className="text-sm text-white">{asset.name} - {asset.type} ({asset.os})</span>
@@ -367,7 +557,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
               )}
             </div>
 
-            <Button onClick={updateCompany} className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button onClick={updateCompany} className="w-full bg-cyan-600 hover:bg-cyan-700">
               Update Company
             </Button>
           </div>
