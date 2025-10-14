@@ -331,6 +331,62 @@ async def login(credentials: UserLogin):
     }
 
 
+# Profile Routes
+@api_router.get("/profile", response_model=User)
+async def get_profile(current_user: User = Depends(get_current_user)):
+    """Get current user profile"""
+    return current_user
+
+class ProfileUpdate(BaseModel):
+    name: str
+    email: str
+
+@api_router.put("/profile", response_model=User)
+async def update_profile(profile_data: ProfileUpdate, current_user: User = Depends(get_current_user)):
+    """Update user profile"""
+    # Check if email is already taken by another user
+    if profile_data.email != current_user.email:
+        existing = await db.users.find_one({"email": profile_data.email})
+        if existing and existing["id"] != current_user.id:
+            raise HTTPException(status_code=400, detail="Email already in use")
+    
+    # Update user
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {
+            "name": profile_data.name,
+            "email": profile_data.email
+        }}
+    )
+    
+    # Get updated user
+    updated_user = await db.users.find_one({"id": current_user.id}, {"_id": 0, "password_hash": 0})
+    return User(**updated_user)
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+@api_router.put("/profile/password")
+async def change_password(password_data: PasswordChange, current_user: User = Depends(get_current_user)):
+    """Change user password"""
+    # Get user with password hash
+    user_doc = await db.users.find_one({"id": current_user.id})
+    
+    # Verify current password
+    if not verify_password(password_data.current_password, user_doc["password_hash"]):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Update password
+    new_hash = get_password_hash(password_data.new_password)
+    await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": "Password updated successfully"}
+
+
 # Company Routes
 @api_router.get("/companies", response_model=List[Company])
 async def get_companies():
