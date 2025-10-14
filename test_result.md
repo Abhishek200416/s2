@@ -304,10 +304,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Test profile update functionality"
-    - "Test password change functionality"
-    - "Test API key display and regeneration"
-    - "Test webhook endpoint with API key authentication"
     - "Verify alert generator button is removed"
     - "Verify Emergent badge is removed"
   stuck_tasks: []
