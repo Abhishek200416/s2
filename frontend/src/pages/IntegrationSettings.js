@@ -382,8 +382,8 @@ const IntegrationSettings = ({ companyId }) => {
             </Card>
           </TabsContent>
 
-          {/* Webhooks Tab */}
-          <TabsContent value="webhooks">
+          {/* Send Alerts Tab */}
+          <TabsContent value="send-alerts">
             <Card className="bg-slate-900/50 border-slate-800">
               <CardHeader>
                 <CardTitle className="text-white">Webhook Integration</CardTitle>
