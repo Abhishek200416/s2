@@ -501,6 +501,17 @@ async def correlate_alerts(company_id: str):
             {"id": {"$in": [a["id"] for a in alert_group]}},
             {"$set": {"status": "acknowledged"}}
         )
+        
+        # Log activity
+        activity = {
+            "id": str(uuid.uuid4()),
+            "company_id": company_id,
+            "type": "incident_created",
+            "message": f"Incident created: {incident.signature} on {incident.asset_name} ({incident.alert_count} alerts)",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "severity": incident.severity
+        }
+        await db.activities.insert_one(activity)
     
     # Update KPIs
     total_alerts = len(alerts)
