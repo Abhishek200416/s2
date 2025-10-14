@@ -184,6 +184,27 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+def generate_api_key():
+    """Generate a secure API key"""
+    return f"aw_{secrets.token_urlsafe(32)}"
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get current user from JWT token"""
+    try:
+        token = credentials.credentials
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("id")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        
+        user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+        if user_doc is None:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        return User(**user_doc)
+    except PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+
 
 # ============= Decision Engine =============
 async def generate_decision(incident: Incident, company: Company, runbook: Optional[Runbook]) -> Dict[str, Any]:
