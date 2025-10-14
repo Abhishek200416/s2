@@ -413,6 +413,10 @@ async def create_company(company_data: CompanyCreate):
         raise HTTPException(status_code=400, detail="Company with this name already exists")
     
     company = Company(**company_data.model_dump())
+    # Generate API key for new company
+    company.api_key = generate_api_key()
+    company.api_key_created_at = datetime.now(timezone.utc).isoformat()
+    
     await db.companies.insert_one(company.model_dump())
     
     # Initialize KPI for new company
