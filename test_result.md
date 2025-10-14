@@ -132,6 +132,14 @@ backend:
           - Regenerate API key endpoint: POST /api/companies/{id}/regenerate-api-key
           - API keys generated automatically when creating companies
           - Updated seed data to include API keys
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: API key management functionality working correctly:
+          ✅ GET /api/companies - Retrieved 3 companies successfully
+          ✅ GET /api/companies/comp-acme - Retrieved Acme Corp with API key
+          ✅ POST /api/companies/comp-acme/regenerate-api-key - API key regenerated successfully
+          All API key endpoints functioning as expected
 
   - task: "Add profile management endpoints"
     implemented: true
