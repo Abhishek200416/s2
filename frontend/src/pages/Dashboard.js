@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../App';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Shield, LogOut, AlertTriangle, TrendingDown, Clock, CheckCircle, 
-  Play, XCircle, ArrowRight, Activity, Database, Zap, FileText
+  Play, XCircle, ArrowRight, Activity, Database, Zap, FileText, User, Settings
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import AlertCorrelation from '../components/AlertCorrelation';
 import IncidentList from '../components/IncidentList';
 import DecisionEngine from '../components/DecisionEngine';
