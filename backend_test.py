@@ -214,10 +214,12 @@ class AlertWhispererTester:
         # Test webhook with invalid API key
         invalid_api_key = "invalid_key_12345"
         response = self.make_request('POST', f'/webhooks/alerts?api_key={invalid_api_key}', json=webhook_payload)
-        if response and response.status_code == 401:
+        if response is not None and response.status_code == 401:
             self.log_result("Webhook Invalid API Key", True, "Correctly rejected invalid API key with 401 error")
+        elif response is not None:
+            self.log_result("Webhook Invalid API Key", False, f"Expected 401 for invalid API key, got: {response.status_code}")
         else:
-            self.log_result("Webhook Invalid API Key", False, f"Expected 401 for invalid API key, got: {response.status_code if response else 'No response'}")
+            self.log_result("Webhook Invalid API Key", False, "No response received for invalid API key test")
     
     def test_existing_features(self):
         """Test 4: Existing Features (smoke test)"""
