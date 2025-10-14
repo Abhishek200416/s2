@@ -174,7 +174,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -184,6 +184,15 @@ backend:
           - Validates API key and gets company automatically
           - Removed company_id from request body (derived from API key)
           - Improved security by requiring API key for all webhook requests
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: Webhook endpoint with API key authentication working correctly:
+          ✅ POST /api/webhooks/alerts?api_key={valid_key} - Alert created successfully
+          ✅ Verified alert creation in database via GET /api/alerts
+          ✅ POST /api/webhooks/alerts?api_key={invalid_key} - Correctly rejected with 401 error
+          ✅ Webhook payload validation working (asset_name, signature, severity, message, tool_source)
+          Security and functionality both working as expected
 
 frontend:
   - task: "Remove fake alert generator button"
