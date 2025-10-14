@@ -316,6 +316,59 @@ async def get_company(company_id: str):
         raise HTTPException(status_code=404, detail="Company not found")
     return company
 
+class CompanyCreate(BaseModel):
+    name: str
+    policy: Dict[str, Any] = {"auto_approve_low_risk": True, "maintenance_window": "Sat 22:00-02:00"}
+    assets: List[Dict[str, Any]] = []
+
+@api_router.post("/companies", response_model=Company)
+async def create_company(company_data: CompanyCreate):
+    # Check if company exists
+    existing = await db.companies.find_one({"name": company_data.name})
+    if existing:
+        raise HTTPException(status_code=400, detail="Company with this name already exists")
+    
+    company = Company(**company_data.model_dump())
+    await db.companies.insert_one(company.model_dump())
+    
+    # Initialize KPI for new company
+    kpi = KPI(company_id=company.id)
+    await db.kpis.insert_one(kpi.model_dump())
+    
+    return company
+
+@api_router.put("/companies/{company_id}", response_model=Company)
+async def update_company(company_id: str, company_data: CompanyCreate):
+    existing = await db.companies.find_one({"id": company_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    update_data = company_data.model_dump()
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.companies.update_one(
+        {"id": company_id},
+        {"$set": update_data}
+    )
+    
+    updated = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    return Company(**updated)
+
+@api_router.delete("/companies/{company_id}")
+async def delete_company(company_id: str):
+    result = await db.companies.delete_one({"id": company_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Cleanup related data
+    await db.alerts.delete_many({"company_id": company_id})
+    await db.incidents.delete_many({"company_id": company_id})
+    await db.runbooks.delete_many({"company_id": company_id})
+    await db.patch_plans.delete_many({"company_id": company_id})
+    await db.kpis.delete_many({"company_id": company_id})
+    
+    return {"message": "Company deleted successfully"}
+
 
 # Alert Routes
 @api_router.get("/alerts", response_model=List[Alert])
