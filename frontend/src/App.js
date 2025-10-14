@@ -5,7 +5,7 @@ import axios from 'axios';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
-import IntegrationSettings from './pages/IntegrationSettings';
+import Technicians from './pages/Technicians';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
