@@ -80,6 +80,8 @@ class Company(BaseModel):
     name: str
     policy: Dict[str, Any] = {}
     assets: List[Dict[str, Any]] = []
+    api_key: Optional[str] = None
+    api_key_created_at: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class Alert(BaseModel):
