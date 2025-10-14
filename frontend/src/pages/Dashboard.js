@@ -172,12 +172,27 @@ const Dashboard = ({ user, onLogout }) => {
                   <Database className="w-4 h-4 mr-2" />
                   Patches
                 </TabsTrigger>
+                {user.role === 'admin' && (
+                  <TabsTrigger 
+                    value="companies" 
+                    className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                    data-testid="tab-companies"
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    Companies
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <IncidentList companyId={selectedCompany} limit={5} />
-                  <DecisionEngine companyId={selectedCompany} />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                    <IncidentList companyId={selectedCompany} limit={5} />
+                    <DecisionEngine companyId={selectedCompany} />
+                  </div>
+                  <div>
+                    <ActivityFeed companyId={selectedCompany} />
+                  </div>
                 </div>
               </TabsContent>
 
@@ -192,6 +207,12 @@ const Dashboard = ({ user, onLogout }) => {
               <TabsContent value="patches">
                 <PatchManagement companyId={selectedCompany} />
               </TabsContent>
+
+              {user.role === 'admin' && (
+                <TabsContent value="companies">
+                  <CompanyManagement onCompanyChange={loadCompanies} />
+                </TabsContent>
+              )}
             </Tabs>
           </>
         )}
