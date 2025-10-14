@@ -993,7 +993,9 @@ async def seed_database():
                 {"id": "srv-db-01", "name": "srv-db-01", "type": "database", "os": "Ubuntu 22.04"},
                 {"id": "srv-redis-01", "name": "srv-redis-01", "type": "cache", "os": "Ubuntu 22.04"},
                 {"id": "srv-lb-01", "name": "srv-lb-01", "type": "loadbalancer", "os": "Ubuntu 22.04"},
-            ]
+            ],
+            api_key=generate_api_key(),
+            api_key_created_at=datetime.now(timezone.utc).isoformat()
         ),
         Company(
             id="comp-techstart",
@@ -1004,7 +1006,9 @@ async def seed_database():
                 {"id": "win-app-01", "name": "win-app-01", "type": "appserver", "os": "Windows Server 2022"},
                 {"id": "win-db-01", "name": "win-db-01", "type": "database", "os": "Windows Server 2022"},
                 {"id": "srv-api-01", "name": "srv-api-01", "type": "apiserver", "os": "Ubuntu 22.04"},
-            ]
+            ],
+            api_key=generate_api_key(),
+            api_key_created_at=datetime.now(timezone.utc).isoformat()
         ),
         Company(
             id="comp-global",
@@ -1015,7 +1019,9 @@ async def seed_database():
                 {"id": "srv-web-02", "name": "srv-web-02", "type": "webserver", "os": "CentOS 8"},
                 {"id": "srv-mysql-01", "name": "srv-mysql-01", "type": "database", "os": "Ubuntu 22.04"},
                 {"id": "srv-backup-01", "name": "srv-backup-01", "type": "backup", "os": "Ubuntu 22.04"},
-            ]
+            ],
+            api_key=generate_api_key(),
+            api_key_created_at=datetime.now(timezone.utc).isoformat()
         )
     ]
     
