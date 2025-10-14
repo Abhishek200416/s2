@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,9 +6,14 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import random
+import google.generativeai as genai
+from passlib.context import CryptContext
+import jwt
+from jwt import PyJWTError
 
 
 ROOT_DIR = Path(__file__).parent
@@ -19,6 +24,18 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Gemini AI Setup
+genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+model = genai.GenerativeModel('gemini-2.5-pro')
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# JWT settings
+SECRET_KEY = "alert-whisperer-secret-key-change-in-production"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+
 # Create the main app without a prefix
 app = FastAPI()
 
@@ -26,45 +43,811 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
+# ============= Models =============
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    email: str
+    name: str
+    role: str  # admin, technician
+    company_ids: List[str] = []
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    name: str
+    role: str = "technician"
+    company_ids: List[str] = []
 
-# Add your routes to the router instead of directly to app
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: Dict[str, Any]
+
+class Company(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    policy: Dict[str, Any] = {}
+    assets: List[Dict[str, Any]] = []
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class Alert(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    asset_id: str
+    asset_name: str
+    signature: str
+    severity: str  # low, medium, high, critical
+    message: str
+    tool_source: str
+    status: str = "active"  # active, acknowledged, resolved
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class Incident(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    alert_ids: List[str] = []
+    alert_count: int = 0
+    priority_score: float = 0.0
+    status: str = "new"  # new, in_progress, resolved, escalated
+    assigned_to: Optional[str] = None
+    signature: str
+    asset_id: str
+    asset_name: str
+    severity: str
+    decision: Optional[Dict[str, Any]] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class Runbook(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    risk_level: str  # low, medium, high
+    signature: str  # which alert signature this handles
+    actions: List[str] = []
+    health_checks: Dict[str, Any] = {}
+    auto_approve: bool = False
+    company_id: str
+
+class PatchPlan(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    patches: List[Dict[str, Any]] = []
+    canary_assets: List[str] = []
+    status: str = "proposed"  # proposed, canary_in_progress, canary_complete, rolling_out, complete, failed
+    window: str = ""
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class AuditLog(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    incident_id: Optional[str] = None
+    event_type: str
+    payload: Dict[str, Any] = {}
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class KPI(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    total_alerts: int = 0
+    total_incidents: int = 0
+    noise_reduction_pct: float = 0.0
+    mttr_minutes: float = 0.0
+    self_healed_count: int = 0
+    self_healed_pct: float = 0.0
+    patch_compliance_pct: float = 0.0
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class DecisionRequest(BaseModel):
+    incident_id: str
+
+class ExecuteRunbookRequest(BaseModel):
+    incident_id: str
+    runbook_id: str
+    approval_token: Optional[str] = None
+
+class ApproveIncidentRequest(BaseModel):
+    incident_id: str
+
+
+# ============= Auth Functions =============
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+# ============= Decision Engine =============
+async def generate_decision(incident: Incident, company: Company, runbook: Optional[Runbook]) -> Dict[str, Any]:
+    """Generate AI-powered decision for incident remediation"""
+    
+    # Calculate priority score
+    severity_scores = {"low": 10, "medium": 30, "high": 60, "critical": 90}
+    base_score = severity_scores.get(incident.severity, 30)
+    
+    # Add bonus for multiple alerts (correlation bonus)
+    duplicate_bonus = min(incident.alert_count * 2, 20)
+    
+    priority_score = base_score + duplicate_bonus
+    
+    # Determine action based on risk and policy
+    action = "ESCALATE"
+    approval_required = True
+    reason = "No runbook available for this incident type"
+    
+    if runbook:
+        if runbook.risk_level == "low" and runbook.auto_approve:
+            action = "EXECUTE"
+            approval_required = False
+            reason = f"Correlated {incident.alert_count} alerts; low-risk runbook auto-approved"
+        elif runbook.risk_level == "medium" or not runbook.auto_approve:
+            action = "REQUEST_APPROVAL"
+            approval_required = True
+            reason = f"Medium risk or policy requires approval for {runbook.name}"
+        else:
+            action = "REQUEST_APPROVAL"
+            approval_required = True
+            reason = "High risk runbook requires manual approval"
+    
+    # Build decision JSON
+    decision = {
+        "action": action,
+        "reason": reason,
+        "incident_id": incident.id,
+        "priority_score": priority_score,
+        "runbook_id": runbook.id if runbook else None,
+        "params": {},
+        "approval_required": approval_required,
+        "health_check": runbook.health_checks if runbook else {},
+        "escalation": {
+            "skill_tag": "linux" if "linux" in incident.signature.lower() else "windows",
+            "urgency": incident.severity
+        },
+        "kpi_update": {
+            "alerts_after": 1,
+            "mttr_after_min": 8,
+            "self_healed_incidents": 1 if action == "EXECUTE" else 0
+        },
+        "audit": {
+            "event": action.lower().replace("_", " "),
+            "notes": f"Decision engine processed incident {incident.id}"
+        }
+    }
+    
+    # Get AI explanation using Gemini
+    try:
+        prompt = f"""You are an MSP operations AI agent. Explain the following decision in 2-3 sentences:
+        
+Incident: {incident.alert_count} alerts for {incident.signature} on {incident.asset_name}
+Severity: {incident.severity}
+Action: {action}
+Reason: {reason}
+
+Provide a brief technical explanation suitable for an operations dashboard."""
+        
+        response = model.generate_content(prompt)
+        decision["ai_explanation"] = response.text
+    except Exception as e:
+        decision["ai_explanation"] = f"AI explanation unavailable: {str(e)}"
+    
+    return decision
+
+
+# ============= Routes =============
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Alert Whisperer API", "version": "1.0"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+# Auth Routes
+@api_router.post("/auth/register", response_model=User)
+async def register(user_data: UserCreate):
+    # Check if user exists
+    existing = await db.users.find_one({"email": user_data.email})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    # Create user
+    user_dict = user_data.model_dump()
+    password = user_dict.pop("password")
+    hashed_password = get_password_hash(password)
     
-    return status_checks
+    user = User(**user_dict)
+    doc = user.model_dump()
+    doc["password_hash"] = hashed_password
+    
+    await db.users.insert_one(doc)
+    return user
+
+@api_router.post("/auth/login")
+async def login(credentials: UserLogin):
+    user_doc = await db.users.find_one({"email": credentials.email})
+    if not user_doc:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not verify_password(credentials.password, user_doc["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Remove sensitive data
+    user_doc.pop("password_hash", None)
+    user_doc.pop("_id", None)
+    
+    # Create token
+    access_token = create_access_token(data={"sub": user_doc["email"], "id": user_doc["id"]})
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_doc
+    }
+
+
+# Company Routes
+@api_router.get("/companies", response_model=List[Company])
+async def get_companies():
+    companies = await db.companies.find({}, {"_id": 0}).to_list(100)
+    return companies
+
+@api_router.get("/companies/{company_id}", response_model=Company)
+async def get_company(company_id: str):
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return company
+
+
+# Alert Routes
+@api_router.get("/alerts", response_model=List[Alert])
+async def get_alerts(company_id: Optional[str] = None, status: Optional[str] = None):
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    if status:
+        query["status"] = status
+    
+    alerts = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(500)
+    return alerts
+
+@api_router.post("/alerts/generate")
+async def generate_alerts(company_id: str, count: int = 50):
+    """Generate mock alerts for demo purposes"""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    signatures = [
+        "service_down:nginx", "service_down:mysql", "service_down:redis",
+        "disk_full", "memory_high", "cpu_spike", "network_timeout",
+        "ssl_expiring", "backup_failed", "replication_lag"
+    ]
+    severities = ["low", "medium", "high", "critical"]
+    tools = ["Nagios", "Zabbix", "Datadog", "Prometheus", "CloudWatch"]
+    
+    generated_alerts = []
+    base_time = datetime.now(timezone.utc)
+    
+    for i in range(count):
+        asset = random.choice(company["assets"])
+        signature = random.choice(signatures)
+        
+        alert = Alert(
+            company_id=company_id,
+            asset_id=asset["id"],
+            asset_name=asset["name"],
+            signature=signature,
+            severity=random.choice(severities),
+            message=f"{signature.replace('_', ' ').title()} detected on {asset['name']}",
+            tool_source=random.choice(tools),
+            timestamp=(base_time - timedelta(minutes=random.randint(0, 120))).isoformat()
+        )
+        
+        doc = alert.model_dump()
+        await db.alerts.insert_one(doc)
+        generated_alerts.append(alert)
+    
+    return {"generated": len(generated_alerts), "alerts": generated_alerts[:10]}
+
+
+# Incident Routes
+@api_router.get("/incidents", response_model=List[Incident])
+async def get_incidents(company_id: Optional[str] = None, status: Optional[str] = None):
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    if status:
+        query["status"] = status
+    
+    incidents = await db.incidents.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return incidents
+
+@api_router.post("/incidents/correlate")
+async def correlate_alerts(company_id: str):
+    """Correlate alerts into incidents using signature + asset grouping"""
+    # Get all active alerts
+    alerts = await db.alerts.find({
+        "company_id": company_id,
+        "status": "active"
+    }, {"_id": 0}).to_list(1000)
+    
+    # Group by signature + asset
+    incident_groups = {}
+    for alert in alerts:
+        key = f"{alert['signature']}:{alert['asset_id']}"
+        if key not in incident_groups:
+            incident_groups[key] = []
+        incident_groups[key].append(alert)
+    
+    # Create incidents
+    created_incidents = []
+    for key, alert_group in incident_groups.items():
+        if len(alert_group) == 0:
+            continue
+        
+        first_alert = alert_group[0]
+        
+        # Check if incident already exists
+        existing = await db.incidents.find_one({
+            "company_id": company_id,
+            "signature": first_alert["signature"],
+            "asset_id": first_alert["asset_id"],
+            "status": {"$ne": "resolved"}
+        })
+        
+        if existing:
+            # Update existing incident
+            await db.incidents.update_one(
+                {"id": existing["id"]},
+                {
+                    "$set": {
+                        "alert_count": len(alert_group),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    },
+                    "$addToSet": {"alert_ids": {"$each": [a["id"] for a in alert_group]}}
+                }
+            )
+            continue
+        
+        # Create new incident
+        incident = Incident(
+            company_id=company_id,
+            alert_ids=[a["id"] for a in alert_group],
+            alert_count=len(alert_group),
+            signature=first_alert["signature"],
+            asset_id=first_alert["asset_id"],
+            asset_name=first_alert["asset_name"],
+            severity=first_alert["severity"]
+        )
+        
+        doc = incident.model_dump()
+        await db.incidents.insert_one(doc)
+        created_incidents.append(incident)
+        
+        # Mark alerts as acknowledged
+        await db.alerts.update_many(
+            {"id": {"$in": [a["id"] for a in alert_group]}},
+            {"$set": {"status": "acknowledged"}}
+        )
+    
+    # Update KPIs
+    total_alerts = len(alerts)
+    total_incidents = len(incident_groups)
+    noise_reduction = ((total_alerts - total_incidents) / total_alerts * 100) if total_alerts > 0 else 0
+    
+    await db.kpis.update_one(
+        {"company_id": company_id},
+        {
+            "$set": {
+                "total_alerts": total_alerts,
+                "total_incidents": total_incidents,
+                "noise_reduction_pct": round(noise_reduction, 2),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "total_alerts": total_alerts,
+        "incidents_created": len(created_incidents),
+        "noise_reduction_pct": round(noise_reduction, 2),
+        "incidents": created_incidents
+    }
+
+@api_router.post("/incidents/{incident_id}/decide")
+async def decide_on_incident(incident_id: str):
+    """Generate decision for an incident using AI"""
+    incident_doc = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
+    if not incident_doc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    incident = Incident(**incident_doc)
+    
+    # Get company
+    company_doc = await db.companies.find_one({"id": incident.company_id}, {"_id": 0})
+    company = Company(**company_doc)
+    
+    # Find matching runbook
+    runbook_doc = await db.runbooks.find_one({
+        "company_id": incident.company_id,
+        "signature": incident.signature
+    }, {"_id": 0})
+    
+    runbook = Runbook(**runbook_doc) if runbook_doc else None
+    
+    # Generate decision
+    decision = await generate_decision(incident, company, runbook)
+    
+    # Update incident with decision
+    await db.incidents.update_one(
+        {"id": incident_id},
+        {
+            "$set": {
+                "decision": decision,
+                "priority_score": decision["priority_score"],
+                "status": "in_progress",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Log audit
+    audit = AuditLog(
+        incident_id=incident_id,
+        event_type=decision["action"],
+        payload=decision
+    )
+    await db.audit_logs.insert_one(audit.model_dump())
+    
+    return decision
+
+@api_router.post("/incidents/{incident_id}/approve")
+async def approve_incident(incident_id: str):
+    """Approve an incident for execution"""
+    incident_doc = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
+    if not incident_doc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    # Simulate runbook execution
+    await db.incidents.update_one(
+        {"id": incident_id},
+        {
+            "$set": {
+                "status": "resolved",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Update KPIs
+    company_id = incident_doc["company_id"]
+    kpi_doc = await db.kpis.find_one({"company_id": company_id})
+    if kpi_doc:
+        self_healed = kpi_doc.get("self_healed_count", 0) + 1
+        total_incidents = kpi_doc.get("total_incidents", 1)
+        self_healed_pct = (self_healed / total_incidents * 100) if total_incidents > 0 else 0
+        
+        await db.kpis.update_one(
+            {"company_id": company_id},
+            {
+                "$set": {
+                    "self_healed_count": self_healed,
+                    "self_healed_pct": round(self_healed_pct, 2),
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }
+            }
+        )
+    
+    return {"message": "Incident approved and executed", "status": "resolved"}
+
+@api_router.post("/incidents/{incident_id}/escalate")
+async def escalate_incident(incident_id: str):
+    """Escalate an incident to a technician"""
+    await db.incidents.update_one(
+        {"id": incident_id},
+        {
+            "$set": {
+                "status": "escalated",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    return {"message": "Incident escalated to on-call technician"}
+
+
+# Runbook Routes
+@api_router.get("/runbooks", response_model=List[Runbook])
+async def get_runbooks(company_id: Optional[str] = None):
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    
+    runbooks = await db.runbooks.find(query, {"_id": 0}).to_list(100)
+    return runbooks
+
+
+# Patch Routes
+@api_router.get("/patches", response_model=List[PatchPlan])
+async def get_patches(company_id: Optional[str] = None):
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    
+    patches = await db.patch_plans.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return patches
+
+@api_router.post("/patches/{patch_id}/canary")
+async def start_canary(patch_id: str):
+    """Start canary deployment"""
+    await db.patch_plans.update_one(
+        {"id": patch_id},
+        {
+            "$set": {
+                "status": "canary_in_progress",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    return {"message": "Canary deployment started"}
+
+@api_router.post("/patches/{patch_id}/rollout")
+async def rollout_patch(patch_id: str):
+    """Rollout patch to all assets"""
+    await db.patch_plans.update_one(
+        {"id": patch_id},
+        {
+            "$set": {
+                "status": "rolling_out",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    return {"message": "Patch rollout initiated"}
+
+@api_router.post("/patches/{patch_id}/complete")
+async def complete_patch(patch_id: str):
+    """Mark patch as complete"""
+    await db.patch_plans.update_one(
+        {"id": patch_id},
+        {
+            "$set": {
+                "status": "complete",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    return {"message": "Patch deployment complete"}
+
+
+# KPI Routes
+@api_router.get("/kpis/{company_id}", response_model=KPI)
+async def get_kpis(company_id: str):
+    kpi = await db.kpis.find_one({"company_id": company_id}, {"_id": 0})
+    if not kpi:
+        # Return default KPI
+        return KPI(company_id=company_id)
+    return kpi
+
+
+# Audit Routes
+@api_router.get("/audit", response_model=List[AuditLog])
+async def get_audit_logs(incident_id: Optional[str] = None, limit: int = 100):
+    query = {}
+    if incident_id:
+        query["incident_id"] = incident_id
+    
+    logs = await db.audit_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
+
+
+# ============= Seed Data Route =============
+@api_router.post("/seed")
+async def seed_database():
+    """Initialize database with mock MSP data"""
+    
+    # Clear existing data
+    await db.users.delete_many({})
+    await db.companies.delete_many({})
+    await db.alerts.delete_many({})
+    await db.incidents.delete_many({})
+    await db.runbooks.delete_many({})
+    await db.patch_plans.delete_many({})
+    await db.kpis.delete_many({})
+    await db.audit_logs.delete_many({})
+    
+    # Create companies
+    companies = [
+        Company(
+            id="comp-acme",
+            name="Acme Corp",
+            policy={"auto_approve_low_risk": True, "maintenance_window": "Sat 22:00-02:00"},
+            assets=[
+                {"id": "srv-app-01", "name": "srv-app-01", "type": "webserver", "os": "Ubuntu 22.04"},
+                {"id": "srv-app-02", "name": "srv-app-02", "type": "webserver", "os": "Ubuntu 22.04"},
+                {"id": "srv-db-01", "name": "srv-db-01", "type": "database", "os": "Ubuntu 22.04"},
+                {"id": "srv-redis-01", "name": "srv-redis-01", "type": "cache", "os": "Ubuntu 22.04"},
+                {"id": "srv-lb-01", "name": "srv-lb-01", "type": "loadbalancer", "os": "Ubuntu 22.04"},
+            ]
+        ),
+        Company(
+            id="comp-techstart",
+            name="TechStart Inc",
+            policy={"auto_approve_low_risk": False, "maintenance_window": "Sun 00:00-04:00"},
+            assets=[
+                {"id": "win-dc-01", "name": "win-dc-01", "type": "domain_controller", "os": "Windows Server 2022"},
+                {"id": "win-app-01", "name": "win-app-01", "type": "appserver", "os": "Windows Server 2022"},
+                {"id": "win-db-01", "name": "win-db-01", "type": "database", "os": "Windows Server 2022"},
+                {"id": "srv-api-01", "name": "srv-api-01", "type": "apiserver", "os": "Ubuntu 22.04"},
+            ]
+        ),
+        Company(
+            id="comp-global",
+            name="Global Services Ltd",
+            policy={"auto_approve_low_risk": True, "maintenance_window": "Fri 23:00-03:00"},
+            assets=[
+                {"id": "srv-web-01", "name": "srv-web-01", "type": "webserver", "os": "CentOS 8"},
+                {"id": "srv-web-02", "name": "srv-web-02", "type": "webserver", "os": "CentOS 8"},
+                {"id": "srv-mysql-01", "name": "srv-mysql-01", "type": "database", "os": "Ubuntu 22.04"},
+                {"id": "srv-backup-01", "name": "srv-backup-01", "type": "backup", "os": "Ubuntu 22.04"},
+            ]
+        )
+    ]
+    
+    for company in companies:
+        await db.companies.insert_one(company.model_dump())
+    
+    # Create users
+    users = [
+        UserCreate(
+            email="admin@alertwhisperer.com",
+            password="admin123",
+            name="Admin User",
+            role="admin",
+            company_ids=["comp-acme", "comp-techstart", "comp-global"]
+        ),
+        UserCreate(
+            email="tech@acme.com",
+            password="tech123",
+            name="Acme Technician",
+            role="technician",
+            company_ids=["comp-acme"]
+        ),
+        UserCreate(
+            email="tech@techstart.com",
+            password="tech123",
+            name="TechStart Technician",
+            role="technician",
+            company_ids=["comp-techstart"]
+        )
+    ]
+    
+    for user_data in users:
+        user_dict = user_data.model_dump()
+        password = user_dict.pop("password")
+        user = User(**user_dict)
+        doc = user.model_dump()
+        doc["password_hash"] = get_password_hash(password)
+        await db.users.insert_one(doc)
+    
+    # Create runbooks
+    runbooks = [
+        # Acme runbooks
+        Runbook(
+            company_id="comp-acme",
+            name="Restart Nginx",
+            description="Restart nginx service and verify health",
+            risk_level="low",
+            signature="service_down:nginx",
+            actions=["sudo systemctl restart nginx", "curl -f http://localhost/healthz"],
+            health_checks={"type": "http", "url": "http://localhost/healthz", "status": 200},
+            auto_approve=True
+        ),
+        Runbook(
+            company_id="comp-acme",
+            name="Free Disk Space",
+            description="Clean old logs to free disk space",
+            risk_level="medium",
+            signature="disk_full",
+            actions=["find /var/log -name '*.log' -mtime +7 -delete", "df -h"],
+            health_checks={"type": "disk_free", "min_gb": 10},
+            auto_approve=False
+        ),
+        Runbook(
+            company_id="comp-acme",
+            name="Restart Redis",
+            description="Restart Redis cache service",
+            risk_level="low",
+            signature="service_down:redis",
+            actions=["sudo systemctl restart redis", "redis-cli ping"],
+            health_checks={"type": "tcp", "port": 6379},
+            auto_approve=True
+        ),
+        # TechStart runbooks
+        Runbook(
+            company_id="comp-techstart",
+            name="Restart IIS",
+            description="Restart IIS web server",
+            risk_level="medium",
+            signature="service_down:iis",
+            actions=["iisreset /restart"],
+            health_checks={"type": "http", "status": 200},
+            auto_approve=False
+        ),
+        Runbook(
+            company_id="comp-techstart",
+            name="Clear Memory Cache",
+            description="Clear memory cache to reduce usage",
+            risk_level="low",
+            signature="memory_high",
+            actions=["powershell Clear-RecycleBin -Force"],
+            health_checks={"type": "memory", "max_pct": 85},
+            auto_approve=False
+        ),
+    ]
+    
+    for runbook in runbooks:
+        await db.runbooks.insert_one(runbook.model_dump())
+    
+    # Create patch plans
+    patch_plans = [
+        PatchPlan(
+            company_id="comp-acme",
+            patches=[
+                {"id": "KB5012345", "name": "OpenSSL Security Update", "severity": "critical"},
+                {"id": "KB5012346", "name": "Kernel Security Patch", "severity": "high"},
+            ],
+            canary_assets=["srv-app-02"],
+            status="proposed",
+            window="Sat 22:00-23:00"
+        ),
+        PatchPlan(
+            company_id="comp-techstart",
+            patches=[
+                {"id": "KB5023456", "name": "Windows Security Update", "severity": "critical"},
+            ],
+            canary_assets=["win-app-01"],
+            status="proposed",
+            window="Sun 00:00-01:00"
+        ),
+    ]
+    
+    for patch_plan in patch_plans:
+        await db.patch_plans.insert_one(patch_plan.model_dump())
+    
+    # Initialize KPIs
+    for company in companies:
+        kpi = KPI(company_id=company.id)
+        await db.kpis.insert_one(kpi.model_dump())
+    
+    return {
+        "message": "Database seeded successfully",
+        "companies": len(companies),
+        "users": len(users),
+        "runbooks": len(runbooks),
+        "patch_plans": len(patch_plans)
+    }
+
 
 # Include the router in the main app
 app.include_router(api_router)
