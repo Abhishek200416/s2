@@ -112,20 +112,57 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-white">{user.name}</p>
-                <p className="text-xs text-slate-400">{user.role}</p>
-              </div>
               <Button
-                onClick={onLogout}
+                onClick={() => navigate('/integrations')}
                 variant="outline"
                 size="sm"
                 className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
-                data-testid="logout-button"
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <Settings className="w-4 h-4 mr-2" />
+                Integrations
               </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-white hover:bg-slate-800">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center border border-cyan-500/30">
+                        <User className="w-4 h-4 text-cyan-400" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-medium">{user.name}</p>
+                        <p className="text-xs text-slate-400">{user.role}</p>
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 bg-slate-900 border-slate-800" align="end">
+                  <DropdownMenuLabel className="text-slate-300">My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-slate-800" />
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/profile')}
+                    className="text-slate-300 focus:bg-slate-800 focus:text-white cursor-pointer"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/integrations')}
+                    className="text-slate-300 focus:bg-slate-800 focus:text-white cursor-pointer"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Integrations
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-800" />
+                  <DropdownMenuItem 
+                    onClick={onLogout}
+                    className="text-red-400 focus:bg-red-500/10 focus:text-red-400 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
