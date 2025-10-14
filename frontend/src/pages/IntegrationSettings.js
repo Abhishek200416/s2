@@ -386,9 +386,12 @@ const IntegrationSettings = ({ companyId }) => {
           <TabsContent value="send-alerts">
             <Card className="bg-slate-900/50 border-slate-800">
               <CardHeader>
-                <CardTitle className="text-white">Webhook Integration</CardTitle>
-                <CardDescription className="text-slate-400">
-                  Configure your monitoring tools to send alerts to Alert Whisperer
+                <CardTitle className="text-white text-2xl flex items-center">
+                  <Send className="w-6 h-6 mr-2 text-cyan-400" />
+                  How to Send Alerts to Alert Whisperer
+                </CardTitle>
+                <CardDescription className="text-slate-400 text-base">
+                  Guide for your clients to configure their systems and send alerts
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
