@@ -365,4 +365,4 @@ agent_communication:
          - POST /api/incidents/correlate?company_id=comp-acme - Alert correlation ✅
       
       All backend APIs are functioning correctly. No critical issues found.
-      Backend URL: https://upaeth-dashboard.preview.emergentagent.com/api
+      Backend URL: https://random-input.preview.emergentagent.com/api
