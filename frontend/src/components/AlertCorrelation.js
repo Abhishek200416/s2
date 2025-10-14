@@ -7,38 +7,21 @@ import { Zap, Play, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner';
 
 const AlertCorrelation = ({ companyId, companyName }) => {
-  const [alerts, setAlerts] = useState([]);
   const [correlating, setCorrelating] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [activeAlerts, setActiveAlerts] = useState([]);
   const [correlationResult, setCorrelationResult] = useState(null);
 
   useEffect(() => {
-    if (companyId) {
-      loadAlerts();
-    }
+    loadAlerts();
   }, [companyId]);
 
   const loadAlerts = async () => {
     try {
       const response = await api.get(`/alerts?company_id=${companyId}&status=active`);
-      setAlerts(response.data);
+      setActiveAlerts(response.data);
     } catch (error) {
       console.error('Failed to load alerts:', error);
       toast.error('Failed to load alerts');
-    }
-  };
-
-  const generateAlerts = async () => {
-    setGenerating(true);
-    try {
-      await api.post(`/alerts/generate?company_id=${companyId}&count=50`);
-      toast.success('Generated 50 sample alerts');
-      await loadAlerts();
-    } catch (error) {
-      console.error('Failed to generate alerts:', error);
-      toast.error('Failed to generate alerts');
-    } finally {
-      setGenerating(false);
     }
   };
 
