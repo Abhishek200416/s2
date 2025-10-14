@@ -96,10 +96,10 @@ function App() {
             } 
           />
           <Route 
-            path="/integrations" 
+            path="/technicians" 
             element={
               isAuthenticated ? 
-                <IntegrationSettings companyId={user?.company_ids?.[0]} /> : 
+                <Technicians user={user} onLogout={handleLogout} /> : 
                 <Navigate to="/login" replace />
             } 
           />
