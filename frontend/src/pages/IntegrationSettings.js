@@ -503,8 +503,207 @@ const IntegrationSettings = ({ companyId }) => {
             </Card>
           </TabsContent>
 
-          {/* AWS Tab - Continued in next message due to size */}
-          <TabsContent value="aws">
+          {/* Technician Routing Tab */}
+          <TabsContent value="technicians">
+            <Card className="bg-slate-900/50 border-slate-800">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl flex items-center">
+                  <Users className="w-6 h-6 mr-2 text-cyan-400" />
+                  How Alerts are Routed to Technicians
+                </CardTitle>
+                <CardDescription className="text-slate-400 text-base">
+                  Understanding the alert → incident → technician workflow
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Workflow Overview */}
+                <div className="p-6 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-lg">
+                  <h3 className="text-xl font-semibold text-white mb-4">Alert Processing Workflow</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-500 text-white flex items-center justify-center font-bold mr-4">1</div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-white mb-1">Alerts Received</h4>
+                        <p className="text-slate-300">Alerts arrive from client companies via webhook with their API key</p>
+                      </div>
+                    </div>
+                    <div className="border-l-2 border-cyan-500/50 ml-5 pl-9 pb-4">
+                      <p className="text-sm text-slate-400">Each alert contains: asset name, signature, severity, message, and tool source</p>
+                    </div>
+
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold mr-4">2</div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-white mb-1">AI Correlation</h4>
+                        <p className="text-slate-300">Similar alerts are automatically grouped into incidents</p>
+                      </div>
+                    </div>
+                    <div className="border-l-2 border-purple-500/50 ml-5 pl-9 pb-4">
+                      <p className="text-sm text-slate-400">Alerts with similar signatures and assets are correlated together</p>
+                      <p className="text-sm text-slate-400 mt-1">Example: Multiple "service_down:nginx" alerts → Single incident</p>
+                    </div>
+
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-4">3</div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-white mb-1">Technician Assignment</h4>
+                        <p className="text-slate-300">Incidents can be assigned to technicians for resolution</p>
+                      </div>
+                    </div>
+                    <div className="border-l-2 border-green-500/50 ml-5 pl-9 pb-4">
+                      <p className="text-sm text-slate-400">MSP administrators assign incidents to available technicians</p>
+                      <p className="text-sm text-slate-400 mt-1">Technicians receive the incident details and begin troubleshooting</p>
+                    </div>
+
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold mr-4">4</div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-white mb-1">Resolution & Tracking</h4>
+                        <p className="text-slate-300">Technicians work on incidents and update their status</p>
+                      </div>
+                    </div>
+                    <div className="border-l-2 border-amber-500/50 ml-5 pl-9">
+                      <p className="text-sm text-slate-400">Technicians add notes, track progress, and mark incidents as resolved</p>
+                      <p className="text-sm text-slate-400 mt-1">Complete audit trail maintained for compliance</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assignment Options */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">How to Assign Incidents to Technicians</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                      <h4 className="text-lg font-semibold text-cyan-400 mb-2">Manual Assignment</h4>
+                      <p className="text-sm text-slate-300 mb-3">MSP admins manually assign incidents based on:</p>
+                      <ul className="text-sm text-slate-400 space-y-1 ml-4">
+                        <li>• Technician expertise and skills</li>
+                        <li>• Current workload distribution</li>
+                        <li>• Incident severity and priority</li>
+                        <li>• Client relationship assignment</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                      <h4 className="text-lg font-semibold text-purple-400 mb-2">Automation Options</h4>
+                      <p className="text-sm text-slate-300 mb-3">Future enhancements can include:</p>
+                      <ul className="text-sm text-slate-400 space-y-1 ml-4">
+                        <li>• Round-robin assignment</li>
+                        <li>• Skill-based routing</li>
+                        <li>• Load balancing</li>
+                        <li>• On-call schedule integration</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technician Capabilities */}
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">What Technicians Can Do</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                      <h4 className="text-blue-400 font-semibold mb-2 flex items-center">
+                        <Workflow className="w-4 h-4 mr-2" />
+                        View & Analyze
+                      </h4>
+                      <ul className="text-sm text-slate-300 space-y-1">
+                        <li>• View incident details</li>
+                        <li>• See correlated alerts</li>
+                        <li>• Review alert history</li>
+                        <li>• Check asset information</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <h4 className="text-green-400 font-semibold mb-2 flex items-center">
+                        <Terminal className="w-4 h-4 mr-2" />
+                        Take Action
+                      </h4>
+                      <ul className="text-sm text-slate-300 space-y-1">
+                        <li>• Add resolution notes</li>
+                        <li>• Update incident status</li>
+                        <li>• Execute runbooks</li>
+                        <li>• Document fixes</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                      <h4 className="text-purple-400 font-semibold mb-2 flex items-center">
+                        <Check className="w-4 h-4 mr-2" />
+                        Close & Report
+                      </h4>
+                      <ul className="text-sm text-slate-300 space-y-1">
+                        <li>• Mark as resolved</li>
+                        <li>• Generate reports</li>
+                        <li>• Provide client updates</li>
+                        <li>• Track resolution time</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Integration with Systems */}
+                <div className="p-5 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+                  <h4 className="text-cyan-400 font-semibold mb-3 flex items-center text-lg">
+                    <Cloud className="w-5 h-5 mr-2" />
+                    System Integration for Automated Response
+                  </h4>
+                  <p className="text-slate-300 mb-3">
+                    Technicians can execute automated responses directly from Alert Whisperer:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">AWS Systems Manager Integration</p>
+                        <p className="text-sm text-slate-400">Execute commands and runbooks on client infrastructure via SSM</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">Runbook Automation</p>
+                        <p className="text-sm text-slate-400">Predefined scripts for common issues (service restart, disk cleanup, etc.)</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
+                      <div>
+                        <p className="text-slate-200 font-medium">Notification Systems</p>
+                        <p className="text-sm text-slate-400">Alert clients via email, SMS, or ticketing system integration</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Best Practices */}
+                <div className="p-5 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <h4 className="text-green-400 font-semibold mb-3 text-lg">Best Practices for Incident Management</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-green-300 mb-2">Assignment:</p>
+                      <ul className="text-sm text-slate-300 space-y-1">
+                        <li>• Assign high-severity incidents immediately</li>
+                        <li>• Match technician skills to incident type</li>
+                        <li>• Balance workload across team</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-green-300 mb-2">Resolution:</p>
+                      <ul className="text-sm text-slate-300 space-y-1">
+                        <li>• Document all actions taken</li>
+                        <li>• Update status regularly</li>
+                        <li>• Create runbooks for recurring issues</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tool Integrations Tab (renamed from guides) */}
+          <TabsContent value="guides">
             <Card className="bg-slate-900/50 border-slate-800">
               <CardHeader>
                 <CardTitle className="text-white">AWS Systems Manager Setup</CardTitle>
