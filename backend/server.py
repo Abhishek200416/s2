@@ -475,7 +475,7 @@ async def get_users(current_user: User = Depends(get_current_user)):
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
     return users
 
-class UserCreate(BaseModel):
+class UserCreateRequest(BaseModel):
     name: str
     email: str
     password: str
