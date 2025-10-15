@@ -178,8 +178,8 @@ const IntegrationSettings = ({ companyId }) => {
                     <div className="flex items-start">
                       <div className="w-2 h-2 rounded-full bg-cyan-400 mt-2 mr-3"></div>
                       <div>
-                        <p className="text-slate-200 font-medium">AI Correlation & Analysis</p>
-                        <p className="text-sm text-slate-400">Similar alerts are automatically correlated into incidents for easier management</p>
+                        <p className="text-slate-200 font-medium">Event Correlation & Analysis</p>
+                        <p className="text-sm text-slate-400">Similar alerts are automatically correlated into incidents using configurable time windows (5-15 min)</p>
                       </div>
                     </div>
                     <div className="flex items-start">
