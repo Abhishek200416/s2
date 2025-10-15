@@ -709,9 +709,26 @@ async def check_rate_limit(company_id: str) -> bool:
     burst_size = rate_config.get("burst_size", 100)
     
     if current_count >= burst_size:
-        raise HTTPException(
+        # Calculate seconds until window reset
+        seconds_until_reset = max(1, int(60 - time_diff))
+        
+        # Create response with Retry-After header
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
             status_code=429,
-            detail=f"Rate limit exceeded. Max {requests_per_minute} requests/minute, burst up to {burst_size}"
+            content={
+                "detail": f"Rate limit exceeded. Max {requests_per_minute} requests/minute, burst up to {burst_size}",
+                "retry_after_seconds": seconds_until_reset,
+                "backoff_policy": "Token bucket with sliding window",
+                "limit": requests_per_minute,
+                "burst": burst_size
+            },
+            headers={
+                "Retry-After": str(seconds_until_reset),
+                "X-RateLimit-Limit": str(requests_per_minute),
+                "X-RateLimit-Burst": str(burst_size),
+                "X-RateLimit-Remaining": "0"
+            }
         )
     
     # Increment counter
