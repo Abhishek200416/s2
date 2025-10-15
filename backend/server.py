@@ -126,6 +126,9 @@ class Alert(BaseModel):
     message: str
     tool_source: str
     status: str = "active"  # active, acknowledged, resolved
+    delivery_id: Optional[str] = None  # For idempotency - webhook delivery identifier
+    delivery_attempts: int = 0  # Track retry attempts
+    first_seen: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class Incident(BaseModel):
