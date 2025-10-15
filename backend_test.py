@@ -360,7 +360,7 @@ class AlertWhispererTester:
         
         # First, create a test alert via webhook
         webhook_payload = {
-            "asset_name": "srv-web-01",
+            "asset_name": "srv-app-01",
             "signature": "high_cpu",
             "severity": "critical",
             "message": "CPU usage 95% - correlation test",
