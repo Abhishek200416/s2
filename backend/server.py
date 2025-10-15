@@ -2215,6 +2215,34 @@ async def get_realtime_metrics(company_id: Optional[str] = None):
     }
 
 
+@api_router.get("/companies/{company_id}/kpis")
+async def get_company_kpis(company_id: str):
+    """Get detailed KPI metrics for a specific company"""
+    # Reuse the realtime metrics function
+    metrics = await get_realtime_metrics(company_id=company_id)
+    
+    # Add additional company-specific details
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Get SSM execution statistics
+    ssm_executions = await db.ssm_executions.find({"company_id": company_id}, {"_id": 0}).to_list(1000)
+    ssm_success_count = sum(1 for e in ssm_executions if e.get("status") == "Success")
+    ssm_total = len(ssm_executions)
+    
+    return {
+        "company_id": company_id,
+        "company_name": company.get("name"),
+        "metrics": metrics,
+        "ssm_statistics": {
+            "total_executions": ssm_total,
+            "successful_executions": ssm_success_count,
+            "success_rate_pct": round((ssm_success_count / max(ssm_total, 1)) * 100, 2) if ssm_total > 0 else 0
+        }
+    }
+
+
 # ============= Chat Endpoints =============
 @api_router.get("/chat/{company_id}")
 async def get_chat_messages(company_id: str, limit: int = 50):
