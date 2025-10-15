@@ -1612,16 +1612,18 @@ When a technician needs manual intervention:
 
 **Production-grade enhancements implemented:**
 
-✅ **HMAC webhook authentication** with timestamp validation  
-✅ **Configurable correlation window** (5-15 min event-driven)  
-✅ **Multi-tenant isolation** (per-tenant API keys, data partitioning)  
-✅ **AWS Secrets Manager** integration for credentials  
-✅ **AWS Systems Manager** for secure remote execution  
-✅ **Cross-account IAM roles** for client access  
-✅ **API Gateway WebSocket** for scalable real-time updates  
-✅ **Patch Manager compliance** monitoring  
+✅ **Event Correlation** (NOT AI) - Rule-based with 5-15 min configurable windows  
+✅ **HMAC webhook authentication** with timestamp validation & replay protection  
+✅ **Multi-tenant isolation** (DynamoDB patterns, per-tenant API keys, cross-account IAM)  
+✅ **API Gateway WebSocket** for real-time bi-directional updates (transport choice justified)  
+✅ **AWS Secrets Manager** integration for HMAC secrets and credentials  
+✅ **AWS Systems Manager** for secure remote execution (Run Command, Automation)  
+✅ **Session Manager** for zero-SSH access (no open ports, full audit)  
+✅ **SSM Hybrid Activations** for on-premises server management  
+✅ **Cross-account IAM roles** with External ID for MSP client access  
+✅ **Patch Manager compliance** monitoring with QuickSight dashboards  
 
-**Your Alert Whisperer is now enterprise-ready for AWS MSPs! 🚀**
+**Your Alert Whisperer is now enterprise-ready for AWS MSPs with production-grade security! 🚀**
 
 ---
 
