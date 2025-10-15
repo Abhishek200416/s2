@@ -3647,9 +3647,6 @@ async def startup_event():
     logger.info("🤖 Initializing agent instance...")
     agent_instance = init_agent(db, tools_registry)
     
-    # Register agent router
-    app.include_router(agent_router)
-    
     logger.info("✅ All services initialized successfully")
     logger.info(f"   Version: {os.getenv('GIT_SHA', 'dev')}")
     logger.info(f"   Agent Mode: {os.getenv('AGENT_MODE', 'local')}")
