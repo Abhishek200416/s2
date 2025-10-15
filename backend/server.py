@@ -1393,6 +1393,91 @@ async def seed_database():
     }
 
 
+# ============= Real-Time Metrics Endpoint =============
+@api_router.get("/metrics/realtime")
+async def get_realtime_metrics(company_id: Optional[str] = None):
+    """Get real-time metrics for dashboard"""
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    
+    # Alert counts by priority
+    alerts = await db.alerts.find({**query, "status": "active"}, {"_id": 0}).to_list(1000)
+    
+    alert_counts = {
+        "critical": sum(1 for a in alerts if a["severity"] == "critical"),
+        "high": sum(1 for a in alerts if a["severity"] == "high"),
+        "medium": sum(1 for a in alerts if a["severity"] == "medium"),
+        "low": sum(1 for a in alerts if a["severity"] == "low"),
+        "total": len(alerts)
+    }
+    
+    # Incident counts by status
+    incidents = await db.incidents.find(query, {"_id": 0}).to_list(500)
+    
+    incident_counts = {
+        "new": sum(1 for i in incidents if i["status"] == "new"),
+        "in_progress": sum(1 for i in incidents if i["status"] == "in_progress"),
+        "resolved": sum(1 for i in incidents if i["status"] == "resolved"),
+        "escalated": sum(1 for i in incidents if i["status"] == "escalated"),
+        "total": len(incidents)
+    }
+    
+    # Get KPIs
+    kpi_docs = await db.kpis.find(query, {"_id": 0}).to_list(100)
+    total_kpis = {
+        "noise_reduction_pct": sum(k.get("noise_reduction_pct", 0) for k in kpi_docs) / max(len(kpi_docs), 1),
+        "self_healed_count": sum(k.get("self_healed_count", 0) for k in kpi_docs),
+        "mttr_minutes": sum(k.get("mttr_minutes", 0) for k in kpi_docs) / max(len(kpi_docs), 1)
+    }
+    
+    return {
+        "alerts": alert_counts,
+        "incidents": incident_counts,
+        "kpis": total_kpis,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
+
+# ============= Chat Endpoints =============
+@api_router.get("/chat/{company_id}")
+async def get_chat_messages(company_id: str, limit: int = 50):
+    """Get chat messages for a company"""
+    messages = await db.chat_messages.find(
+        {"company_id": company_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(limit).to_list(limit)
+    
+    return list(reversed(messages))
+
+@api_router.post("/chat/{company_id}")
+async def send_chat_message(
+    company_id: str, 
+    message: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Send a chat message"""
+    chat_message = ChatMessage(
+        company_id=company_id,
+        user_id=current_user.id,
+        user_name=current_user.name,
+        user_role=current_user.role,
+        message=message
+    )
+    
+    await db.chat_messages.insert_one(chat_message.model_dump())
+    
+    # Broadcast message via WebSocket
+    await manager.broadcast({
+        "type": "chat_message",
+        "data": chat_message.model_dump()
+    })
+    
+    return chat_message
+
+@api_router.put
+
+
 # Include the router in the main app
 app.include_router(api_router)
 
