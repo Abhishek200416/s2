@@ -127,6 +127,21 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Notification Bell */}
+              <Button
+                onClick={() => setActiveTab('notifications')}
+                variant="ghost"
+                size="sm"
+                className="relative text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+
               <Button
                 onClick={() => navigate('/technicians')}
                 variant="outline"
