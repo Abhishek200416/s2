@@ -401,7 +401,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -412,6 +412,16 @@ backend:
           - Default 15-min window, configurable 5-15 minutes
           - Aggregation key: asset|signature (can be customized)
           - Auto-creates default config if not exists
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: Configurable correlation time window working perfectly:
+          ✅ Default configuration: time_window_minutes=15, auto_correlate=true, aggregation_key="asset|signature"
+          ✅ Time window successfully updated from 15 to 10 minutes
+          ✅ Auto-correlate successfully updated from true to false
+          ✅ Configuration persists correctly across requests (Time: 10min, Auto: false)
+          ✅ Event-driven correlation using per-company settings confirmed
+          Configurable correlation fully functional with 5-15 minute range
   
   - task: "Add correlation configuration endpoints"
     implemented: true
