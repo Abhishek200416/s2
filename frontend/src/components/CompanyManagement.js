@@ -6,13 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Plus, Edit, Trash2, Server, Key, Copy, Check, Send, Code } from 'lucide-react';
+import { Building2, Plus, Edit, Trash2, Server, Key, Copy, Check, Send, Code, TrendingUp, TrendingDown } from 'lucide-react';
 import { toast } from 'sonner';
+import CompanyOnboardingDialog from './CompanyOnboardingDialog';
 
 const CompanyManagement = ({ onCompanyChange }) => {
   const [companies, setCompanies] = useState([]);
   const [companyKPIs, setCompanyKPIs] = useState({});
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -24,6 +25,13 @@ const CompanyManagement = ({ onCompanyChange }) => {
     assets: []
   });
   const [assetForm, setAssetForm] = useState({ id: '', name: '', type: '', os: '' });
+  
+  const handleOnboardingSuccess = (company) => {
+    loadCompanies();
+    setNewlyCreatedCompany(company);
+    setShowIntegrationDialog(true);
+    if (onCompanyChange) onCompanyChange();
+  };
 
   useEffect(() => {
     loadCompanies();
