@@ -263,7 +263,7 @@ class AlertWhispererTester:
                 
                 # Check KPIs structure
                 kpis = metrics.get('kpis', {})
-                kpi_fields = ['noise_reduction_pct', 'self_healed_count', 'mttr_minutes']
+                kpi_fields = ['noise_reduction_pct', 'self_healed_count', 'mttr_overall_minutes']
                 kpi_missing = [field for field in kpi_fields if field not in kpis]
                 
                 if not alert_missing and not incident_missing and not kpi_missing:
