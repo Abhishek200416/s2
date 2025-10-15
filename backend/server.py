@@ -1179,14 +1179,40 @@ class WebhookAlert(BaseModel):
     tool_source: str = "External"
 
 @api_router.post("/webhooks/alerts")
-async def receive_webhook_alert(alert_data: WebhookAlert, api_key: str):
-    """Webhook endpoint for external monitoring tools to send alerts"""
+async def receive_webhook_alert(
+    request: Request,
+    alert_data: WebhookAlert,
+    api_key: str,
+    x_signature: Optional[str] = Header(None),
+    x_timestamp: Optional[str] = Header(None)
+):
+    """
+    Webhook endpoint for external monitoring tools to send alerts
+    
+    Security:
+    - API key authentication (required)
+    - HMAC-SHA256 signature verification (optional, per-company)
+    - Timestamp validation for replay attack protection
+    
+    Headers (if HMAC enabled):
+    - X-Signature: sha256=<hex_signature>
+    - X-Timestamp: <unix_timestamp>
+    """
     # Validate API key and get company
     company = await db.companies.find_one({"api_key": api_key})
     if not company:
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     company_id = company["id"]
+    
+    # Verify HMAC signature if enabled for this company
+    raw_body = await request.body()
+    await verify_webhook_signature(
+        company_id=company_id,
+        signature_header=x_signature,
+        timestamp_header=x_timestamp,
+        raw_body=raw_body.decode('utf-8')
+    )
     
     # Find asset by name
     asset = None
