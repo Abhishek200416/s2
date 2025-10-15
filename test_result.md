@@ -701,7 +701,7 @@ agent_communication:
          - POST /api/incidents/correlate?company_id=comp-acme - Alert correlation ✅
       
       All backend APIs are functioning correctly. No critical issues found.
-      Backend URL: https://api-integration-26.preview.emergentagent.com/api
+      Backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
   - agent: "testing"
     message: |
       REAL-TIME FEATURES TESTING COMPLETE - ALL TESTS PASSED (27/27 - 100% Success Rate)
@@ -755,4 +755,4 @@ agent_communication:
          - Real-time metrics calculated correctly ✅
       
       All real-time Alert Whisperer features are functioning perfectly!
-      Backend URL: https://api-integration-26.preview.emergentagent.com/api
+      Backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
