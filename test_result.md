@@ -467,6 +467,61 @@ frontend:
           - Added Integrations button in header
           - User avatar with dropdown for better UX
 
+
+  - task: "Create Real-Time Dashboard component"
+    implemented: true
+    working: true
+    file: "components/RealTimeDashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Created comprehensive RealTimeDashboard component:
+          - WebSocket connection for live updates (/ws endpoint)
+          - Auto-reconnect on disconnect
+          - Live metrics cards: Critical Alerts, High Priority, Active Incidents, Noise Reduction
+          - Real-time alert list with priority sorting
+          - Real-time incident list with priority scores
+          - Priority filter: All, Critical, High, Medium, Low
+          - Status filter: All, Active, New, In Progress, Resolved
+          - Search filter: alerts/incidents by message/signature
+          - Live status indicator (green pulse when connected)
+          - Auto-refresh every 30 seconds
+          - Browser notifications for critical alerts
+          - Toast notifications for new alerts/incidents
+          - Real-time update handling for:
+            * alert_received: Adds alert to list, shows notification
+            * incident_created: Adds incident, updates metrics
+            * incident_updated: Updates incident data
+            * notification: Shows toast
+          - Color-coded severity badges (Critical=red, High=orange, Medium=amber, Low=slate)
+          - Timestamp formatting (e.g., "5m ago", "2h ago")
+          - Empty states with checkmark icons
+          - Tool sources display for incidents
+          - Priority score badges on incidents
+
+  - task: "Update Dashboard to use RealTimeDashboard"
+    implemented: true
+    working: true
+    file: "pages/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Updated main Dashboard page:
+          - Imported RealTimeDashboard component
+          - Replaced "overview" tab content with RealTimeDashboard
+          - Passes companyId and companyName as props
+          - Maintains existing tabs: Correlation, Incidents, Patches, Companies
+          - Real-time dashboard now default view on login
+
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
