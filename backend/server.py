@@ -773,12 +773,34 @@ async def get_incidents(company_id: Optional[str] = None, status: Optional[str] 
 
 @api_router.post("/incidents/correlate")
 async def correlate_alerts(company_id: str):
-    """Correlate alerts into incidents using signature + asset grouping with 15-minute time window"""
+    """
+    Correlate alerts into incidents using configurable time window and aggregation key
+    
+    Event-driven correlation with:
+    - Configurable time window (5-15 minutes, default 15)
+    - Aggregation key: asset|signature
+    - Multi-tool detection
+    - Priority-based incident creation
+    """
     # Get company for priority calculation
     company_doc = await db.companies.find_one({"id": company_id}, {"_id": 0})
     if not company_doc:
         raise HTTPException(status_code=404, detail="Company not found")
     company = Company(**company_doc)
+    
+    # Get correlation configuration for company (with defaults)
+    correlation_config = await db.correlation_config.find_one({"company_id": company_id})
+    if not correlation_config:
+        # Create default configuration
+        default_config = CorrelationConfig(
+            company_id=company_id,
+            time_window_minutes=15,
+            aggregation_key="asset|signature",
+            auto_correlate=True,
+            min_alerts_for_incident=1
+        )
+        await db.correlation_config.insert_one(default_config.model_dump())
+        correlation_config = default_config.model_dump()
     
     # Get all active alerts
     alerts = await db.alerts.find({
@@ -786,11 +808,12 @@ async def correlate_alerts(company_id: str):
         "status": "active"
     }, {"_id": 0}).to_list(1000)
     
-    # 15-minute correlation window
-    correlation_window_minutes = 15
+    # Use configurable correlation window (5-15 minutes)
+    correlation_window_minutes = correlation_config.get("time_window_minutes", 15)
     now = datetime.now(timezone.utc)
     
-    # Group by signature + asset within time window
+    # Group by aggregation key within time window
+    # Default: asset|signature (can be configured per company)
     incident_groups = {}
     for alert in alerts:
         alert_time = datetime.fromisoformat(alert['timestamp'].replace('Z', '+00:00'))
