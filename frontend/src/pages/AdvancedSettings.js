@@ -136,6 +136,13 @@ const AdvancedSettings = ({ companyId, companyName }) => {
               <Settings className="w-4 h-4 mr-2" />
               AWS Integration
             </TabsTrigger>
+            <TabsTrigger 
+              value="cross-account"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Cross-Account Setup
+            </TabsTrigger>
           </TabsList>
 
           {/* Webhook Security Tab */}
