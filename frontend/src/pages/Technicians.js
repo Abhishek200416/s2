@@ -115,6 +115,16 @@ const Technicians = () => {
   return (
     <div className="min-h-screen bg-slate-950 py-8">
       <div className="max-w-7xl mx-auto px-6">
+        <div className="mb-6">
+          <Button
+            onClick={() => navigate('/dashboard')}
+            variant="ghost"
+            className="text-slate-400 hover:text-white hover:bg-slate-800"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
         <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30 mb-6">
           <CardHeader>
             <div className="flex items-center justify-between">
