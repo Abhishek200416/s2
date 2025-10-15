@@ -740,7 +740,7 @@ class AlertWhispererTester:
         if api_key:
             # Make multiple rapid requests to webhook endpoint to trigger rate limiting
             webhook_payload = {
-                "asset_name": "rate-limit-test",
+                "asset_name": "srv-app-01",
                 "signature": "rate_limit_test",
                 "severity": "low",
                 "message": "Rate limit test alert",
