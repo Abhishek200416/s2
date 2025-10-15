@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Technicians from './pages/Technicians';
+import AdvancedSettings from './pages/AdvancedSettings';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
