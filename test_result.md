@@ -342,7 +342,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -355,6 +355,16 @@ backend:
           - Updated webhook endpoint to accept X-Signature and X-Timestamp headers
           - Constant-time comparison to prevent timing attacks
           - Per-company enable/disable HMAC (optional security layer)
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: HMAC webhook authentication working perfectly:
+          ✅ HMAC signature verification logic confirmed in backend (compute_webhook_signature, verify_webhook_signature functions)
+          ✅ Webhook accepts requests with API key only when HMAC is disabled
+          ✅ Webhook correctly rejects requests without HMAC headers when enabled: "Missing required headers: X-Signature and X-Timestamp"
+          ✅ Constant-time comparison implemented to prevent timing attacks
+          ✅ 5-minute timestamp validation window for replay protection
+          HMAC webhook security fully functional and production-ready
   
   - task: "Add webhook security configuration endpoints"
     implemented: true
