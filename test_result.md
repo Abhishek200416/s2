@@ -372,7 +372,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -383,6 +383,17 @@ backend:
           - POST /api/companies/{company_id}/webhook-security/disable - Disable HMAC
           - POST /api/companies/{company_id}/webhook-security/regenerate-secret - Rotate secret
           - WebhookSecurityConfig model with configurable headers and timeout
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: Webhook security configuration endpoints working perfectly:
+          ✅ GET /api/companies/comp-acme/webhook-security - Returns config (enabled: false by default)
+          ✅ POST /api/companies/comp-acme/webhook-security/enable - Enables HMAC and generates secret successfully
+          ✅ Response includes: hmac_secret, signature_header (X-Signature), timestamp_header (X-Timestamp), max_timestamp_diff_seconds (300), enabled=true
+          ✅ GET /api/companies/comp-acme/webhook-security (after enabling) - Shows enabled=true with correct secret
+          ✅ POST /api/companies/comp-acme/webhook-security/regenerate-secret - Generates NEW secret (different from previous)
+          ✅ POST /api/companies/comp-acme/webhook-security/disable - Disables HMAC successfully (enabled=false)
+          All webhook security endpoints return 200 with correct data structure
   
   - task: "Add configurable correlation time window (5-15 min)"
     implemented: true
