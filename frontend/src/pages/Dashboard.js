@@ -234,14 +234,6 @@ const Dashboard = ({ user, onLogout }) => {
                   <AlertTriangle className="w-4 h-4 mr-2" />
                   Incidents
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="patches" 
-                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
-                  data-testid="tab-patches"
-                >
-                  <Database className="w-4 h-4 mr-2" />
-                  Patches
-                </TabsTrigger>
                 {user.role === 'admin' && (
                   <TabsTrigger 
                     value="companies" 
