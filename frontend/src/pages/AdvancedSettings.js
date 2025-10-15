@@ -326,10 +326,10 @@ print(response.json())`}
               <CardHeader>
                 <CardTitle className="text-white flex items-center gap-2">
                   <Clock className="w-5 h-5 text-cyan-400" />
-                  Event-Driven Correlation Configuration
+                  Event Correlation Configuration (NOT AI)
                 </CardTitle>
                 <CardDescription className="text-slate-300">
-                  Configure how alerts are grouped into incidents. Adjust time window and correlation behavior.
+                  Rule-based alert grouping with configurable time windows. Similar to Datadog Event Aggregation and PagerDuty Alert Grouping.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
