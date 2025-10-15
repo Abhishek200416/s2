@@ -839,7 +839,10 @@ class AlertWhispererTester:
         # Test 12: HMAC Webhook Integration (NEW - Production-Grade AWS MSP)
         self.test_hmac_webhook_integration(api_key)
         
-        # Test 13: Existing Features (Smoke Test)
+        # Test 13: CRITICAL TESTS from Review Request
+        self.test_critical_requirements()
+        
+        # Test 14: Existing Features (Smoke Test)
         self.test_existing_features()
         
         return self.generate_summary()
