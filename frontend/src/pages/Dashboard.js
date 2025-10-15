@@ -226,15 +226,10 @@ const Dashboard = ({ user, onLogout }) => {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="lg:col-span-2 space-y-6">
-                    <IncidentList companyId={selectedCompany} limit={5} />
-                    <DecisionEngine companyId={selectedCompany} />
-                  </div>
-                  <div>
-                    <ActivityFeed companyId={selectedCompany} />
-                  </div>
-                </div>
+                <RealTimeDashboard 
+                  companyId={selectedCompany} 
+                  companyName={currentCompany?.name} 
+                />
               </TabsContent>
 
               <TabsContent value="correlation">
