@@ -309,6 +309,52 @@ class CrossAccountRole(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+class RateLimitConfig(BaseModel):
+    """Rate limiting configuration per company"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    requests_per_minute: int = 60  # Default: 60 requests per minute
+    burst_size: int = 100  # Allow bursts up to this size
+    enabled: bool = True
+    current_count: int = 0  # Current request count in window
+    window_start: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class ApprovalRequest(BaseModel):
+    """Approval workflow for risky runbook executions"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    incident_id: str
+    runbook_id: str
+    company_id: str
+    risk_level: str  # low, medium, high
+    requested_by: str  # User ID who requested
+    status: str = "pending"  # pending, approved, rejected, expired
+    approved_by: Optional[str] = None
+    approval_notes: Optional[str] = None
+    expires_at: str = Field(default_factory=lambda: (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class SystemAuditLog(BaseModel):
+    """Comprehensive audit log for all critical operations"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    user_email: Optional[str] = None
+    user_role: Optional[str] = None
+    company_id: Optional[str] = None
+    action: str  # runbook_executed, incident_assigned, approval_granted, config_changed, etc.
+    resource_type: str  # incident, runbook, user, company, config
+    resource_id: Optional[str] = None
+    details: Dict[str, Any] = {}
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    status: str = "success"  # success, failure
+    error_message: Optional[str] = None
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 
 # ============= Auth Functions =============
 def verify_password(plain_password, hashed_password):
