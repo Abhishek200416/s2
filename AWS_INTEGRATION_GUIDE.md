@@ -308,7 +308,68 @@ Auto-assign to technicians (if priority > threshold)
 
 Each company (MSP client) is a separate tenant with complete data isolation.
 
-### **Isolation Patterns**
+### **Database Choice: MongoDB vs DynamoDB**
+
+**Current Implementation:** MongoDB (demo-ready, works well)  
+**Recommended for Production:** DynamoDB (better multi-tenant patterns)
+
+| Feature | MongoDB | DynamoDB |
+|---------|---------|----------|
+| **Tenant Isolation** | Application-level filtering | Partition key (built-in physical isolation) |
+| **Scalability** | Manual sharding required | Automatic scaling per tenant |
+| **AWS Integration** | Requires Atlas or self-hosting | Native AWS service |
+| **Cost at Scale** | Higher (dedicated clusters) | Pay-per-request (more economical) |
+| **Backup/Restore** | Manual or Atlas managed | Point-in-time recovery built-in |
+| **Security** | Application-managed | IAM + KMS encryption native |
+| **SaaS Patterns** | Custom implementation | AWS SaaS Lens patterns available |
+
+**Migration Path:** Run dual-write during transition, migrate data, switch reads, deprecate MongoDB. See `MULTI_TENANT_ISOLATION.md` for details.
+
+### **DynamoDB Multi-Tenant Pattern (Recommended)**
+
+**Single-Table Design with Tenant Partition Keys:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   DynamoDB Table: alert-whisperer           │
+├─────────────────────────────────────────────────────────────┤
+│ PK (Partition Key)    │ SK (Sort Key)                       │
+├───────────────────────┼─────────────────────────────────────┤
+│ TENANT#comp-acme      │ ALERT#2024-01-15T10:00:00Z#abc123   │
+│ TENANT#comp-acme      │ ALERT#2024-01-15T10:02:30Z#def456   │
+│ TENANT#comp-acme      │ INCIDENT#2024-01-15T10:05:00Z#ghi789│
+│ TENANT#comp-acme      │ CONFIG#webhook-security             │
+│ TENANT#comp-acme      │ CONFIG#correlation                  │
+│ TENANT#comp-techstart │ ALERT#2024-01-15T10:01:00Z#jkl012   │
+│ TENANT#comp-techstart │ INCIDENT#2024-01-15T10:06:00Z#mno345│
+└───────────────────────┴─────────────────────────────────────┘
+```
+
+**Benefits:**
+- **Physical Isolation**: Each tenant's data in separate partitions (no cross-tenant query risk)
+- **Performance**: Query one partition only (no full table scans)
+- **Cost Attribution**: DynamoDB metrics per partition key (per-tenant billing)
+- **Scalability**: Auto-scaling per partition (hot tenants don't affect others)
+
+**Query Example:**
+```python
+import boto3
+
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('alert-whisperer')
+
+# Get all alerts for Acme Corp (single partition query - FAST)
+response = table.query(
+    KeyConditionExpression=Key('PK').eq('TENANT#comp-acme') & 
+                          Key('SK').begins_with('ALERT#')
+)
+
+# Result: Only Acme's alerts, impossible to see other tenants
+```
+
+**Reference:** [AWS SaaS Multi-Tenant DynamoDB Patterns](https://docs.aws.amazon.com/prescriptive-guidance/latest/saas-multitenant-api-access-authorization/dynamodb.html)
+
+### **Isolation Patterns
 
 #### **1. Per-Tenant API Keys**
 
