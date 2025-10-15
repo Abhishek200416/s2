@@ -226,6 +226,29 @@ class ExecuteRunbookRequest(BaseModel):
 class ApproveIncidentRequest(BaseModel):
     incident_id: str
 
+class CorrelationConfig(BaseModel):
+    """Configuration for alert correlation settings"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    time_window_minutes: int = 15  # Configurable 5-15 minutes
+    aggregation_key: str = "asset|signature"  # asset|signature or custom
+    auto_correlate: bool = True
+    min_alerts_for_incident: int = 1  # Minimum alerts to create incident
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class WebhookSecurityConfig(BaseModel):
+    """Configuration for webhook HMAC security"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    hmac_secret: str  # Secret key for HMAC signature validation
+    signature_header: str = "X-Signature"  # Header name for signature
+    timestamp_header: str = "X-Timestamp"  # Header name for timestamp
+    max_timestamp_diff_seconds: int = 300  # 5 minutes max difference
+    enabled: bool = True
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 
 # ============= Auth Functions =============
 def verify_password(plain_password, hashed_password):
