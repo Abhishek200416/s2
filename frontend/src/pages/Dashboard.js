@@ -38,6 +38,10 @@ const Dashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     loadCompanies();
+    loadUnreadCount();
+    // Poll for unread notifications every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -45,6 +49,15 @@ const Dashboard = ({ user, onLogout }) => {
       loadKPIs();
     }
   }, [selectedCompany]);
+
+  const loadUnreadCount = async () => {
+    try {
+      const response = await api.get('/notifications/unread-count');
+      setUnreadCount(response.data.count);
+    } catch (error) {
+      console.error('Failed to load unread count:', error);
+    }
+  };
 
   const loadCompanies = async () => {
     try {
