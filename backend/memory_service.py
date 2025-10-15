@@ -168,6 +168,3 @@ class MemoryService:
             "long_term_count": long_count,
             "outcomes": {o["_id"]: o["count"] for o in outcomes}
         }
-
-# Fix missing import
-from pydantic import Field
