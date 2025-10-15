@@ -761,3 +761,40 @@ agent_communication:
       
       All real-time Alert Whisperer features are functioning perfectly!
       Backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
+  - agent: "main"
+    message: |
+      INITIATING FRONTEND TESTING
+      
+      User approved automated frontend testing. Will test:
+      
+      1. Real-Time Dashboard:
+         - WebSocket connection and live updates
+         - Alert and incident display with real-time refresh
+         - Priority filters (Critical/High/Medium/Low)
+         - Status filters (All/Active/New/In Progress/Resolved)
+         - Search functionality
+         - Browser notifications for critical alerts
+         - Live metrics cards updates
+         - Auto-reconnect on disconnect
+      
+      2. Profile Management:
+         - Profile information editing (name, email)
+         - Password change functionality
+         - Form validations
+      
+      3. Integration Settings:
+         - API key display and copy
+         - API key regeneration
+         - Webhook documentation and examples
+         - All integration guides tabs
+      
+      4. Navigation:
+         - User dropdown menu (Profile, Logout)
+         - Header navigation (Integrations, Technicians)
+         - Route navigation between pages
+      
+      5. UI Elements Removed:
+         - Fake alert generator button
+         - Emergent badge
+      
+      Testing frontend with backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
