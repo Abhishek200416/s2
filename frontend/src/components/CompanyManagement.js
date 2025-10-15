@@ -307,10 +307,10 @@ const CompanyManagement = ({ onCompanyChange }) => {
 
                 {company.assets && company.assets.length > 0 && (
                   <div>
-                    <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
+                    <div className="text-xs text-slate-500 mb-2 flex items-center gap-1">
                       <Server className="w-3 h-3" />
-                      Assets
-                    </p>
+                      <span>Assets</span>
+                    </div>
                     <div className="space-y-1">
                       {company.assets.slice(0, 3).map((asset, idx) => (
                         <div key={idx} className="text-xs text-slate-400 flex items-center gap-2">
