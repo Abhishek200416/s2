@@ -1,0 +1,44 @@
+# Production Dockerfile for Alert Whisperer Agent
+# Optimized for AWS deployment (ECR + ECS/EKS)
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt /app/
+
+# Install Python dependencies (no dev extras)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY server.py /app/
+COPY auth_service.py /app/
+COPY agent_service.py /app/
+COPY agent_tools.py /app/
+COPY memory_service.py /app/
+COPY db_init.py /app/
+COPY .env /app/
+
+# Environment variables
+ENV PORT=8001
+ENV GIT_SHA="production"
+ENV AGENT_MODE="local"
+ENV PYTHONUNBUFFERED=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:${PORT}/api/agent/ping || exit 1
+
+# Expose port
+EXPOSE ${PORT}
+
+# Run server
+CMD ["python", "-m", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
