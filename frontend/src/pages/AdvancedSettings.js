@@ -176,14 +176,35 @@ const AdvancedSettings = ({ companyId, companyName }) => {
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
             >
               <Shield className="w-4 h-4 mr-2" />
-              Webhook Security (HMAC)
+              Webhook Security
             </TabsTrigger>
             <TabsTrigger 
               value="correlation"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
             >
               <Clock className="w-4 h-4 mr-2" />
-              Correlation Settings
+              Correlation
+            </TabsTrigger>
+            <TabsTrigger 
+              value="rate-limiting"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Rate Limiting
+            </TabsTrigger>
+            <TabsTrigger 
+              value="approval-gates"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <Clipboard className="w-4 h-4 mr-2" />
+              Approval Gates
+            </TabsTrigger>
+            <TabsTrigger 
+              value="rbac-audit"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <UserCheck className="w-4 h-4 mr-2" />
+              RBAC & Audit
             </TabsTrigger>
             <TabsTrigger 
               value="aws-integration"
@@ -197,7 +218,7 @@ const AdvancedSettings = ({ companyId, companyName }) => {
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
             >
               <Shield className="w-4 h-4 mr-2" />
-              Cross-Account Setup
+              Cross-Account IAM
             </TabsTrigger>
           </TabsList>
 
