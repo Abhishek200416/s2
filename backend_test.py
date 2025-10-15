@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Alert Whisperer Backend API Test Suite
-Tests authentication, profile management, company/API key management, and webhook integration
+Alert Whisperer Backend API Test Suite - Real-Time Features Testing
+Tests new real-time features: fake alert generator removal, real-time metrics, 
+chat system, notifications, enhanced correlation with priority scoring
 """
 
 import requests
@@ -9,6 +10,7 @@ import json
 import sys
 import os
 from datetime import datetime
+import time
 
 # Get backend URL from frontend .env file
 BACKEND_URL = "https://api-integration-26.preview.emergentagent.com/api"
