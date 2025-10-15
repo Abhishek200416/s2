@@ -678,8 +678,9 @@ async def check_rate_limit(company_id: str) -> bool:
     
     if not rate_config:
         # Create default rate limit config
-        rate_config = RateLimitConfig(company_id=company_id)
-        await db.rate_limits.insert_one(rate_config.model_dump())
+        default_config = RateLimitConfig(company_id=company_id)
+        await db.rate_limits.insert_one(default_config.model_dump())
+        rate_config = default_config.model_dump()
     
     if not rate_config.get("enabled", True):
         return True
