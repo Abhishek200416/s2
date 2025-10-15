@@ -732,7 +732,16 @@ class AlertWhispererTester:
         # Test 9: Webhook Real-Time Broadcasting
         self.test_webhook_realtime_broadcasting(api_key)
         
-        # Test 10: Existing Features (Smoke Test)
+        # Test 10: Webhook Security Configuration (NEW - Production-Grade AWS MSP)
+        self.test_webhook_security_configuration()
+        
+        # Test 11: Correlation Configuration (NEW - Production-Grade AWS MSP)
+        self.test_correlation_configuration()
+        
+        # Test 12: HMAC Webhook Integration (NEW - Production-Grade AWS MSP)
+        self.test_hmac_webhook_integration(api_key)
+        
+        # Test 13: Existing Features (Smoke Test)
         self.test_existing_features()
         
         return self.generate_summary()
