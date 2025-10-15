@@ -70,9 +70,9 @@ const DecisionEngine = ({ companyId }) => {
           <div className="p-4 bg-slate-800/30 rounded-lg border border-slate-700">
             <h4 className="text-sm font-medium text-white mb-3">Action Flow</h4>
             <div className="flex items-center gap-2 text-xs">
-              <span className="px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30">Alert Correlation</span>
+              <span className="px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30">Event Correlation</span>
               <span className="text-slate-600">→</span>
-              <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded border border-purple-500/30">AI Decision</span>
+              <span className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded border border-purple-500/30">Decision Engine</span>
               <span className="text-slate-600">→</span>
               <span className="px-2 py-1 bg-amber-500/20 text-amber-300 rounded border border-amber-500/30">Approval Check</span>
               <span className="text-slate-600">→</span>
