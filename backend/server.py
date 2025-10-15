@@ -2861,31 +2861,8 @@ async def seed_database():
     for runbook in runbooks:
         await db.runbooks.insert_one(runbook.model_dump())
     
-    # Create patch plans
-    patch_plans = [
-        PatchPlan(
-            company_id="comp-acme",
-            patches=[
-                {"id": "KB5012345", "name": "OpenSSL Security Update", "severity": "critical"},
-                {"id": "KB5012346", "name": "Kernel Security Patch", "severity": "high"},
-            ],
-            canary_assets=["srv-app-02"],
-            status="proposed",
-            window="Sat 22:00-23:00"
-        ),
-        PatchPlan(
-            company_id="comp-techstart",
-            patches=[
-                {"id": "KB5023456", "name": "Windows Security Update", "severity": "critical"},
-            ],
-            canary_assets=["win-app-01"],
-            status="proposed",
-            window="Sun 00:00-01:00"
-        ),
-    ]
-    
-    for patch_plan in patch_plans:
-        await db.patch_plans.insert_one(patch_plan.model_dump())
+    # NO DEMO PATCH PLANS - Patches come from real AWS Patch Manager only
+    # This ensures compliance data is always real and production-ready
     
     # Initialize KPIs
     for company in companies:
@@ -2893,11 +2870,11 @@ async def seed_database():
         await db.kpis.insert_one(kpi.model_dump())
     
     return {
-        "message": "Database seeded successfully",
+        "message": "Database seeded successfully - NO DEMO DATA",
         "companies": len(companies),
         "users": len(users),
         "runbooks": len(runbooks),
-        "patch_plans": len(patch_plans)
+        "patch_plans": 0  # No demo patch plans
     }
 
 
