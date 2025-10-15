@@ -1175,6 +1175,340 @@ const data = await response.json();
 
 ---
 
+## 🌐 SSM Hybrid Activations (On-Premises Servers)
+
+### **Challenge**
+
+MSP clients often have servers in their own datacenters that need monitoring and management alongside AWS resources.
+
+### **Solution: SSM Hybrid Activations**
+
+Extend AWS Systems Manager capabilities to non-EC2 servers (on-premises, other clouds, edge devices).
+
+### **Setup Process**
+
+#### **Step 1: Create Activation in AWS Console**
+
+```bash
+# Create activation for on-prem servers
+aws ssm create-activation \
+  --default-instance-name "CustomerDatacenter" \
+  --iam-role "SSMServiceRole" \
+  --registration-limit 50 \
+  --expiration-date "2025-12-31T23:59:59" \
+  --tags "Key=Customer,Value=Acme" "Key=Location,Value=Datacenter1" \
+  --region us-east-1
+
+# Output:
+{
+  "ActivationId": "activation-abc123def456",
+  "ActivationCode": "xyz789..."
+}
+```
+
+#### **Step 2: Install SSM Agent on On-Prem Server**
+
+**Ubuntu/Debian:**
+```bash
+# Download SSM Agent
+wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+
+# Install
+sudo dpkg -i amazon-ssm-agent.deb
+
+# Enable and start
+sudo systemctl enable amazon-ssm-agent
+sudo systemctl start amazon-ssm-agent
+```
+
+**Amazon Linux/RHEL/CentOS:**
+```bash
+# Install SSM Agent
+sudo yum install -y amazon-ssm-agent
+
+# Enable and start
+sudo systemctl enable amazon-ssm-agent
+sudo systemctl start amazon-ssm-agent
+```
+
+**Windows Server:**
+```powershell
+# Download installer
+Invoke-WebRequest `
+  -Uri "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe" `
+  -OutFile "AmazonSSMAgentSetup.exe"
+
+# Install
+Start-Process -FilePath .\\AmazonSSMAgentSetup.exe -ArgumentList "/S" -Wait
+
+# Verify service
+Get-Service AmazonSSMAgent
+```
+
+#### **Step 3: Register with Activation Code**
+
+```bash
+# Register on-prem server with AWS
+sudo amazon-ssm-agent -register \
+  -code "activation-code-from-step-1" \
+  -id "activation-id-from-step-1" \
+  -region "us-east-1"
+
+# Restart agent
+sudo systemctl restart amazon-ssm-agent
+
+# Verify registration
+sudo amazon-ssm-agent -version
+```
+
+#### **Step 4: Verify in SSM Console**
+
+```bash
+# List managed instances (includes hybrid)
+aws ssm describe-instance-information --filters "Key=ActivationIds,Values=activation-abc123def456"
+
+# Output shows instance with prefix "mi-" (managed instance)
+{
+  "InstanceId": "mi-0123456789abcdef",
+  "PingStatus": "Online",
+  "PlatformType": "Linux",
+  "PlatformName": "Ubuntu",
+  "IPAddress": "192.168.1.100"
+}
+```
+
+### **Usage in Alert Whisperer**
+
+Once registered, on-prem servers appear as managed instances:
+
+```python
+# Execute runbook on on-prem server (same as EC2)
+response = ssm.send_command(
+    InstanceIds=['mi-0123456789abcdef'],  # Hybrid instance ID
+    DocumentName='AWS-RunShellScript',
+    Parameters={
+        'commands': [
+            'df -h',
+            'du -sh /var/log/* | sort -rh | head -10',
+            'find /var/log -name "*.log" -mtime +30 -delete'
+        ]
+    }
+)
+```
+
+### **Benefits**
+
+✅ **Unified Management**: Same tools for AWS + on-prem  
+✅ **No Inbound Ports**: Agents connect outbound only  
+✅ **IAM Authentication**: No SSH keys for on-prem servers  
+✅ **Full SSM Features**: Run Command, Session Manager, Patch Manager  
+✅ **Audit Logging**: CloudTrail tracks all actions  
+
+### **Hybrid Architecture**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                     AWS ACCOUNT                              │
+│                                                              │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │           AWS Systems Manager                      │    │
+│  │  - Run Command                                     │    │
+│  │  - Session Manager                                 │    │
+│  │  - Patch Manager                                   │    │
+│  └────────────────────────────────────────────────────┘    │
+│                          ▲                                   │
+│                          │ HTTPS (443)                       │
+└──────────────────────────┼───────────────────────────────────┘
+                           │
+                           │ Outbound Only
+                           │ (No inbound ports)
+                           │
+┌──────────────────────────┼───────────────────────────────────┐
+│               CUSTOMER DATACENTER                            │
+│                          │                                   │
+│  ┌───────────────────────▼──────────┐  ┌──────────────────┐ │
+│  │  On-Prem Server 1                │  │ On-Prem Server 2 │ │
+│  │  - SSM Agent (registered)        │  │ - SSM Agent      │ │
+│  │  - Instance ID: mi-abc123...     │  │ - Instance ID:   │ │
+│  │  - Status: Online                │  │   mi-def456...   │ │
+│  └──────────────────────────────────┘  └──────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### **Cost**
+
+- **Hybrid Activations**: No charge for activation creation
+- **Managed Instances**: Charged per managed on-prem instance (same as EC2 On-Demand pricing for SSM)
+- **API Calls**: Standard AWS API pricing applies
+
+---
+
+## 🔐 Session Manager (Zero-SSH Access)
+
+### **What Is Session Manager?**
+
+AWS Systems Manager Session Manager provides secure, auditable shell access to EC2 instances and on-prem servers **without SSH/RDP ports**, **without bastion hosts**, and **without managing SSH keys**.
+
+### **Zero-SSH Security Posture**
+
+**Traditional SSH Access (❌ Problems):**
+```
+Technician → VPN → Bastion Host → SSH (port 22) → Production Server
+              ▲
+              │
+       Security Risks:
+       - Open inbound port 22
+       - SSH keys to manage
+       - Bastion hosts to maintain
+       - No detailed audit logs
+       - Key rotation complexity
+```
+
+**Session Manager (✅ Solution):**
+```
+Technician → AWS Console/CLI → Session Manager → IAM Auth → TLS Tunnel → Server
+                                                    ▲
+                                                    │
+                                             No inbound ports!
+                                             CloudTrail logs all actions
+```
+
+### **Setup**
+
+#### **1. IAM Policy for Technicians**
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ssm:StartSession"
+      ],
+      "Resource": [
+        "arn:aws:ec2:*:*:instance/*",
+        "arn:aws:ssm:*:*:managed-instance/*"
+      ],
+      "Condition": {
+        "StringLike": {
+          "ssm:resourceTag/Customer": ["Acme", "TechStart"]
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ssm:TerminateSession",
+        "ssm:ResumeSession"
+      ],
+      "Resource": "arn:aws:ssm:*:*:session/${aws:username}-*"
+    }
+  ]
+}
+```
+
+#### **2. Start Session from AWS Console**
+
+1. Navigate to **Systems Manager → Session Manager**
+2. Click **Start Session**
+3. Select instance (EC2 or on-prem with mi- prefix)
+4. Click **Start Session**
+5. Interactive shell opens in browser (no SSH client needed!)
+
+#### **3. Start Session from AWS CLI**
+
+```bash
+# Install session manager plugin
+# https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html
+
+# Start session
+aws ssm start-session --target i-0123456789abcdef
+
+# Output: Interactive shell
+Starting session with SessionId: user-abc123...
+sh-4.2$ whoami
+ssm-user
+sh-4.2$ sudo su - root
+root@ip-10-0-1-100:~#
+```
+
+#### **4. Enable Session Logging (Important!)**
+
+```bash
+# Create S3 bucket for session logs
+aws s3 mb s3://alert-whisperer-session-logs
+
+# Configure Session Manager preferences
+aws ssm update-document \
+  --name "SSM-SessionManagerRunShell" \
+  --content '{
+    "schemaVersion": "1.0",
+    "description": "Document to hold regional settings for Session Manager",
+    "sessionType": "Standard_Stream",
+    "inputs": {
+      "s3BucketName": "alert-whisperer-session-logs",
+      "s3KeyPrefix": "sessions/",
+      "s3EncryptionEnabled": true,
+      "cloudWatchLogGroupName": "/aws/ssm/session-logs",
+      "cloudWatchEncryptionEnabled": true,
+      "idleSessionTimeout": "20",
+      "maxSessionDuration": "60"
+    }
+  }'
+```
+
+### **Benefits**
+
+✅ **No Open Ports**: Zero inbound firewall rules required  
+✅ **No SSH Keys**: IAM credentials only  
+✅ **No Bastion Hosts**: Direct connection via AWS  
+✅ **Full Audit Trail**: Every keystroke logged to CloudTrail + S3  
+✅ **Session Recording**: Replay sessions for compliance  
+✅ **IAM-Based Access**: Fine-grained permissions  
+✅ **Works for On-Prem**: Hybrid activations supported  
+
+### **Compliance & Audit**
+
+**CloudTrail Event:**
+```json
+{
+  "eventName": "StartSession",
+  "userIdentity": {
+    "userName": "technician@alertwhisperer.com",
+    "principalId": "AIDAI..."
+  },
+  "requestParameters": {
+    "target": "i-0123456789abcdef"
+  },
+  "responseElements": {
+    "sessionId": "tech-abc123..."
+  },
+  "eventTime": "2024-01-15T14:30:00Z"
+}
+```
+
+**Session Log (S3):**
+```
+[2024-01-15 14:30:00] Session started by technician@alertwhisperer.com
+[2024-01-15 14:30:15] Command: df -h
+[2024-01-15 14:30:20] Command: systemctl restart nginx
+[2024-01-15 14:30:45] Session terminated
+```
+
+### **Use in Alert Whisperer**
+
+When a technician needs manual intervention:
+
+1. Alert Whisperer creates incident
+2. Technician assigned to incident
+3. Click "Connect to Server" button
+4. Opens Session Manager session (no SSH!)
+5. All actions logged for compliance
+6. Session auto-terminates after 1 hour
+
+---
+
 ## 📚 Additional Resources
 
 ### **AWS Documentation**
