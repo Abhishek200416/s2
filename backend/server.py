@@ -1384,6 +1384,385 @@ async def get_audit_logs(incident_id: Optional[str] = None, limit: int = 100):
     return logs
 
 
+# SSM Remediation Routes (AWS Systems Manager Integration)
+class ExecuteRunbookSSMRequest(BaseModel):
+    runbook_id: str
+    instance_ids: List[str] = []  # Target EC2 instances or on-prem servers
+
+@api_router.post("/incidents/{incident_id}/execute-runbook-ssm")
+async def execute_runbook_with_ssm(incident_id: str, request: ExecuteRunbookSSMRequest):
+    """
+    Execute a runbook using AWS SSM Run Command
+    This endpoint simulates SSM execution with mock data for demo purposes
+    In production, this would call boto3 SSM client
+    """
+    # Get incident
+    incident = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    # Get runbook
+    runbook = await db.runbooks.find_one({"id": request.runbook_id}, {"_id": 0})
+    if not runbook:
+        raise HTTPException(status_code=404, detail="Runbook not found")
+    
+    # Mock SSM Command ID (in production, this would come from boto3)
+    command_id = f"cmd-{str(uuid.uuid4())[:8]}"
+    
+    # Determine instance IDs (use from request or mock from incident)
+    instance_ids = request.instance_ids or [f"i-{str(uuid.uuid4())[:8]}"]
+    
+    # Create SSM execution record
+    ssm_execution = SSMExecution(
+        incident_id=incident_id,
+        company_id=incident["company_id"],
+        command_id=command_id,
+        runbook_id=request.runbook_id,
+        command_type="RunCommand",
+        status="InProgress",
+        instance_ids=instance_ids,
+        document_name="AWS-RunShellScript",
+        parameters={
+            "commands": runbook["actions"],
+            "workingDirectory": "/tmp"
+        }
+    )
+    
+    await db.ssm_executions.insert_one(ssm_execution.model_dump())
+    
+    # Update incident with SSM command info
+    await db.incidents.update_one(
+        {"id": incident_id},
+        {
+            "$set": {
+                "ssm_command_id": command_id,
+                "remediation_status": "InProgress",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Simulate success after 5-15 seconds (for demo purposes)
+    # In production, you would poll SSM API for actual status
+    import random
+    duration = random.randint(5, 15)
+    
+    # Auto-complete after mock duration (for demo)
+    completed_at = datetime.now(timezone.utc).isoformat()
+    success_output = f"✅ Runbook executed successfully\nCommands: {', '.join(runbook['actions'][:2])}\nDuration: {duration}s\nInstances: {len(instance_ids)}"
+    
+    await db.ssm_executions.update_one(
+        {"command_id": command_id},
+        {
+            "$set": {
+                "status": "Success",
+                "output": success_output,
+                "duration_seconds": duration,
+                "completed_at": completed_at
+            }
+        }
+    )
+    
+    await db.incidents.update_one(
+        {"id": incident_id},
+        {
+            "$set": {
+                "auto_remediated": True,
+                "remediation_status": "Success",
+                "remediation_duration_seconds": duration,
+                "status": "resolved",
+                "updated_at": completed_at
+            }
+        }
+    )
+    
+    # Broadcast incident update
+    await manager.broadcast({
+        "type": "incident_updated",
+        "incident_id": incident_id,
+        "company_id": incident["company_id"],
+        "status": "resolved",
+        "auto_remediated": True
+    })
+    
+    return {
+        "message": "Runbook execution initiated via AWS SSM",
+        "command_id": command_id,
+        "incident_id": incident_id,
+        "status": "Success",
+        "duration_seconds": duration,
+        "instance_ids": instance_ids
+    }
+
+@api_router.get("/incidents/{incident_id}/ssm-executions", response_model=List[SSMExecution])
+async def get_incident_ssm_executions(incident_id: str):
+    """Get all SSM execution history for an incident"""
+    executions = await db.ssm_executions.find(
+        {"incident_id": incident_id},
+        {"_id": 0}
+    ).sort("started_at", -1).to_list(20)
+    return executions
+
+@api_router.get("/ssm/executions/{command_id}", response_model=SSMExecution)
+async def get_ssm_execution_details(command_id: str):
+    """Get details of a specific SSM execution"""
+    execution = await db.ssm_executions.find_one({"command_id": command_id}, {"_id": 0})
+    if not execution:
+        raise HTTPException(status_code=404, detail="SSM execution not found")
+    return SSMExecution(**execution)
+
+@api_router.get("/ssm/executions", response_model=List[SSMExecution])
+async def get_all_ssm_executions(company_id: Optional[str] = None, limit: int = 50):
+    """Get all SSM executions, optionally filtered by company"""
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    
+    executions = await db.ssm_executions.find(query, {"_id": 0}).sort("started_at", -1).to_list(limit)
+    return executions
+
+
+# Patch Compliance Routes (AWS Patch Manager Integration)
+@api_router.get("/companies/{company_id}/patch-compliance", response_model=List[PatchCompliance])
+async def get_company_patch_compliance(company_id: str):
+    """Get patch compliance status for a company from AWS Patch Manager (mocked for demo)"""
+    # In production, this would call boto3 SSM get_patch_compliance_summary
+    # For demo, return mock data or existing data
+    compliance_data = await db.patch_compliance.find(
+        {"company_id": company_id},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # If no data exists, generate mock data for demo
+    if not compliance_data:
+        environments = ["production", "staging", "development"]
+        mock_data = []
+        
+        for env in environments:
+            # Generate 2-5 instances per environment
+            import random
+            num_instances = random.randint(2, 5)
+            
+            for i in range(num_instances):
+                compliance_status = random.choice(["COMPLIANT", "NON_COMPLIANT"])
+                critical_missing = random.randint(0, 5) if compliance_status == "NON_COMPLIANT" else 0
+                high_missing = random.randint(0, 10) if compliance_status == "NON_COMPLIANT" else 0
+                
+                compliance = PatchCompliance(
+                    company_id=company_id,
+                    environment=env,
+                    instance_id=f"i-{uuid.uuid4().hex[:12]}",
+                    instance_name=f"{env}-server-{i+1}",
+                    compliance_status=compliance_status,
+                    compliance_percentage=100.0 if compliance_status == "COMPLIANT" else random.uniform(70.0, 95.0),
+                    critical_patches_missing=critical_missing,
+                    high_patches_missing=high_missing,
+                    medium_patches_missing=random.randint(0, 15),
+                    low_patches_missing=random.randint(0, 20),
+                    patches_installed=random.randint(50, 150)
+                )
+                
+                await db.patch_compliance.insert_one(compliance.model_dump())
+                mock_data.append(compliance)
+        
+        return mock_data
+    
+    return compliance_data
+
+@api_router.get("/patch-compliance/summary")
+async def get_patch_compliance_summary(company_id: Optional[str] = None):
+    """Get aggregated patch compliance summary across all companies or a specific company"""
+    query = {}
+    if company_id:
+        query["company_id"] = company_id
+    
+    compliance_data = await db.patch_compliance.find(query, {"_id": 0}).to_list(1000)
+    
+    if not compliance_data:
+        return {
+            "total_instances": 0,
+            "compliant_instances": 0,
+            "non_compliant_instances": 0,
+            "compliance_percentage": 0.0,
+            "total_critical_patches_missing": 0,
+            "total_high_patches_missing": 0,
+            "by_environment": {}
+        }
+    
+    total_instances = len(compliance_data)
+    compliant = sum(1 for c in compliance_data if c["compliance_status"] == "COMPLIANT")
+    critical_missing = sum(c.get("critical_patches_missing", 0) for c in compliance_data)
+    high_missing = sum(c.get("high_patches_missing", 0) for c in compliance_data)
+    
+    # Group by environment
+    by_env = {}
+    for c in compliance_data:
+        env = c["environment"]
+        if env not in by_env:
+            by_env[env] = {
+                "total": 0,
+                "compliant": 0,
+                "critical_missing": 0,
+                "high_missing": 0
+            }
+        by_env[env]["total"] += 1
+        if c["compliance_status"] == "COMPLIANT":
+            by_env[env]["compliant"] += 1
+        by_env[env]["critical_missing"] += c.get("critical_patches_missing", 0)
+        by_env[env]["high_missing"] += c.get("high_patches_missing", 0)
+    
+    return {
+        "total_instances": total_instances,
+        "compliant_instances": compliant,
+        "non_compliant_instances": total_instances - compliant,
+        "compliance_percentage": round((compliant / total_instances * 100), 2) if total_instances > 0 else 0,
+        "total_critical_patches_missing": critical_missing,
+        "total_high_patches_missing": high_missing,
+        "by_environment": by_env
+    }
+
+@api_router.post("/patch-compliance/sync")
+async def sync_patch_compliance(company_id: str):
+    """Sync patch compliance data from AWS Patch Manager (mocked for demo)"""
+    # In production, this would call boto3 SSM describe_instance_patch_states
+    # For demo, we'll refresh the mock data
+    
+    # Delete existing data
+    await db.patch_compliance.delete_many({"company_id": company_id})
+    
+    # Generate fresh mock data
+    compliance_data = await get_company_patch_compliance(company_id)
+    
+    return {
+        "message": "Patch compliance data synced successfully",
+        "company_id": company_id,
+        "instances_synced": len(compliance_data)
+    }
+
+
+# Cross-Account IAM Role Routes
+class CrossAccountRoleCreate(BaseModel):
+    role_arn: str
+    external_id: str
+    aws_account_id: str
+
+@api_router.post("/companies/{company_id}/cross-account-role", response_model=CrossAccountRole)
+async def create_cross_account_role(company_id: str, role_data: CrossAccountRoleCreate):
+    """Save cross-account IAM role configuration for a company"""
+    # Check if company exists
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Check if role already exists
+    existing = await db.cross_account_roles.find_one({"company_id": company_id}, {"_id": 0})
+    if existing:
+        # Update existing
+        await db.cross_account_roles.update_one(
+            {"company_id": company_id},
+            {"$set": {
+                **role_data.model_dump(),
+                "status": "active",
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        updated = await db.cross_account_roles.find_one({"company_id": company_id}, {"_id": 0})
+        return CrossAccountRole(**updated)
+    
+    # Create new role
+    role = CrossAccountRole(
+        company_id=company_id,
+        **role_data.model_dump()
+    )
+    await db.cross_account_roles.insert_one(role.model_dump())
+    return role
+
+@api_router.get("/companies/{company_id}/cross-account-role", response_model=CrossAccountRole)
+async def get_cross_account_role(company_id: str):
+    """Get cross-account IAM role configuration for a company"""
+    role = await db.cross_account_roles.find_one({"company_id": company_id}, {"_id": 0})
+    if not role:
+        raise HTTPException(status_code=404, detail="Cross-account role not configured")
+    return CrossAccountRole(**role)
+
+@api_router.get("/companies/{company_id}/cross-account-role/template")
+async def get_cross_account_role_template(company_id: str):
+    """Get IAM trust policy template and setup instructions"""
+    # Generate unique external ID for this company
+    external_id = f"aw-{company_id}-{uuid.uuid4().hex[:8]}"
+    
+    # MSP AWS Account ID (in production, this would be from environment)
+    msp_account_id = "123456789012"
+    
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "AWS": f"arn:aws:iam::{msp_account_id}:root"
+                },
+                "Action": "sts:AssumeRole",
+                "Condition": {
+                    "StringEquals": {
+                        "sts:ExternalId": external_id
+                    }
+                }
+            }
+        ]
+    }
+    
+    permissions_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ssm:SendCommand",
+                    "ssm:GetCommandInvocation",
+                    "ssm:ListCommandInvocations",
+                    "ssm:DescribeInstanceInformation",
+                    "ssm:GetPatchSummary",
+                    "ssm:DescribeInstancePatchStates",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeTags"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+    
+    cli_commands = f"""# Step 1: Create the IAM role with trust policy
+aws iam create-role \\
+  --role-name AlertWhispererMSPAccess \\
+  --assume-role-policy-document file://trust-policy.json
+
+# Step 2: Attach permissions policy
+aws iam put-role-policy \\
+  --role-name AlertWhispererMSPAccess \\
+  --policy-name AlertWhispererPermissions \\
+  --policy-document file://permissions-policy.json
+
+# Step 3: Get the role ARN
+aws iam get-role --role-name AlertWhispererMSPAccess --query 'Role.Arn' --output text
+"""
+    
+    return {
+        "external_id": external_id,
+        "msp_account_id": msp_account_id,
+        "trust_policy": trust_policy,
+        "permissions_policy": permissions_policy,
+        "cli_commands": cli_commands,
+        "instructions": [
+            "1. Save the trust policy JSON to a file named 'trust-policy.json'",
+            "2. Save the permissions policy JSON to a file named 'permissions-policy.json'",
+            "3. Run the AWS CLI commands to create the role",
+            "4. Copy the Role ARN and External ID back to Alert Whisperer",
+            "5. Alert Whisperer will use AssumeRole to access your AWS resources securely"
+        ]
+    }
+
+
 # Webhook & Integration Routes
 class WebhookAlert(BaseModel):
     asset_name: str
