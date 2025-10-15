@@ -88,6 +88,14 @@ function App() {
             } 
           />
           <Route 
+            path="/dashboard" 
+            element={
+              isAuthenticated ? 
+                <Dashboard user={user} onLogout={handleLogout} /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
             path="/profile" 
             element={
               isAuthenticated ? 
