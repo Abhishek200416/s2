@@ -11,7 +11,7 @@ const DecisionEngine = ({ companyId }) => {
           Decision Engine
         </CardTitle>
         <CardDescription className="text-slate-300">
-          AI-powered incident analysis and remediation decisions
+          Automated incident analysis and remediation decisions
         </CardDescription>
       </CardHeader>
       <CardContent>
