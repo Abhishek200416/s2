@@ -268,6 +268,71 @@ def generate_api_key():
     """Generate a secure API key"""
     return f"aw_{secrets.token_urlsafe(32)}"
 
+def generate_hmac_secret():
+    """Generate a secure HMAC secret key for webhook signing"""
+    return secrets.token_urlsafe(32)
+
+def compute_webhook_signature(secret: str, timestamp: str, body: str) -> str:
+    """
+    Compute HMAC-SHA256 signature for webhook payload
+    Formula: HMAC_SHA256(secret, timestamp + '.' + raw_body)
+    """
+    message = f"{timestamp}.{body}"
+    signature = hmac.new(
+        secret.encode('utf-8'),
+        message.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    return f"sha256={signature}"
+
+async def verify_webhook_signature(
+    company_id: str,
+    signature_header: Optional[str],
+    timestamp_header: Optional[str],
+    raw_body: str
+) -> bool:
+    """
+    Verify webhook HMAC signature and timestamp
+    Returns True if signature is valid and timestamp is within allowed window
+    """
+    # Get webhook security config for company
+    security_config = await db.webhook_security.find_one({"company_id": company_id})
+    
+    # If HMAC is not enabled for this company, skip verification
+    if not security_config or not security_config.get("enabled", False):
+        return True
+    
+    # Check if signature and timestamp headers are provided
+    if not signature_header or not timestamp_header:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing required headers: X-Signature and X-Timestamp"
+        )
+    
+    # Validate timestamp (replay attack protection)
+    try:
+        request_timestamp = int(timestamp_header)
+        current_timestamp = int(time.time())
+        max_diff = security_config.get("max_timestamp_diff_seconds", 300)
+        
+        if abs(current_timestamp - request_timestamp) > max_diff:
+            raise HTTPException(
+                status_code=401,
+                detail=f"Timestamp difference exceeds {max_diff} seconds"
+            )
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid timestamp format")
+    
+    # Compute expected signature
+    hmac_secret = security_config["hmac_secret"]
+    expected_signature = compute_webhook_signature(hmac_secret, timestamp_header, raw_body)
+    
+    # Compare signatures (constant-time comparison to prevent timing attacks)
+    if not hmac.compare_digest(signature_header, expected_signature):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    
+    return True
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current user from JWT token"""
     try:
