@@ -113,7 +113,7 @@ class CriticalTester:
             if api_key:
                 # Test one webhook request to verify endpoint works
                 webhook_payload = {
-                    "asset_name": "rate-limit-test",
+                    "asset_name": "srv-app-01",
                     "signature": "rate_limit_test",
                     "severity": "low",
                     "message": "Rate limit test alert",
