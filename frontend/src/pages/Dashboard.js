@@ -261,10 +261,6 @@ const Dashboard = ({ user, onLogout }) => {
                 <IncidentList companyId={selectedCompany} />
               </TabsContent>
 
-              <TabsContent value="patches">
-                <PatchManagement companyId={selectedCompany} />
-              </TabsContent>
-
               {user.role === 'admin' && (
                 <TabsContent value="companies">
                   <CompanyManagement onCompanyChange={loadCompanies} />
