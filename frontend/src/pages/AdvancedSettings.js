@@ -12,8 +12,13 @@ import { Switch } from '@/components/ui/switch';
 const AdvancedSettings = ({ companyId, companyName }) => {
   const [webhookSecurity, setWebhookSecurity] = useState(null);
   const [correlationConfig, setCorrelationConfig] = useState(null);
+  const [crossAccountRole, setCrossAccountRole] = useState(null);
+  const [crossAccountTemplate, setCrossAccountTemplate] = useState(null);
+  const [roleArn, setRoleArn] = useState('');
+  const [awsAccountId, setAwsAccountId] = useState('');
   const [loading, setLoading] = useState(true);
   const [copiedSecret, setCopiedSecret] = useState(false);
+  const [copiedItem, setCopiedItem] = useState(null);
 
   useEffect(() => {
     if (companyId) {
