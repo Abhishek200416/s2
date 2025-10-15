@@ -458,9 +458,9 @@ const CompanyManagement = ({ onCompanyChange }) => {
                     <span className="text-purple-400 font-bold text-sm">2</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">AI-Powered Correlation & Priority Scoring</p>
+                    <p className="text-white font-medium">Event Correlation & Priority Scoring</p>
                     <p className="text-sm text-slate-400">
-                      Intelligent algorithms group similar alerts within a 15-minute window by signature and asset. 
+                      Rule-based algorithms group similar alerts within a configurable time window (5-15 min) by signature and asset. 
                       Priority score calculated: <code className="text-amber-400 text-xs">severity + critical_asset + duplicates + multi_tool - age_decay</code>
                     </p>
                   </div>
