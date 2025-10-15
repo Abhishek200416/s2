@@ -166,4 +166,48 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
 
   const getSeverityColor = (severity) => {
     const colors = {
-      low: 'bg-slate-500/20 text-slate-300 border-slate-500
+      low: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
+      medium: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      high: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+      critical: 'bg-red-500/20 text-red-300 border-red-500/30'
+    };
+    return colors[severity] || colors.low;
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      active: 'bg-red-500/20 text-red-300 border-red-500/30',
+      acknowledged: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      resolved: 'bg-green-500/20 text-green-300 border-green-500/30',
+      new: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      in_progress: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      escalated: 'bg-purple-500/20 text-purple-300 border-purple-500/30'
+    };
+    return colors[status] || colors.active;
+  };
+
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000); // seconds
+    
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return date.toLocaleString();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="w-8 h-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6" data-testid="realtime-dashboard">
+      {/* Header with Real-Time Status */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white flex items-center gap-3">
