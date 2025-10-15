@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../App';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Trash2, Mail, Shield, UserCircle, Edit } from 'lucide-react';
+import { Users, Plus, Trash2, Mail, Shield, UserCircle, Edit, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Technicians = () => {
+  const navigate = useNavigate();
   const [technicians, setTechnicians] = useState([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
