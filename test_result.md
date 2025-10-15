@@ -750,6 +750,49 @@ frontend:
           - Passes companyId and companyName as props
           - Maintains existing tabs: Correlation, Incidents, Patches, Companies
           - Real-time dashboard now default view on login
+  
+  - task: "Create Advanced Settings page for webhook security and correlation config"
+    implemented: true
+    working: true
+    file: "pages/AdvancedSettings.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Created comprehensive Advanced Settings page with 3 tabs:
+          1. Webhook Security (HMAC) Tab:
+             - Enable/disable HMAC authentication
+             - View and copy HMAC secret key
+             - Regenerate HMAC secret with confirmation
+             - Shows signature/timestamp header configuration
+             - Displays replay protection window (5 minutes)
+             - Python code example for HMAC signing
+             - Visual status indicator (enabled/disabled)
+          2. Correlation Settings Tab:
+             - Interactive time window slider (5-15 min)
+             - Aggregation key display (asset|signature)
+             - Auto-correlate toggle switch
+             - Minimum alerts for incident configuration
+             - Real-time updates on changes
+             - Example scenario showing how correlation works
+          3. AWS Integration Tab:
+             - Links to AWS_INTEGRATION_GUIDE.md
+             - Quick reference cards for:
+               * AWS Secrets Manager
+               * AWS Systems Manager (SSM)
+               * API Gateway WebSocket
+               * Cross-Account IAM Roles
+               * Patch Manager Compliance
+             - Production-grade benefits checklist
+          
+          ✅ Added navigation:
+          - Added route /advanced-settings in App.js
+          - Added "Advanced Settings" button in Dashboard header (cyan theme)
+          - Button positioned next to Technicians button
+          - Only accessible to authenticated users
 
 
 metadata:
