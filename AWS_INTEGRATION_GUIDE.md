@@ -854,6 +854,26 @@ response = client_ssm.send_command(
 
 Replace self-managed WebSocket with **API Gateway WebSocket API** for production scale.
 
+### **Why API Gateway WebSocket? (Transport Choice Rationale)**
+
+**Chosen:** API Gateway WebSocket API  
+
+**Rationale:**
+- ✅ **Bi-Directional Communication**: Server can push updates to clients (no polling)
+- ✅ **Real-Time Notifications**: Alert/incident updates broadcast immediately
+- ✅ **Scalability**: Handles thousands of concurrent connections automatically
+- ✅ **AWS-Native**: Integrates seamlessly with Lambda, DynamoDB, CloudWatch
+- ✅ **Cost-Effective**: Pay per message, not per connection time
+- ✅ **Managed Service**: No server infrastructure to maintain
+
+**Alternative Considered:** AppSync GraphQL Subscriptions
+- Also supports real-time push via subscriptions
+- More overhead for simple alert broadcasts
+- Better for complex data queries with filtering
+- Valid choice but unnecessary complexity for our use case
+
+**Conclusion:** API Gateway WebSocket chosen for simplicity, direct control, and perfect fit for alert notification patterns.
+
 ### **Architecture**
 
 ```
