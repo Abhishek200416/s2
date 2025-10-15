@@ -103,9 +103,11 @@
 #====================================================================================================
 
 user_problem_statement: |
-  REAL-TIME ALERT WHISPERER SYSTEM:
-  Transform into real-time MSP ops agent with:
-  1. Remove ALL fake data generators (✅ DONE)
+  PRODUCTION-GRADE AWS MSP ALERT WHISPERER SYSTEM:
+  Enterprise-ready MSP platform with AWS best practices:
+  
+  ✅ COMPLETED (Previous Phase):
+  1. Remove ALL fake data generators
   2. Real-time monitoring with WebSocket live updates
   3. Enhanced priority scoring: priority = severity + critical_asset_bonus + duplicate_factor + multi_tool_bonus - age_decay
   4. Alert correlation with 15-minute time window
@@ -116,6 +118,20 @@ user_problem_statement: |
   9. Notification system for critical alerts
   10. Browser notifications for high-priority alerts
   11. Only real data from company webhooks - NO FAKE DATA
+  
+  🚀 NEW (Production-Grade AWS MSP Features):
+  1. HMAC-SHA256 webhook authentication with replay protection (X-Signature, X-Timestamp headers)
+  2. Event-driven correlation with configurable time window (5-15 min)
+  3. Aggregation key system (asset|signature) for intelligent grouping
+  4. Per-company webhook security configuration (enable/disable HMAC)
+  5. Per-company correlation settings (time window, auto-correlate)
+  6. Multi-tenant isolation patterns (per-tenant API keys, data partitioning)
+  7. AWS Secrets Manager integration documentation
+  8. AWS Systems Manager (SSM) remote execution documentation
+  9. Cross-account IAM role setup for MSP client access
+  10. API Gateway WebSocket migration guide
+  11. Patch Manager compliance integration documentation
+  12. Comprehensive AWS_INTEGRATION_GUIDE.md with production patterns
 
 backend:
   - task: "Remove fake alert generator endpoint"
