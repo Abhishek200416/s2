@@ -166,7 +166,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -176,6 +176,15 @@ backend:
           - Tracks tool_sources for each incident
           - Multi-tool detection for priority bonus
           - Real-time priority recalculation on updates
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: 15-minute correlation window working correctly:
+          ✅ POST /api/incidents/correlate?company_id=comp-acme - Correlation completed: 2 incidents created
+          ✅ Incidents properly grouped by signature + asset within time window
+          ✅ Tool sources tracked in incidents (tool_sources array populated)
+          ✅ Multi-tool detection ready for priority bonuses
+          Correlation engine functioning perfectly with time window constraints
   
   - task: "Add WebSocket support for real-time updates"
     implemented: true
