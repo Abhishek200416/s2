@@ -391,7 +391,7 @@ class AlertWhispererTester:
                     # Find our test incident
                     test_incident = None
                     for incident in incidents:
-                        if incident.get('signature') == 'high_cpu' and incident.get('asset_name') == 'srv-web-01':
+                        if incident.get('signature') == 'high_cpu' and incident.get('asset_name') == 'srv-app-01':
                             test_incident = incident
                             break
                     
