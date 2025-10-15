@@ -143,6 +143,11 @@ class Incident(BaseModel):
     asset_name: str
     severity: str
     decision: Optional[Dict[str, Any]] = None
+    # SSM Remediation fields
+    auto_remediated: bool = False
+    ssm_command_id: Optional[str] = None
+    remediation_duration_seconds: Optional[int] = None
+    remediation_status: Optional[str] = None  # InProgress, Success, Failed, TimedOut
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
