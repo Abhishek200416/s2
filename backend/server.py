@@ -1969,7 +1969,8 @@ async def receive_webhook_alert(
     alert_data: WebhookAlert,
     api_key: str,
     x_signature: Optional[str] = Header(None),
-    x_timestamp: Optional[str] = Header(None)
+    x_timestamp: Optional[str] = Header(None),
+    x_delivery_id: Optional[str] = Header(None)
 ):
     """
     Webhook endpoint for external monitoring tools to send alerts
@@ -1978,10 +1979,13 @@ async def receive_webhook_alert(
     - API key authentication (required)
     - HMAC-SHA256 signature verification (optional, per-company)
     - Timestamp validation for replay attack protection
+    - Rate limiting per company
+    - Idempotency via X-Delivery-ID header
     
     Headers (if HMAC enabled):
     - X-Signature: sha256=<hex_signature>
     - X-Timestamp: <unix_timestamp>
+    - X-Delivery-ID: <unique_delivery_identifier> (optional, for idempotency)
     """
     # Validate API key and get company
     company = await db.companies.find_one({"api_key": api_key})
@@ -1989,6 +1993,23 @@ async def receive_webhook_alert(
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     company_id = company["id"]
+    
+    # Check rate limiting
+    await check_rate_limit(company_id)
+    
+    # Check idempotency - return existing alert if duplicate
+    existing_alert_id = await check_idempotency(
+        company_id=company_id,
+        delivery_id=x_delivery_id,
+        alert_data=alert_data.model_dump()
+    )
+    
+    if existing_alert_id:
+        return {
+            "message": "Alert already received (idempotent)",
+            "alert_id": existing_alert_id,
+            "duplicate": True
+        }
     
     # Verify HMAC signature if enabled for this company
     raw_body = await request.body()
@@ -2009,7 +2030,14 @@ async def receive_webhook_alert(
     if not asset:
         raise HTTPException(status_code=404, detail=f"Asset {alert_data.asset_name} not found")
     
-    # Create alert
+    # Generate delivery_id if not provided
+    if not x_delivery_id:
+        content_hash = hashlib.sha256(
+            f"{alert_data.asset_name}:{alert_data.signature}:{alert_data.message}".encode()
+        ).hexdigest()[:16]
+        x_delivery_id = f"auto_{content_hash}"
+    
+    # Create alert with idempotency tracking
     alert = Alert(
         company_id=company_id,
         asset_id=asset["id"],
@@ -2017,7 +2045,9 @@ async def receive_webhook_alert(
         signature=alert_data.signature,
         severity=alert_data.severity,
         message=alert_data.message,
-        tool_source=alert_data.tool_source
+        tool_source=alert_data.tool_source,
+        delivery_id=x_delivery_id,
+        delivery_attempts=1
     )
     
     await db.alerts.insert_one(alert.model_dump())
