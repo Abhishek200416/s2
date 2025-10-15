@@ -3587,6 +3587,10 @@ async def websocket_endpoint(websocket: WebSocket):
 # Include the router in the main app
 app.include_router(api_router)
 
+# Include agent router (imported at startup)
+from agent_service import router as agent_router
+app.include_router(agent_router, prefix="/api")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
