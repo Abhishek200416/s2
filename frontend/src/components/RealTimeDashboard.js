@@ -218,7 +218,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
             Real-Time Operations Dashboard
           </h2>
           <p className="text-slate-400 mt-1">
-            {companyName} • Live monitoring with AI-powered correlation
+            {companyName} • Live monitoring with event correlation
           </p>
         </div>
         <div className="flex items-center gap-3">
