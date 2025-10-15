@@ -94,30 +94,41 @@ noise_reduction = (1 - incidents / raw_alerts) * 100
 
 **Dashboard Implementation:**
 ```javascript
-// Real-time KPI calculation
+// Real-time KPI calculation with target display
 const calculateNoiseReduction = async (companyId, timeRange) => {
   const alerts = await fetch(`/api/alerts/count?company_id=${companyId}&timeRange=${timeRange}`);
   const incidents = await fetch(`/api/incidents/count?company_id=${companyId}&timeRange=${timeRange}`);
   
   const noiseReduction = (1 - incidents.count / alerts.count) * 100;
+  const target_min = 40;
+  const target_max = 70;
+  
   return {
     raw_alerts: alerts.count,
     incidents: incidents.count,
     noise_reduction_pct: noiseReduction.toFixed(1),
+    target_range: `${target_min}-${target_max}%`,
+    meets_target: noiseReduction >= target_min,
+    status: noiseReduction >= target_max ? "excellent" : 
+            noiseReduction >= target_min ? "good" : "needs_tuning",
     timestamp: new Date().toISOString()
   };
 };
 ```
 
-**Citation Method:**
-- Database queries logged to CloudWatch
-- Screenshots of dashboard with date ranges
-- Export to CSV for verification
-- Reference: Similar to Datadog's "Event Aggregation" metrics
+**Reference:**
+- PagerDuty Event Intelligence reports similar 40-60% reduction ranges
+- Datadog Event Aggregation: "reduces alert volume by 30-70% depending on environment"
+- Vendor impact varies by customer configuration and alert patterns
 
 ---
 
-### 2. MTTR Reduction (Target: 30-50% for known issues)
+### 2. MTTR Reduction (Target Range: 30-50% for automated cases)
+
+**What This Means:**
+- Automation typically reduces resolution time by 30-50% for known issues
+- Manual incidents may show little to no improvement (expected)
+- YOUR results depend on runbook coverage and automation maturity
 
 **Definition:** Mean Time To Resolution - Average time from incident creation to resolution.
 
@@ -125,7 +136,13 @@ const calculateNoiseReduction = async (companyId, timeRange) => {
 ```
 MTTR = Sum(Resolution Time) / Number of Resolved Incidents
 
-MTTR Reduction % = (1 - (MTTR_with_automation / MTTR_baseline)) × 100
+MTTR Reduction % = (1 - (MTTR_automated / MTTR_manual)) × 100
+
+Example (Target: 40% reduction):
+- Manual MTTR: 45 minutes
+- Automated MTTR: 27 minutes  
+- MTTR Reduction: (1 - 27/45) × 100 = 40%
+```
 ```
 
 **Measurement Method:**
