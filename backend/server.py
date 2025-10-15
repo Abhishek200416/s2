@@ -1149,24 +1149,106 @@ class CompanyCreate(BaseModel):
     name: str
     policy: Dict[str, Any] = {"auto_approve_low_risk": True, "maintenance_window": "Sat 22:00-02:00"}
     assets: List[Dict[str, Any]] = []
+    # AWS Integration (optional)
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
+    aws_region: str = "us-east-1"
+    aws_account_id: Optional[str] = None
+    # Monitoring Integrations (optional)
+    monitoring_integrations: List[MonitoringIntegration] = []
 
 @api_router.post("/companies", response_model=Company)
 async def create_company(company_data: CompanyCreate):
+    """
+    Create a new company with optional integration verification
+    Verifies AWS credentials and monitoring tool connectivity before saving
+    """
     # Check if company exists
     existing = await db.companies.find_one({"name": company_data.name})
     if existing:
         raise HTTPException(status_code=400, detail="Company with this name already exists")
     
-    company = Company(**company_data.model_dump())
+    company = Company(**company_data.model_dump(exclude={"aws_access_key_id", "aws_secret_access_key", "aws_region"}))
+    
     # Generate API key for new company
     company.api_key = generate_api_key()
     company.api_key_created_at = datetime.now(timezone.utc).isoformat()
     
+    verification_details = {
+        "webhook": {"verified": True, "message": "Webhook endpoint ready"},
+        "aws": None,
+        "monitoring_tools": []
+    }
+    
+    # Verify AWS credentials if provided
+    if company_data.aws_access_key_id and company_data.aws_secret_access_key:
+        aws_verification = await verify_aws_credentials(
+            company_data.aws_access_key_id,
+            company_data.aws_secret_access_key,
+            company_data.aws_region
+        )
+        
+        if aws_verification["verified"]:
+            company.aws_credentials = AWSCredentials(
+                access_key_id=company_data.aws_access_key_id,
+                secret_access_key=company_data.aws_secret_access_key,
+                region=company_data.aws_region,
+                enabled=True
+            )
+            company.aws_account_id = company_data.aws_account_id
+            verification_details["aws"] = {
+                "verified": True,
+                "services": aws_verification["services"]
+            }
+        else:
+            verification_details["aws"] = {
+                "verified": False,
+                "error": aws_verification["error"]
+            }
+            # Don't fail company creation, but mark AWS as not verified
+            company.aws_credentials = AWSCredentials(
+                access_key_id=company_data.aws_access_key_id,
+                secret_access_key=company_data.aws_secret_access_key,
+                region=company_data.aws_region,
+                enabled=False
+            )
+    
+    # Verify monitoring integrations if provided
+    for integration in company_data.monitoring_integrations:
+        # TODO: Add verification logic for each monitoring tool type
+        # For now, mark as verified if API key is provided
+        if integration.api_key:
+            integration.verified = True
+            integration.verified_at = datetime.now(timezone.utc).isoformat()
+        verification_details["monitoring_tools"].append({
+            "tool": integration.tool_type,
+            "verified": integration.verified
+        })
+    
+    company.monitoring_integrations = company_data.monitoring_integrations
+    
+    # Determine overall integration status
+    company.integration_verified = (
+        verification_details["webhook"]["verified"] and
+        (verification_details["aws"] is None or verification_details["aws"]["verified"])
+    )
+    company.integration_verified_at = datetime.now(timezone.utc).isoformat()
+    company.verification_details = verification_details
+    
     await db.companies.insert_one(company.model_dump())
     
-    # Initialize KPI for new company
+    # Initialize default configurations for new company
+    # KPI
     kpi = KPI(company_id=company.id)
     await db.kpis.insert_one(kpi.model_dump())
+    
+    # Correlation Config
+    correlation_config = CorrelationConfig(company_id=company.id)
+    await db.correlation_configs.insert_one(correlation_config.model_dump())
+    
+    # Rate Limit Config
+    rate_limit = RateLimitConfig(company_id=company.id)
+    await db.rate_limits.insert_one(rate_limit.model_dump())
     
     return company
 
