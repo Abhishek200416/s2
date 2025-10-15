@@ -107,6 +107,7 @@ class Company(BaseModel):
     name: str
     policy: Dict[str, Any] = {}
     assets: List[Dict[str, Any]] = []
+    critical_assets: List[str] = []  # List of asset IDs that are critical
     api_key: Optional[str] = None
     api_key_created_at: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
