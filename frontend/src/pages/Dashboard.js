@@ -329,6 +329,14 @@ const Dashboard = ({ user, onLogout }) => {
                   Overview
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="impact" 
+                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                  data-testid="tab-impact"
+                >
+                  <TrendingDown className="w-4 h-4 mr-2" />
+                  Impact Analysis
+                </TabsTrigger>
+                <TabsTrigger 
                   value="correlation" 
                   className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
                   data-testid="tab-correlation"
