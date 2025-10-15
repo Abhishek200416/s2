@@ -261,17 +261,41 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 
 # ============= Decision Engine =============
+def calculate_priority_score(incident: Incident, company: Company, alerts: List[Dict[str, Any]]) -> float:
+    """
+    Calculate priority score using the formula:
+    priority = severity + critical_asset_bonus + duplicate_factor + multi_tool_bonus - age_decay
+    """
+    # Base severity scores
+    severity_scores = {"low": 10, "medium": 30, "high": 60, "critical": 90}
+    severity_score = severity_scores.get(incident.severity, 30)
+    
+    # Critical asset bonus (20 points if asset is marked critical)
+    critical_asset_bonus = 20 if incident.asset_id in company.critical_assets else 0
+    
+    # Duplicate factor (2 points per duplicate alert, max 20)
+    duplicate_factor = min(incident.alert_count * 2, 20)
+    
+    # Multi-tool bonus (10 points if reported by 2+ different tools)
+    multi_tool_bonus = 10 if len(incident.tool_sources) >= 2 else 0
+    
+    # Age decay (-1 point per hour old, max -10)
+    created_time = datetime.fromisoformat(incident.created_at.replace('Z', '+00:00'))
+    age_hours = (datetime.now(timezone.utc) - created_time).total_seconds() / 3600
+    age_decay = min(age_hours, 10)
+    
+    priority_score = severity_score + critical_asset_bonus + duplicate_factor + multi_tool_bonus - age_decay
+    
+    return round(priority_score, 2)
+
 async def generate_decision(incident: Incident, company: Company, runbook: Optional[Runbook]) -> Dict[str, Any]:
     """Generate AI-powered decision for incident remediation"""
     
-    # Calculate priority score
-    severity_scores = {"low": 10, "medium": 30, "high": 60, "critical": 90}
-    base_score = severity_scores.get(incident.severity, 30)
+    # Get alerts for this incident
+    alerts = await db.alerts.find({"id": {"$in": incident.alert_ids}}, {"_id": 0}).to_list(100)
     
-    # Add bonus for multiple alerts (correlation bonus)
-    duplicate_bonus = min(incident.alert_count * 2, 20)
-    
-    priority_score = base_score + duplicate_bonus
+    # Calculate priority score using enhanced formula
+    priority_score = calculate_priority_score(incident, company, alerts)
     
     # Determine action based on risk and policy
     action = "ESCALATE"
