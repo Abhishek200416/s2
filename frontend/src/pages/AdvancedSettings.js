@@ -376,6 +376,51 @@ response = requests.post(
 print(response.json())`}
                         </code>
                       </pre>
+                      <div className="mt-4 p-3 bg-slate-800/50 rounded border border-slate-700">
+                        <h4 className="text-white text-sm font-semibold mb-2">GitHub-Style Webhook Pattern</h4>
+                        <p className="text-xs text-slate-400 mb-2">
+                          This follows the same pattern as GitHub's webhook signature verification (X-Hub-Signature-256):
+                        </p>
+                        <ul className="text-xs text-slate-300 space-y-1">
+                          <li>• <strong>Constant-time comparison</strong> prevents timing attacks</li>
+                          <li>• <strong>HMAC-SHA256</strong> provides cryptographic integrity</li>
+                          <li>• <strong>Timestamp validation</strong> protects against replay attacks (5-min window)</li>
+                          <li>• <strong>Per-company secrets</strong> enable multi-tenant isolation</li>
+                        </ul>
+                      </div>
+
+                      <div className="mt-4">
+                        <h4 className="text-white text-sm font-semibold mb-2">Idempotency Support</h4>
+                        <p className="text-xs text-slate-400 mb-2">
+                          Add X-Delivery-ID header to prevent duplicate processing:
+                        </p>
+                        <pre className="bg-slate-950 border border-slate-800 rounded p-3 text-xs text-slate-300 overflow-x-auto">
+                          <code>{`headers = {
+    "Content-Type": "application/json",
+    "X-Signature": f"sha256={signature}",
+    "X-Timestamp": timestamp,
+    "X-Delivery-ID": "unique-delivery-id-12345"  # Prevents duplicates
+}`}</code>
+                        </pre>
+                      </div>
+
+                      <div className="mt-4">
+                        <h4 className="text-white text-sm font-semibold mb-2">Handling Webhook Responses</h4>
+                        <div className="space-y-2 text-xs text-slate-300">
+                          <div className="p-2 bg-green-500/10 border border-green-500/30 rounded">
+                            <strong>200/201:</strong> Alert received successfully
+                          </div>
+                          <div className="p-2 bg-orange-500/10 border border-orange-500/30 rounded">
+                            <strong>401:</strong> Invalid API key or HMAC signature - check credentials
+                          </div>
+                          <div className="p-2 bg-red-500/10 border border-red-500/30 rounded">
+                            <strong>429:</strong> Rate limit exceeded - implement exponential backoff
+                          </div>
+                          <div className="p-2 bg-blue-500/10 border border-blue-500/30 rounded">
+                            <strong>Duplicate Response:</strong> {"{ duplicate: true }"} - Alert already processed
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </>
                 )}
