@@ -13,7 +13,7 @@ from datetime import datetime
 import time
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://alert-sentinel-4.preview.emergentagent.com/api"
+BACKEND_URL = "https://secops-guardian.preview.emergentagent.com/api"
 
 class AlertWhispererTester:
     def __init__(self):
