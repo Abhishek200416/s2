@@ -351,6 +351,14 @@ const Dashboard = ({ user, onLogout }) => {
                   <Database className="w-4 h-4 mr-2" />
                   Patches
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="compliance" 
+                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                  data-testid="tab-compliance"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Compliance
+                </TabsTrigger>
                 {user.role === 'admin' && (
                   <TabsTrigger 
                     value="companies" 
