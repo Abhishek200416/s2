@@ -668,46 +668,6 @@ async def get_alerts(company_id: Optional[str] = None, status: Optional[str] = N
     alerts = await db.alerts.find(query, {"_id": 0}).sort("timestamp", -1).to_list(500)
     return alerts
 
-@api_router.post("/alerts/generate")
-async def generate_alerts(company_id: str, count: int = 50):
-    """Generate mock alerts for demo purposes"""
-    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    
-    signatures = [
-        "service_down:nginx", "service_down:mysql", "service_down:redis",
-        "disk_full", "memory_high", "cpu_spike", "network_timeout",
-        "ssl_expiring", "backup_failed", "replication_lag"
-    ]
-    severities = ["low", "medium", "high", "critical"]
-    tools = ["Nagios", "Zabbix", "Datadog", "Prometheus", "CloudWatch"]
-    
-    generated_alerts = []
-    base_time = datetime.now(timezone.utc)
-    
-    for i in range(count):
-        asset = random.choice(company["assets"])
-        signature = random.choice(signatures)
-        
-        alert = Alert(
-            company_id=company_id,
-            asset_id=asset["id"],
-            asset_name=asset["name"],
-            signature=signature,
-            severity=random.choice(severities),
-            message=f"{signature.replace('_', ' ').title()} detected on {asset['name']}",
-            tool_source=random.choice(tools),
-            timestamp=(base_time - timedelta(minutes=random.randint(0, 120))).isoformat()
-        )
-        
-        doc = alert.model_dump()
-        await db.alerts.insert_one(doc)
-        generated_alerts.append(alert)
-    
-    return {"generated": len(generated_alerts), "alerts": generated_alerts[:10]}
-
-
 # Incident Routes
 @api_router.get("/incidents", response_model=List[Incident])
 async def get_incidents(company_id: Optional[str] = None, status: Optional[str] = None):
