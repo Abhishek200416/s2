@@ -73,18 +73,22 @@ noise_reduction = (1 - incidents / raw_alerts) * 100
 **Proof Documentation:**
 ```json
 {
+  "note": "EXAMPLE targets - your actual results will vary",
   "measurement_period": "2024-01-15T00:00:00Z to 2024-01-16T00:00:00Z",
   "company_id": "comp-acme",
   "raw_alerts_received": 1000,
   "incidents_created": 350,
   "noise_reduction_pct": 65.0,
+  "target_range": "40-70%",
+  "achieved_target": true,
   "correlation_config": {
     "time_window_minutes": 15,
     "aggregation_key": "asset|signature",
     "auto_correlate": true
   },
   "methodology": "Event correlation with 15-minute time window",
-  "data_source": "MongoDB collections: alerts, incidents"
+  "data_source": "MongoDB collections: alerts, incidents",
+  "disclaimer": "Results depend on alert patterns and may require tuning"
 }
 ```
 
