@@ -440,6 +440,148 @@ async def verify_webhook_signature(
     
     return True
 
+async def check_rate_limit(company_id: str) -> bool:
+    """
+    Check and enforce rate limiting for company
+    Returns True if within limit, raises HTTPException if exceeded
+    """
+    # Get or create rate limit config
+    rate_config = await db.rate_limits.find_one({"company_id": company_id})
+    
+    if not rate_config:
+        # Create default rate limit config
+        rate_config = RateLimitConfig(company_id=company_id)
+        await db.rate_limits.insert_one(rate_config.model_dump())
+    
+    if not rate_config.get("enabled", True):
+        return True
+    
+    # Check if we're in a new window
+    window_start = datetime.fromisoformat(rate_config["window_start"])
+    current_time = datetime.now(timezone.utc)
+    time_diff = (current_time - window_start).total_seconds()
+    
+    # Reset window if more than 60 seconds have passed
+    if time_diff >= 60:
+        await db.rate_limits.update_one(
+            {"company_id": company_id},
+            {
+                "$set": {
+                    "current_count": 1,
+                    "window_start": current_time.isoformat(),
+                    "updated_at": current_time.isoformat()
+                }
+            }
+        )
+        return True
+    
+    # Check if within limits
+    current_count = rate_config.get("current_count", 0)
+    requests_per_minute = rate_config.get("requests_per_minute", 60)
+    burst_size = rate_config.get("burst_size", 100)
+    
+    if current_count >= burst_size:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Max {requests_per_minute} requests/minute, burst up to {burst_size}"
+        )
+    
+    # Increment counter
+    await db.rate_limits.update_one(
+        {"company_id": company_id},
+        {
+            "$inc": {"current_count": 1},
+            "$set": {"updated_at": current_time.isoformat()}
+        }
+    )
+    
+    return True
+
+async def check_idempotency(company_id: str, delivery_id: Optional[str], alert_data: dict) -> Optional[str]:
+    """
+    Check for duplicate webhook deliveries
+    Returns existing alert_id if duplicate found, None otherwise
+    """
+    if not delivery_id:
+        # Generate delivery_id from alert content for deduplication
+        content_hash = hashlib.sha256(
+            f"{alert_data.get('asset_name')}:{alert_data.get('signature')}:{alert_data.get('message')}".encode()
+        ).hexdigest()[:16]
+        delivery_id = f"auto_{content_hash}"
+    
+    # Check if this delivery_id was already processed (within last 24 hours)
+    cutoff_time = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    existing_alert = await db.alerts.find_one({
+        "company_id": company_id,
+        "delivery_id": delivery_id,
+        "timestamp": {"$gte": cutoff_time}
+    })
+    
+    if existing_alert:
+        # Update delivery attempts
+        await db.alerts.update_one(
+            {"id": existing_alert["id"]},
+            {
+                "$inc": {"delivery_attempts": 1},
+                "$set": {"timestamp": datetime.now(timezone.utc).isoformat()}
+            }
+        )
+        return existing_alert["id"]
+    
+    return None
+
+async def create_audit_log(
+    user_id: Optional[str],
+    user_email: Optional[str],
+    user_role: Optional[str],
+    company_id: Optional[str],
+    action: str,
+    resource_type: str,
+    resource_id: Optional[str],
+    details: Dict[str, Any],
+    ip_address: Optional[str] = None,
+    status: str = "success",
+    error_message: Optional[str] = None
+):
+    """Create audit log entry for critical operations"""
+    audit_log = SystemAuditLog(
+        user_id=user_id,
+        user_email=user_email,
+        user_role=user_role,
+        company_id=company_id,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        details=details,
+        ip_address=ip_address,
+        status=status,
+        error_message=error_message
+    )
+    await db.audit_logs.insert_one(audit_log.model_dump())
+
+def check_permission(user: Dict[str, Any], required_permission: str) -> bool:
+    """Check if user has required permission based on RBAC"""
+    user_role = user.get("role", "technician")
+    
+    # MSP Admin has all permissions
+    if user_role == "msp_admin" or user_role == "admin":
+        return True
+    
+    # Company Admin has most permissions except system-wide operations
+    if user_role == "company_admin":
+        company_admin_permissions = [
+            "view_incidents", "assign_incidents", "execute_runbooks",
+            "manage_technicians", "view_reports", "approve_runbooks"
+        ]
+        return required_permission in company_admin_permissions
+    
+    # Technician has limited permissions
+    if user_role == "technician":
+        tech_permissions = ["view_incidents", "update_incidents", "execute_low_risk_runbooks"]
+        return required_permission in tech_permissions
+    
+    return False
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current user from JWT token"""
     try:
