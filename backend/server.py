@@ -1130,6 +1130,31 @@ async def receive_webhook_alert(alert_data: WebhookAlert, api_key: str):
     }
     await db.activities.insert_one(activity)
     
+    # Broadcast alert via WebSocket for real-time updates
+    await manager.broadcast({
+        "type": "alert_received",
+        "data": alert.model_dump()
+    })
+    
+    # Create notification for critical alerts
+    if alert.severity in ["critical", "high"]:
+        notification = Notification(
+            user_id="admin",  # Notify admins
+            company_id=company_id,
+            alert_id=alert.id,
+            type="critical_alert",
+            title=f"{alert.severity.upper()} Alert Received",
+            message=f"{alert.signature} on {alert.asset_name}: {alert.message}",
+            priority=alert.severity
+        )
+        await db.notifications.insert_one(notification.model_dump())
+        
+        # Broadcast notification
+        await manager.broadcast({
+            "type": "notification",
+            "data": notification.model_dump()
+        })
+    
     return {"message": "Alert received", "alert_id": alert.id}
 
 
