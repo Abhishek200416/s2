@@ -105,6 +105,23 @@ class Token(BaseModel):
     token_type: str
     user: Dict[str, Any]
 
+class AWSCredentials(BaseModel):
+    """AWS credentials for integration"""
+    access_key_id: Optional[str] = None
+    secret_access_key: Optional[str] = None
+    region: str = "us-east-1"
+    enabled: bool = False
+
+class MonitoringIntegration(BaseModel):
+    """Monitoring tool integration settings"""
+    tool_type: str  # datadog, zabbix, prometheus, cloudwatch, etc.
+    enabled: bool = False
+    api_key: Optional[str] = None
+    api_url: Optional[str] = None
+    verified: bool = False
+    verified_at: Optional[str] = None
+    last_error: Optional[str] = None
+
 class Company(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -114,6 +131,15 @@ class Company(BaseModel):
     critical_assets: List[str] = []  # List of asset IDs that are critical
     api_key: Optional[str] = None
     api_key_created_at: Optional[str] = None
+    # AWS Integration
+    aws_credentials: Optional[AWSCredentials] = None
+    aws_account_id: Optional[str] = None
+    # Monitoring Integrations
+    monitoring_integrations: List[MonitoringIntegration] = []
+    # Integration verification status
+    integration_verified: bool = False
+    integration_verified_at: Optional[str] = None
+    verification_details: Optional[Dict[str, Any]] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class Alert(BaseModel):
