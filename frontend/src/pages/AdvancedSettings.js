@@ -596,6 +596,175 @@ print(response.json())`}
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Cross-Account IAM Setup Tab */}
+          <TabsContent value="cross-account">
+            <Card className="bg-slate-900/50 border-slate-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-cyan-400" />
+                  AWS Cross-Account IAM Role Setup
+                </CardTitle>
+                <CardDescription className="text-slate-300">
+                  Secure cross-account access for MSP → Client AWS resources
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {crossAccountRole ? (
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                    <p className="text-green-400 font-semibold mb-2">✓ Cross-Account Role Configured</p>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-slate-400">Role ARN:</span>
+                        <code className="ml-2 text-cyan-400">{crossAccountRole.role_arn}</code>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">AWS Account ID:</span>
+                        <code className="ml-2 text-cyan-400">{crossAccountRole.aws_account_id}</code>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">Status:</span>
+                        <span className="ml-2 text-green-400">{crossAccountRole.status}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                      <h3 className="text-white font-semibold mb-2">What is Cross-Account Access?</h3>
+                      <p className="text-slate-300 text-sm">
+                        Allows Alert Whisperer (MSP) to securely access client AWS resources using AssumeRole with ExternalId. 
+                        This eliminates the need for long-lived access keys and provides better security and auditability.
+                      </p>
+                    </div>
+
+                    {crossAccountTemplate && (
+                      <>
+                        <div>
+                          <h3 className="text-white font-semibold mb-3">Step 1: Create IAM Role in Client AWS Account</h3>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-white">Trust Policy JSON</Label>
+                                <Button
+                                  onClick={() => copyToClipboard(JSON.stringify(crossAccountTemplate.trust_policy, null, 2), 'trust')}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-cyan-400 hover:text-cyan-300"
+                                >
+                                  {copiedItem === 'trust' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                              <pre className="bg-slate-950 border border-slate-700 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto">
+                                {JSON.stringify(crossAccountTemplate.trust_policy, null, 2)}
+                              </pre>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-white">Permissions Policy JSON</Label>
+                                <Button
+                                  onClick={() => copyToClipboard(JSON.stringify(crossAccountTemplate.permissions_policy, null, 2), 'permissions')}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-cyan-400 hover:text-cyan-300"
+                                >
+                                  {copiedItem === 'permissions' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                              <pre className="bg-slate-950 border border-slate-700 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto">
+                                {JSON.stringify(crossAccountTemplate.permissions_policy, null, 2)}
+                              </pre>
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-white">AWS CLI Commands</Label>
+                                <Button
+                                  onClick={() => copyToClipboard(crossAccountTemplate.cli_commands, 'cli')}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-cyan-400 hover:text-cyan-300"
+                                >
+                                  {copiedItem === 'cli' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                              </div>
+                              <pre className="bg-slate-950 border border-slate-700 rounded-lg p-4 text-xs text-slate-300 overflow-x-auto">
+                                {crossAccountTemplate.cli_commands}
+                              </pre>
+                            </div>
+
+                            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                              <p className="text-yellow-400 font-semibold mb-2">⚠️ Important Security Notes</p>
+                              <ul className="list-disc list-inside text-slate-300 text-sm space-y-1">
+                                <li>Keep the External ID secure: <code className="text-cyan-400">{crossAccountTemplate.external_id}</code></li>
+                                <li>Never share your AWS Account credentials</li>
+                                <li>Role can be revoked anytime from your AWS Console</li>
+                                <li>All actions are logged in CloudTrail for auditing</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-white font-semibold mb-3">Step 2: Enter Role ARN After Creation</h3>
+                          <div className="space-y-4">
+                            <div>
+                              <Label className="text-white">AWS Account ID</Label>
+                              <Input
+                                value={awsAccountId}
+                                onChange={(e) => setAwsAccountId(e.target.value)}
+                                placeholder="123456789012"
+                                className="bg-slate-800 border-slate-700 text-white mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-white">Role ARN</Label>
+                              <Input
+                                value={roleArn}
+                                onChange={(e) => setRoleArn(e.target.value)}
+                                placeholder="arn:aws:iam::123456789012:role/AlertWhispererMSPAccess"
+                                className="bg-slate-800 border-slate-700 text-white mt-1"
+                              />
+                            </div>
+                            <Button
+                              onClick={saveCrossAccountRole}
+                              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white"
+                            >
+                              Save Cross-Account Configuration
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-800/50 rounded-lg p-4">
+                          <h4 className="text-white font-semibold mb-2">What happens after setup?</h4>
+                          <ul className="space-y-2 text-slate-300 text-sm">
+                            <li className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span>Alert Whisperer can execute SSM Run Commands on your EC2 instances</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span>Patch compliance data synced from AWS Patch Manager</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span>Auto-remediation runbooks can restart services, clear disk, etc.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span>All actions auditable in CloudTrail (who, what, when)</span>
+                            </li>
+                          </ul>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
