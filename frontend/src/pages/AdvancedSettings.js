@@ -789,6 +789,21 @@ print(response.json())`}
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Rate Limiting Tab */}
+          <TabsContent value="rate-limiting">
+            <RateLimitSettings companyId={companyId} companyName={companyName} />
+          </TabsContent>
+
+          {/* Approval Gates Tab */}
+          <TabsContent value="approval-gates">
+            <ApprovalGates />
+          </TabsContent>
+
+          {/* RBAC & Audit Tab */}
+          <TabsContent value="rbac-audit">
+            <RBACSettings companyId={companyId} />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
