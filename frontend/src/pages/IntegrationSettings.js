@@ -534,8 +534,8 @@ const IntegrationSettings = ({ companyId }) => {
                     <div className="flex items-start">
                       <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold mr-4">2</div>
                       <div className="flex-1">
-                        <h4 className="text-lg font-semibold text-white mb-1">AI Correlation</h4>
-                        <p className="text-slate-300">Similar alerts are automatically grouped into incidents</p>
+                        <h4 className="text-lg font-semibold text-white mb-1">Event Correlation</h4>
+                        <p className="text-slate-300">Similar alerts are automatically grouped into incidents using rule-based correlation (asset + signature within time window)</p>
                       </div>
                     </div>
                     <div className="border-l-2 border-purple-500/50 ml-5 pl-9 pb-4">
