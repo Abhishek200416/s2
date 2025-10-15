@@ -336,6 +336,80 @@ backend:
           ✅ No fake data - only real webhook alerts processed
           Real-time webhook system functioning as designed
   
+  - task: "Add HMAC webhook authentication with replay protection"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Implemented HMAC-SHA256 webhook security:
+          - Added WebhookSecurityConfig model for per-company HMAC settings
+          - compute_webhook_signature() function (HMAC_SHA256(secret, timestamp + '.' + body))
+          - verify_webhook_signature() with timestamp validation (5-min window, replay protection)
+          - generate_hmac_secret() for secure secret generation
+          - Updated webhook endpoint to accept X-Signature and X-Timestamp headers
+          - Constant-time comparison to prevent timing attacks
+          - Per-company enable/disable HMAC (optional security layer)
+  
+  - task: "Add webhook security configuration endpoints"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Added webhook security management endpoints:
+          - GET /api/companies/{company_id}/webhook-security - Get security config
+          - POST /api/companies/{company_id}/webhook-security/enable - Enable HMAC + generate secret
+          - POST /api/companies/{company_id}/webhook-security/disable - Disable HMAC
+          - POST /api/companies/{company_id}/webhook-security/regenerate-secret - Rotate secret
+          - WebhookSecurityConfig model with configurable headers and timeout
+  
+  - task: "Add configurable correlation time window (5-15 min)"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Implemented event-driven correlation with configurable settings:
+          - Added CorrelationConfig model (time_window_minutes, aggregation_key, auto_correlate)
+          - Updated /api/incidents/correlate to use per-company correlation settings
+          - Default 15-min window, configurable 5-15 minutes
+          - Aggregation key: asset|signature (can be customized)
+          - Auto-creates default config if not exists
+  
+  - task: "Add correlation configuration endpoints"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Added correlation configuration management:
+          - GET /api/companies/{company_id}/correlation-config - Get current config
+          - PUT /api/companies/{company_id}/correlation-config - Update settings
+          - CorrelationConfigUpdate model for partial updates
+          - Validation: time_window_minutes must be 5-15
+          - Per-company customization of correlation behavior
+  
   - task: "Add API key generation and management"
     implemented: true
     working: true
