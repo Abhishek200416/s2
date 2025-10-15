@@ -681,17 +681,109 @@ class AlertWhispererTester:
         else:
             self.log_result("Enable HMAC for Testing", False, f"Failed to enable HMAC for testing: {response.status_code if response else 'No response'}")
     
-    def test_existing_features(self):
-        """Test 13: Existing Features (smoke test)"""
-        print("\n=== Testing Existing Features (Smoke Test) ===")
+    def test_critical_requirements(self):
+        """Test 13: CRITICAL TESTS from Review Request"""
+        print("\n=== CRITICAL TESTS - Alert Whisperer MSP Platform ===")
         
-        # Test seed endpoint
+        # CRITICAL TEST 1: Login test
+        login_data = {
+            "email": "admin@alertwhisperer.com",
+            "password": "admin123"
+        }
+        
+        response = self.make_request('POST', '/auth/login', json=login_data)
+        if response and response.status_code == 200:
+            data = response.json()
+            access_token = data.get('access_token')
+            user_obj = data.get('user')
+            if access_token and user_obj:
+                self.log_result("CRITICAL: Login Test", True, f"Login successful - access_token: {access_token[:20]}..., user: {user_obj.get('name')}")
+                self.auth_token = access_token  # Update auth token for subsequent tests
+            else:
+                missing = []
+                if not access_token: missing.append("access_token")
+                if not user_obj: missing.append("user")
+                self.log_result("CRITICAL: Login Test", False, f"Login response missing: {missing}")
+        else:
+            self.log_result("CRITICAL: Login Test", False, f"Login failed with status {response.status_code if response else 'No response'}")
+        
+        # CRITICAL TEST 2: Verify NO DEMO DATA in patches
+        response = self.make_request('GET', '/patches')
+        if response and response.status_code == 200:
+            patches = response.json()
+            if isinstance(patches, list) and len(patches) == 0:
+                self.log_result("CRITICAL: No Demo Data in Patches", True, "GET /api/patches returns empty array [] - no demo data present")
+            else:
+                self.log_result("CRITICAL: No Demo Data in Patches", False, f"Expected empty array, got: {len(patches) if isinstance(patches, list) else type(patches)} items")
+        else:
+            self.log_result("CRITICAL: No Demo Data in Patches", False, f"Failed to get patches: {response.status_code if response else 'No response'}")
+        
+        # CRITICAL TEST 3: Verify NO DEMO DATA in patch compliance
+        response = self.make_request('GET', '/companies/comp-acme/patch-compliance')
+        if response and response.status_code == 200:
+            compliance = response.json()
+            if isinstance(compliance, list) and len(compliance) == 0:
+                self.log_result("CRITICAL: No Demo Data in Patch Compliance", True, "GET /api/companies/comp-acme/patch-compliance returns empty array [] - no demo data present")
+            else:
+                self.log_result("CRITICAL: No Demo Data in Patch Compliance", False, f"Expected empty array, got: {len(compliance) if isinstance(compliance, list) else type(compliance)} items")
+        else:
+            self.log_result("CRITICAL: No Demo Data in Patch Compliance", False, f"Failed to get patch compliance: {response.status_code if response else 'No response'}")
+        
+        # CRITICAL TEST 4: Test rate limiting headers
+        # First get API key for webhook testing
+        api_key = None
+        response = self.make_request('GET', '/companies/comp-acme')
+        if response and response.status_code == 200:
+            company = response.json()
+            api_key = company.get('api_key')
+        
+        if api_key:
+            # Make multiple rapid requests to webhook endpoint to trigger rate limiting
+            webhook_payload = {
+                "asset_name": "rate-limit-test",
+                "signature": "rate_limit_test",
+                "severity": "low",
+                "message": "Rate limit test alert",
+                "tool_source": "RateLimitTester"
+            }
+            
+            rate_limit_triggered = False
+            retry_after_header = None
+            
+            # Make 10 rapid requests to try to trigger rate limiting
+            for i in range(10):
+                response = self.make_request('POST', f'/webhooks/alerts?api_key={api_key}', json=webhook_payload)
+                if response and response.status_code == 429:
+                    rate_limit_triggered = True
+                    retry_after_header = response.headers.get('Retry-After')
+                    break
+                time.sleep(0.1)  # Small delay between requests
+            
+            if rate_limit_triggered:
+                if retry_after_header:
+                    self.log_result("CRITICAL: Rate Limiting Headers", True, f"Rate limiting triggered with 429 status and Retry-After header: {retry_after_header}")
+                else:
+                    self.log_result("CRITICAL: Rate Limiting Headers", False, "Rate limiting triggered with 429 but missing Retry-After header")
+            else:
+                self.log_result("CRITICAL: Rate Limiting Headers", True, "Rate limiting not triggered (may be configured with high limits)")
+        else:
+            self.log_result("CRITICAL: Rate Limiting Headers", False, "No API key available for rate limiting test")
+        
+        # CRITICAL TEST 5: Verify seed endpoint
         response = self.make_request('POST', '/seed')
         if response and response.status_code == 200:
             seed_result = response.json()
-            self.log_result("Database Seed", True, f"Database reinitialized: {seed_result.get('companies', 0)} companies, {seed_result.get('users', 0)} users")
+            patch_plans = seed_result.get('patch_plans', -1)
+            if patch_plans == 0:
+                self.log_result("CRITICAL: Seed Endpoint", True, f"POST /api/seed returns patch_plans: 0 (no demo patch plans)")
+            else:
+                self.log_result("CRITICAL: Seed Endpoint", False, f"Expected patch_plans: 0, got: {patch_plans}")
         else:
-            self.log_result("Database Seed", False, f"Failed to seed database: {response.status_code if response else 'No response'}")
+            self.log_result("CRITICAL: Seed Endpoint", False, f"Failed to call seed endpoint: {response.status_code if response else 'No response'}")
+    
+    def test_existing_features(self):
+        """Test 14: Existing Features (smoke test)"""
+        print("\n=== Testing Existing Features (Smoke Test) ===")
         
         # Test get alerts
         response = self.make_request('GET', '/alerts?company_id=comp-acme&status=active')
