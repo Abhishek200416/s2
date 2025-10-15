@@ -3041,6 +3041,89 @@ async def get_company_kpis(company_id: str):
     }
 
 
+@api_router.get("/companies/{company_id}/kpis/impact")
+async def get_kpi_impact(company_id: str):
+    """
+    Get KPI impact analysis showing before/after Alert Whisperer implementation
+    Shows improvement metrics with baseline assumptions
+    """
+    # Get current metrics
+    current_metrics = await get_realtime_metrics(company_id=company_id)
+    current_kpis = current_metrics["kpis"]
+    
+    # Calculate baseline (before Alert Whisperer) assumptions:
+    # - No alert correlation: incidents = alerts (noise reduction 0%)
+    # - No auto-remediation: self-healed 0%
+    # - Manual MTTR typically 2-3x longer than automated
+    
+    total_alerts = current_metrics["alerts"]["total"]
+    
+    baseline = {
+        "noise_reduction_pct": 0,  # No correlation
+        "incidents_count": total_alerts,  # Every alert becomes an incident
+        "self_healed_pct": 0,  # No automation
+        "self_healed_count": 0,
+        "mttr_minutes": current_kpis["mttr_manual_minutes"] if current_kpis["mttr_manual_minutes"] > 0 else 120,  # Assume 2 hours manual
+        "patch_compliance_pct": max(current_kpis["patch_compliance_pct"] - 15, 60)  # Assume 15% worse before
+    }
+    
+    # Calculate improvements
+    improvements = {
+        "noise_reduction": {
+            "before": baseline["noise_reduction_pct"],
+            "after": current_kpis["noise_reduction_pct"],
+            "improvement": current_kpis["noise_reduction_pct"] - baseline["noise_reduction_pct"],
+            "improvement_pct": current_kpis["noise_reduction_pct"],
+            "status": current_kpis["noise_reduction_status"],
+            "target": 40
+        },
+        "self_healed": {
+            "before": baseline["self_healed_pct"],
+            "after": current_kpis["self_healed_pct"],
+            "improvement": current_kpis["self_healed_pct"] - baseline["self_healed_pct"],
+            "improvement_pct": current_kpis["self_healed_pct"],
+            "status": current_kpis["self_healed_status"],
+            "target": 20
+        },
+        "mttr": {
+            "before": baseline["mttr_minutes"],
+            "after": current_kpis["mttr_overall_minutes"],
+            "improvement": baseline["mttr_minutes"] - current_kpis["mttr_overall_minutes"],
+            "improvement_pct": round(((baseline["mttr_minutes"] - current_kpis["mttr_overall_minutes"]) / max(baseline["mttr_minutes"], 1)) * 100, 2),
+            "status": current_kpis["mttr_status"],
+            "target": 30  # 30% reduction target
+        },
+        "patch_compliance": {
+            "before": baseline["patch_compliance_pct"],
+            "after": current_kpis["patch_compliance_pct"],
+            "improvement": current_kpis["patch_compliance_pct"] - baseline["patch_compliance_pct"],
+            "improvement_pct": round(((current_kpis["patch_compliance_pct"] - baseline["patch_compliance_pct"]) / max(baseline["patch_compliance_pct"], 1)) * 100, 2),
+            "status": current_kpis["patch_compliance_status"],
+            "target": 95
+        }
+    }
+    
+    return {
+        "baseline": baseline,
+        "current": {
+            "noise_reduction_pct": current_kpis["noise_reduction_pct"],
+            "incidents_count": current_metrics["incidents"]["total"],
+            "self_healed_pct": current_kpis["self_healed_pct"],
+            "self_healed_count": current_kpis["self_healed_count"],
+            "mttr_minutes": current_kpis["mttr_overall_minutes"],
+            "patch_compliance_pct": current_kpis["patch_compliance_pct"]
+        },
+        "improvements": improvements,
+        "summary": {
+            "noise_reduced": f"{improvements['noise_reduction']['improvement']:.1f}%",
+            "incidents_prevented": max(baseline["incidents_count"] - current_metrics["incidents"]["total"], 0),
+            "time_saved_per_incident": f"{improvements['mttr']['improvement']:.1f} minutes",
+            "auto_resolved_count": current_kpis["self_healed_count"]
+        }
+    }
+
+
+
 # ============= Chat Endpoints =============
 @api_router.get("/chat/{company_id}")
 async def get_chat_messages(company_id: str, limit: int = 50):
