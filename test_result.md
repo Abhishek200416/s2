@@ -579,6 +579,100 @@ backend:
           ✅ Webhook payload validation working (asset_name, signature, severity, message, tool_source)
           Security and functionality both working as expected
 
+  - task: "Add delivery idempotency and retry handling"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ SuperHack Enhancement #1 - Delivery Idempotency:
+          - Added delivery_id and delivery_attempts fields to Alert model
+          - Implemented check_idempotency() with 24-hour lookback
+          - Auto-generates delivery_id from content hash if not provided
+          - Returns {duplicate: true} for idempotent requests
+          - Supports X-Delivery-ID header in webhook endpoint
+          - Tracks delivery attempts for monitoring
+
+  - task: "Add rate limiting and backpressure"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ SuperHack Enhancement #2 - Rate Limiting:
+          - Added RateLimitConfig model with per-company limits
+          - Implemented check_rate_limit() middleware
+          - Sliding window rate limiting (60-second windows)
+          - Configurable requests_per_minute (1-1000) and burst_size
+          - Returns 429 when limits exceeded
+          - Added management endpoints: GET/PUT /api/companies/{id}/rate-limit
+
+  - task: "Add approval gates for runbook execution"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ SuperHack Enhancement #4 - Approval Gates:
+          - Added ApprovalRequest model with risk-based workflow
+          - Updated execute_runbook_with_ssm() to check risk levels
+          - Low risk: Auto-execute immediately
+          - Medium risk: Requires Company Admin or MSP Admin
+          - High risk: Requires MSP Admin only
+          - 1-hour expiration on approval requests
+          - Added endpoints: GET /api/approval-requests, POST approve/reject
+
+  - task: "Add RBAC and comprehensive audit logging"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ SuperHack Enhancement #5 - RBAC & Audit:
+          - Updated User model with permissions field
+          - Added SystemAuditLog model for comprehensive audit trail
+          - Implemented create_audit_log() and check_permission()
+          - 3 RBAC roles: msp_admin, company_admin, technician
+          - Logs all critical operations (runbook, approval, assignment, config)
+          - Added endpoints: GET /api/audit-logs, GET /api/audit-logs/summary
+
+  - task: "Add correlation dedup key documentation endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ SuperHack Enhancement #3 - Correlation Safeguards:
+          - Added GET /api/correlation/dedup-keys endpoint
+          - Documents 4 aggregation strategies with examples
+          - Provides time window rationale (5/10/15 min)
+          - Best practices for each dedup pattern
+
 frontend:
   - task: "Remove fake alert generator button"
     implemented: true
