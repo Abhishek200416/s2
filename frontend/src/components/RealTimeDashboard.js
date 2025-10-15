@@ -211,3 +211,8 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <Activity className="w-7 h-7 text-cyan-400" />
+            Real-Time Operations Dashboard
+          </h2>
+          <p className="text-slate-400 mt-1">
+            {companyName} • Live monitoring with
