@@ -254,6 +254,58 @@ class WebhookSecurityConfig(BaseModel):
     enabled: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+class SSMExecution(BaseModel):
+    """Track AWS SSM Run Command/Automation executions"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    incident_id: str
+    company_id: str
+    command_id: str  # AWS SSM Command ID
+    runbook_id: str
+    command_type: str = "RunCommand"  # RunCommand or Automation
+    status: str = "InProgress"  # InProgress, Success, Failed, TimedOut, Cancelled
+    instance_ids: List[str] = []
+    document_name: str  # SSM Document name (e.g., AWS-RunShellScript)
+    parameters: Dict[str, Any] = {}
+    output: Optional[str] = None
+    error_message: Optional[str] = None
+    duration_seconds: Optional[int] = None
+    started_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    completed_at: Optional[str] = None
+
+class PatchCompliance(BaseModel):
+    """Track patch compliance status from AWS Patch Manager"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    environment: str  # production, staging, development
+    instance_id: str
+    instance_name: str
+    compliance_status: str  # COMPLIANT, NON_COMPLIANT, UNSPECIFIED
+    compliance_percentage: float = 0.0
+    critical_patches_missing: int = 0
+    high_patches_missing: int = 0
+    medium_patches_missing: int = 0
+    low_patches_missing: int = 0
+    patches_installed: int = 0
+    last_scan_time: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_patch_time: Optional[str] = None
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class CrossAccountRole(BaseModel):
+    """Track cross-account IAM role configuration for MSP client access"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    role_arn: str  # arn:aws:iam::123456789012:role/AlertWhispererMSPAccess
+    external_id: str  # Unique external ID for security
+    aws_account_id: str
+    status: str = "active"  # active, inactive, invalid
+    last_verified: Optional[str] = None
+    permissions: List[str] = ["ssm:*", "ec2:Describe*", "ssm:GetPatchCompliance"]
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 
 # ============= Auth Functions =============
 def verify_password(plain_password, hashed_password):
