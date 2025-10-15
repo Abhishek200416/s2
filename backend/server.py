@@ -2106,24 +2106,25 @@ async def seed_database():
 # ============= Real-Time Metrics Endpoint =============
 @api_router.get("/metrics/realtime")
 async def get_realtime_metrics(company_id: Optional[str] = None):
-    """Get real-time metrics for dashboard"""
+    """Get real-time metrics for dashboard with enhanced KPI calculations"""
     query = {}
     if company_id:
         query["company_id"] = company_id
     
     # Alert counts by priority
-    alerts = await db.alerts.find({**query, "status": "active"}, {"_id": 0}).to_list(1000)
+    all_alerts = await db.alerts.find(query, {"_id": 0}).to_list(10000)
+    active_alerts = [a for a in all_alerts if a.get("status") == "active"]
     
     alert_counts = {
-        "critical": sum(1 for a in alerts if a["severity"] == "critical"),
-        "high": sum(1 for a in alerts if a["severity"] == "high"),
-        "medium": sum(1 for a in alerts if a["severity"] == "medium"),
-        "low": sum(1 for a in alerts if a["severity"] == "low"),
-        "total": len(alerts)
+        "critical": sum(1 for a in active_alerts if a["severity"] == "critical"),
+        "high": sum(1 for a in active_alerts if a["severity"] == "high"),
+        "medium": sum(1 for a in active_alerts if a["severity"] == "medium"),
+        "low": sum(1 for a in active_alerts if a["severity"] == "low"),
+        "total": len(active_alerts)
     }
     
     # Incident counts by status
-    incidents = await db.incidents.find(query, {"_id": 0}).to_list(500)
+    incidents = await db.incidents.find(query, {"_id": 0}).to_list(5000)
     
     incident_counts = {
         "new": sum(1 for i in incidents if i["status"] == "new"),
@@ -2133,18 +2134,83 @@ async def get_realtime_metrics(company_id: Optional[str] = None):
         "total": len(incidents)
     }
     
-    # Get KPIs
-    kpi_docs = await db.kpis.find(query, {"_id": 0}).to_list(100)
-    total_kpis = {
-        "noise_reduction_pct": sum(k.get("noise_reduction_pct", 0) for k in kpi_docs) / max(len(kpi_docs), 1),
-        "self_healed_count": sum(k.get("self_healed_count", 0) for k in kpi_docs),
-        "mttr_minutes": sum(k.get("mttr_minutes", 0) for k in kpi_docs) / max(len(kpi_docs), 1)
+    # Calculate enhanced KPIs
+    
+    # 1. Noise Reduction % = (1 - incidents/alerts) * 100
+    total_alerts = len(all_alerts)
+    total_incidents = len(incidents)
+    noise_reduction_pct = round((1 - (total_incidents / max(total_alerts, 1))) * 100, 2) if total_alerts > 0 else 0
+    
+    # 2. Self-Healed Count & Percentage
+    auto_remediated_incidents = [i for i in incidents if i.get("auto_remediated", False)]
+    self_healed_count = len(auto_remediated_incidents)
+    self_healed_pct = round((self_healed_count / max(total_incidents, 1)) * 100, 2) if total_incidents > 0 else 0
+    
+    # 3. MTTR (Mean Time To Resolution)
+    resolved_incidents = [i for i in incidents if i["status"] == "resolved"]
+    auto_resolved = [i for i in resolved_incidents if i.get("auto_remediated", False)]
+    manual_resolved = [i for i in resolved_incidents if not i.get("auto_remediated", False)]
+    
+    def calculate_mttr(incident_list):
+        if not incident_list:
+            return 0
+        total_seconds = 0
+        for inc in incident_list:
+            created = datetime.fromisoformat(inc["created_at"].replace("Z", "+00:00"))
+            updated = datetime.fromisoformat(inc["updated_at"].replace("Z", "+00:00"))
+            duration = (updated - created).total_seconds()
+            total_seconds += duration
+        return round(total_seconds / len(incident_list) / 60, 2)  # Convert to minutes
+    
+    mttr_auto = calculate_mttr(auto_resolved)
+    mttr_manual = calculate_mttr(manual_resolved)
+    mttr_overall = calculate_mttr(resolved_incidents)
+    
+    # MTTR Reduction % = (manual_mttr - auto_mttr) / manual_mttr * 100
+    mttr_reduction_pct = round(((mttr_manual - mttr_auto) / max(mttr_manual, 1)) * 100, 2) if mttr_manual > 0 else 0
+    
+    # 4. Patch Compliance (get from patch_compliance collection)
+    compliance_data = await db.patch_compliance.find(query, {"_id": 0}).to_list(1000)
+    if compliance_data:
+        compliant_instances = sum(1 for c in compliance_data if c.get("compliance_status") == "COMPLIANT")
+        total_instances = len(compliance_data)
+        patch_compliance_pct = round((compliant_instances / total_instances * 100), 2) if total_instances > 0 else 0
+        critical_patches_missing = sum(c.get("critical_patches_missing", 0) for c in compliance_data)
+    else:
+        patch_compliance_pct = 0
+        critical_patches_missing = 0
+    
+    kpis = {
+        # Noise Reduction: Target 40-70%
+        "noise_reduction_pct": noise_reduction_pct,
+        "noise_reduction_target": 40,
+        "noise_reduction_status": "excellent" if noise_reduction_pct >= 40 else "good" if noise_reduction_pct >= 20 else "needs_improvement",
+        
+        # Self-Healed
+        "self_healed_count": self_healed_count,
+        "self_healed_pct": self_healed_pct,
+        "self_healed_target": 20,  # Target 20-30%
+        "self_healed_status": "excellent" if self_healed_pct >= 20 else "good" if self_healed_pct >= 10 else "needs_improvement",
+        
+        # MTTR
+        "mttr_overall_minutes": mttr_overall,
+        "mttr_auto_minutes": mttr_auto,
+        "mttr_manual_minutes": mttr_manual,
+        "mttr_reduction_pct": mttr_reduction_pct,
+        "mttr_target_reduction": 30,  # Target 30-50% reduction
+        "mttr_status": "excellent" if mttr_reduction_pct >= 30 else "good" if mttr_reduction_pct >= 15 else "needs_improvement",
+        
+        # Patch Compliance
+        "patch_compliance_pct": patch_compliance_pct,
+        "patch_compliance_target": 95,  # Target 95%+
+        "critical_patches_missing": critical_patches_missing,
+        "patch_compliance_status": "excellent" if patch_compliance_pct >= 95 else "good" if patch_compliance_pct >= 85 else "needs_improvement"
     }
     
     return {
         "alerts": alert_counts,
         "incidents": incident_counts,
-        "kpis": total_kpis,
+        "kpis": kpis,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
