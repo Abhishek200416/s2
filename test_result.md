@@ -103,16 +103,19 @@
 #====================================================================================================
 
 user_problem_statement: |
-  1. Remove the fake alert generator button ("Generate 50 Sample Alerts")
-  2. Remove Emergent badge from the bottom of the page
-  3. Add advanced profile management with:
-     - View and edit profile (name, email)
-     - Change password functionality
-  4. Add complete MSP integration system with:
-     - API key management for companies
-     - Webhook integration guides
-     - AWS Systems Manager setup instructions
-     - Integration guides for monitoring tools (Datadog, Zabbix, Prometheus, CloudWatch)
+  REAL-TIME ALERT WHISPERER SYSTEM:
+  Transform into real-time MSP ops agent with:
+  1. Remove ALL fake data generators (✅ DONE)
+  2. Real-time monitoring with WebSocket live updates
+  3. Enhanced priority scoring: priority = severity + critical_asset_bonus + duplicate_factor + multi_tool_bonus - age_decay
+  4. Alert correlation with 15-minute time window
+  5. Real-time dashboard with live metrics (alerts by priority, incidents by status)
+  6. Priority-based filtering (Critical/High/Medium/Low)
+  7. Auto-correlation and AI decision engine
+  8. Chat system for company communication
+  9. Notification system for critical alerts
+  10. Browser notifications for high-priority alerts
+  11. Only real data from company webhooks - NO FAKE DATA
 
 backend:
   - task: "Add API key generation and management"
