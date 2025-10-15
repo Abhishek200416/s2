@@ -191,7 +191,7 @@ const IncidentList = ({ companyId, limit }) => {
           <DialogHeader>
             <DialogTitle className="text-xl">Incident Decision</DialogTitle>
             <DialogDescription className="text-slate-400">
-              AI-generated remediation decision
+              Automated remediation decision with AI-assisted explanation
             </DialogDescription>
           </DialogHeader>
 
