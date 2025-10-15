@@ -131,6 +131,7 @@ class Incident(BaseModel):
     company_id: str
     alert_ids: List[str] = []
     alert_count: int = 0
+    tool_sources: List[str] = []  # Track which tools reported this
     priority_score: float = 0.0
     status: str = "new"  # new, in_progress, resolved, escalated
     assigned_to: Optional[str] = None
