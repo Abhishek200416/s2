@@ -138,7 +138,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -150,6 +150,15 @@ backend:
           - Duplicate factor: +2 per duplicate (max 20)
           - Multi-tool bonus: +10 if 2+ tools report same issue
           - Age decay: -1 per hour (max -10)
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: Enhanced priority scoring working perfectly:
+          ✅ Created critical alert via webhook (severity: critical)
+          ✅ Correlation created incident with priority_score: 92.0
+          ✅ Priority calculation includes severity (90) + critical asset bonus (2) = 92.0
+          ✅ Tool sources tracked correctly (['Datadog'])
+          Priority scoring engine functioning as designed
   
   - task: "Add 15-minute correlation window with multi-tool tracking"
     implemented: true
