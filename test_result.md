@@ -429,7 +429,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -440,6 +440,16 @@ backend:
           - CorrelationConfigUpdate model for partial updates
           - Validation: time_window_minutes must be 5-15
           - Per-company customization of correlation behavior
+      - working: true
+        agent: "testing"
+        comment: |
+          TESTED: Correlation configuration endpoints working perfectly:
+          ✅ GET /api/companies/comp-acme/correlation-config - Returns default config (time_window_minutes=15, auto_correlate=true)
+          ✅ PUT /api/companies/comp-acme/correlation-config - Successfully updates time_window_minutes to 10
+          ✅ PUT /api/companies/comp-acme/correlation-config - Successfully updates auto_correlate to false
+          ✅ Validation working: time_window_minutes=3 correctly rejected with 400 error: "Time window must be between 5 and 15 minutes"
+          ✅ Configuration persists across requests (verified final state: Time: 10min, Auto: false)
+          All correlation config endpoints return 200 with correct data and validation works
   
   - task: "Add API key generation and management"
     implemented: true
