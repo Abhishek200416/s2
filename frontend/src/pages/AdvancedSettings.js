@@ -99,6 +99,54 @@ const AdvancedSettings = ({ companyId, companyName }) => {
     }
   };
 
+  const loadCrossAccountTemplate = async () => {
+    try {
+      const response = await api.get(`/companies/${companyId}/cross-account-role/template`);
+      setCrossAccountTemplate(response.data);
+    } catch (error) {
+      console.error('Failed to load cross-account template:', error);
+    }
+  };
+
+  const loadCrossAccountRole = async () => {
+    try {
+      const response = await api.get(`/companies/${companyId}/cross-account-role`);
+      setCrossAccountRole(response.data);
+      setRoleArn(response.data.role_arn);
+      setAwsAccountId(response.data.aws_account_id);
+    } catch (error) {
+      // Role not configured yet, load template
+      loadCrossAccountTemplate();
+    }
+  };
+
+  const saveCrossAccountRole = async () => {
+    try {
+      const response = await api.post(`/companies/${companyId}/cross-account-role`, {
+        role_arn: roleArn,
+        external_id: crossAccountTemplate.external_id,
+        aws_account_id: awsAccountId
+      });
+      setCrossAccountRole(response.data);
+      toast.success('Cross-account role saved successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save cross-account role');
+    }
+  };
+
+  const copyToClipboard = (text, item) => {
+    navigator.clipboard.writeText(text);
+    setCopiedItem(item);
+    setTimeout(() => setCopiedItem(null), 2000);
+    toast.success('Copied to clipboard');
+  };
+
+  useEffect(() => {
+    if (companyId) {
+      loadCrossAccountRole();
+    }
+  }, [companyId]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-950">
