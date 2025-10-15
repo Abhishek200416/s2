@@ -3543,6 +3543,77 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# ============= Agent Core & New Services Integration =============
+
+# Import new services
+from auth_service import AuthService, ACCESS_TOKEN_EXPIRE_MINUTES as NEW_ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+from agent_service import router as agent_router, init_agent
+from agent_tools import AgentToolRegistry
+from memory_service import MemoryService
+from db_init import init_indexes, cleanup_expired_data
+import signal
+import sys
+
+# Initialize services (will be done in startup event)
+auth_service = None
+memory_service = None
+tools_registry = None
+agent_instance = None
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize services and database indexes on startup"""
+    global auth_service, memory_service, tools_registry, agent_instance
+    
+    logger.info("🚀 Starting Alert Whisperer Agent Core...")
+    
+    # Initialize database indexes (TTL, performance)
+    logger.info("📊 Initializing database indexes...")
+    await init_indexes(db)
+    
+    # Initialize services
+    logger.info("🔐 Initializing auth service...")
+    auth_service = AuthService(db)
+    
+    logger.info("🧠 Initializing memory service...")
+    memory_service = MemoryService(db)
+    
+    logger.info("🛠️ Initializing tool registry...")
+    tools_registry = AgentToolRegistry(db)
+    
+    logger.info("🤖 Initializing agent instance...")
+    agent_instance = init_agent(db, tools_registry)
+    
+    # Register agent router
+    app.include_router(agent_router)
+    
+    logger.info("✅ All services initialized successfully")
+    logger.info(f"   Version: {os.getenv('GIT_SHA', 'dev')}")
+    logger.info(f"   Agent Mode: {os.getenv('AGENT_MODE', 'local')}")
+
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def shutdown_event():
+    """Graceful shutdown - close connections and cleanup"""
+    logger.info("🛑 Shutting down Alert Whisperer Agent Core...")
+    
+    # Close MongoDB connection
     client.close()
+    logger.info("✅ MongoDB connection closed")
+    
+    # Cleanup expired data
+    logger.info("🧹 Running cleanup...")
+    try:
+        await cleanup_expired_data(db)
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
+    
+    logger.info("✅ Shutdown complete")
+
+# Graceful shutdown signal handler
+def signal_handler(sig, frame):
+    """Handle SIGTERM for graceful shutdown"""
+    logger.info(f"Received signal {sig}, initiating graceful shutdown...")
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
