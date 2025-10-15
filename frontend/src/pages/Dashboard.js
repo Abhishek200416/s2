@@ -25,6 +25,7 @@ import DecisionEngine from '../components/DecisionEngine';
 import PatchManagement from '../components/PatchManagement';
 import PatchCompliance from '../components/PatchCompliance';
 import KPIDashboard from '../components/KPIDashboard';
+import KPIImpactDashboard from '../components/KPIImpactDashboard';
 import CompanyManagement from '../components/CompanyManagement';
 import ActivityFeed from '../components/ActivityFeed';
 
