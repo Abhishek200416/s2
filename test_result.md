@@ -871,6 +871,46 @@ agent_communication:
          - Emergent badge
       
       Testing frontend with backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
+  - agent: "main"
+    message: |
+      ADDITIONAL UI/UX IMPROVEMENTS COMPLETED:
+      
+      ✅ Fixed Issues:
+      1. Added /dashboard route (fixes "No routes matched location '/dashboard'" error)
+      2. Restored Patch Management tab (it was needed)
+      3. Added back navigation buttons to Profile and Technicians pages
+      4. Fixed HTML nesting error in CompanyManagement (div inside p tag)
+      
+      ✅ Enhanced Features:
+      1. Notification Bell Dropdown:
+         - Bell icon in header with unread count badge
+         - Dropdown shows last 10 notifications
+         - Critical notifications highlighted with red pulsing dot
+         - Click notification to mark as read
+         - "Mark all as read" button
+         - Shows notification type (critical/warning/info)
+         - Timestamp for each notification
+      
+      2. Enhanced Company Onboarding Dialog:
+         - Clear 5-step automated MSP workflow explanation
+         - Step 1: Real-Time Alert Reception with WebSocket
+         - Step 2: AI-Powered Correlation & Priority Scoring (with formula)
+         - Step 3: Automated Decision Engine with self-healing
+         - Step 4: Intelligent Technician Assignment
+         - Step 5: Resolution Tracking & Analytics
+         - Makes it crystal clear how the system automates alert handling
+      
+      3. Better Navigation:
+         - Back to Dashboard buttons on Profile and Technicians pages
+         - Consistent navigation experience
+      
+      ✅ WebSocket Issue Identified:
+      - Issue is Kubernetes ingress missing WebSocket upgrade annotations
+      - Backend and frontend code is correct
+      - Infrastructure fix needed (not code issue)
+      - Annotations required for proxy upgrade headers
+      
+      All frontend services running. Ready for testing.
   - agent: "testing"
     message: |
       FRONTEND TESTING COMPLETE - ALL CRITICAL FEATURES WORKING (95% Success Rate)
