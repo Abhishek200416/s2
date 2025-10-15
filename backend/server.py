@@ -2171,49 +2171,57 @@ async def get_all_ssm_executions(company_id: Optional[str] = None, limit: int = 
 # Patch Compliance Routes (AWS Patch Manager Integration)
 @api_router.get("/companies/{company_id}/patch-compliance", response_model=List[PatchCompliance])
 async def get_company_patch_compliance(company_id: str):
-    """Get patch compliance status for a company from AWS Patch Manager (mocked for demo)"""
-    # In production, this would call boto3 SSM get_patch_compliance_summary
-    # For demo, return mock data or existing data
-    compliance_data = await db.patch_compliance.find(
+    """Get patch compliance status for a company from AWS Patch Manager"""
+    # Get company and check AWS credentials
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Check if AWS credentials are configured and enabled
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled", False):
+        return {
+            "error": "AWS credentials not configured",
+            "message": "Please configure AWS credentials in company settings to fetch patch compliance data"
+        }
+    
+    # Fetch real patch compliance from AWS
+    compliance_list = await get_patch_compliance(
+        aws_creds.get("access_key_id"),
+        aws_creds.get("secret_access_key"),
+        aws_creds.get("region", "us-east-1")
+    )
+    
+    # Save to database for caching
+    if compliance_list:
+        # Clear old data
+        await db.patch_compliance.delete_many({"company_id": company_id})
+        
+        # Save new data
+        for compliance_data in compliance_list:
+            compliance = PatchCompliance(
+                company_id=company_id,
+                environment="production",  # Can be derived from instance tags
+                instance_id=compliance_data["instance_id"],
+                instance_name=compliance_data["instance_name"],
+                compliance_status="COMPLIANT" if compliance_data["compliance_status"] == "compliant" else "NON_COMPLIANT",
+                compliance_percentage=100.0 if compliance_data["compliance_status"] == "compliant" else round((compliance_data["installed_count"] / (compliance_data["installed_count"] + compliance_data["missing_count"]) * 100), 2) if (compliance_data["installed_count"] + compliance_data["missing_count"]) > 0 else 0,
+                critical_patches_missing=compliance_data.get("critical_missing", 0),
+                high_patches_missing=compliance_data.get("security_missing", 0),
+                medium_patches_missing=0,
+                low_patches_missing=compliance_data.get("missing_count", 0) - compliance_data.get("critical_missing", 0) - compliance_data.get("security_missing", 0),
+                patches_installed=compliance_data["installed_count"],
+                last_scan_time=compliance_data["last_scan"]
+            )
+            await db.patch_compliance.insert_one(compliance.model_dump())
+    
+    # Return cached data
+    cached_data = await db.patch_compliance.find(
         {"company_id": company_id},
         {"_id": 0}
     ).to_list(100)
     
-    # If no data exists, generate mock data for demo
-    if not compliance_data:
-        environments = ["production", "staging", "development"]
-        mock_data = []
-        
-        for env in environments:
-            # Generate 2-5 instances per environment
-            import random
-            num_instances = random.randint(2, 5)
-            
-            for i in range(num_instances):
-                compliance_status = random.choice(["COMPLIANT", "NON_COMPLIANT"])
-                critical_missing = random.randint(0, 5) if compliance_status == "NON_COMPLIANT" else 0
-                high_missing = random.randint(0, 10) if compliance_status == "NON_COMPLIANT" else 0
-                
-                compliance = PatchCompliance(
-                    company_id=company_id,
-                    environment=env,
-                    instance_id=f"i-{uuid.uuid4().hex[:12]}",
-                    instance_name=f"{env}-server-{i+1}",
-                    compliance_status=compliance_status,
-                    compliance_percentage=100.0 if compliance_status == "COMPLIANT" else random.uniform(70.0, 95.0),
-                    critical_patches_missing=critical_missing,
-                    high_patches_missing=high_missing,
-                    medium_patches_missing=random.randint(0, 15),
-                    low_patches_missing=random.randint(0, 20),
-                    patches_installed=random.randint(50, 150)
-                )
-                
-                await db.patch_compliance.insert_one(compliance.model_dump())
-                mock_data.append(compliance)
-        
-        return mock_data
-    
-    return compliance_data
+    return cached_data if cached_data else []
 
 @api_router.get("/patch-compliance/summary")
 async def get_patch_compliance_summary(company_id: Optional[str] = None):
