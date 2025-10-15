@@ -22,6 +22,7 @@ import RealTimeDashboard from '../components/RealTimeDashboard';
 import AlertCorrelation from '../components/AlertCorrelation';
 import IncidentList from '../components/IncidentList';
 import DecisionEngine from '../components/DecisionEngine';
+import PatchManagement from '../components/PatchManagement';
 import KPIDashboard from '../components/KPIDashboard';
 import CompanyManagement from '../components/CompanyManagement';
 import ActivityFeed from '../components/ActivityFeed';
