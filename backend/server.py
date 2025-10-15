@@ -84,8 +84,9 @@ class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
     name: str
-    role: str  # admin, technician
+    role: str  # msp_admin, company_admin, technician
     company_ids: List[str] = []
+    permissions: List[str] = []  # RBAC permissions
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class UserCreate(BaseModel):
