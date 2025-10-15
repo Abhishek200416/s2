@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://random-input.preview.emergentagent.com/api"
+BACKEND_URL = "https://api-integration-26.preview.emergentagent.com/api"
 
 class AlertWhispererTester:
     def __init__(self):

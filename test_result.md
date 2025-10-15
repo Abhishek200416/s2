@@ -443,4 +443,4 @@ agent_communication:
          - POST /api/incidents/correlate?company_id=comp-acme - Alert correlation ✅
       
       All backend APIs are functioning correctly. No critical issues found.
-      Backend URL: https://random-input.preview.emergentagent.com/api
+      Backend URL: https://api-integration-26.preview.emergentagent.com/api
