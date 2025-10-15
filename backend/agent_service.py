@@ -102,7 +102,7 @@ class DecisionAgent:
             "reasoning": decision["reasoning"],
             "tokens_used": decision["tokens_used"],
             "duration_ms": duration_ms,
-            "created_at": datetime.now(timezone.utc)
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         await self.decisions_collection.insert_one(decision_doc)
         
