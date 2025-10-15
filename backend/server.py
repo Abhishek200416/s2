@@ -682,49 +682,97 @@ async def get_incidents(company_id: Optional[str] = None, status: Optional[str] 
 
 @api_router.post("/incidents/correlate")
 async def correlate_alerts(company_id: str):
-    """Correlate alerts into incidents using signature + asset grouping"""
+    """Correlate alerts into incidents using signature + asset grouping with 15-minute time window"""
+    # Get company for priority calculation
+    company_doc = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company_doc:
+        raise HTTPException(status_code=404, detail="Company not found")
+    company = Company(**company_doc)
+    
     # Get all active alerts
     alerts = await db.alerts.find({
         "company_id": company_id,
         "status": "active"
     }, {"_id": 0}).to_list(1000)
     
-    # Group by signature + asset
+    # 15-minute correlation window
+    correlation_window_minutes = 15
+    now = datetime.now(timezone.utc)
+    
+    # Group by signature + asset within time window
     incident_groups = {}
     for alert in alerts:
+        alert_time = datetime.fromisoformat(alert['timestamp'].replace('Z', '+00:00'))
+        
+        # Only consider alerts within the correlation window
+        age_minutes = (now - alert_time).total_seconds() / 60
+        if age_minutes > correlation_window_minutes:
+            continue
+            
         key = f"{alert['signature']}:{alert['asset_id']}"
         if key not in incident_groups:
             incident_groups[key] = []
         incident_groups[key].append(alert)
     
-    # Create incidents
+    # Create/update incidents
     created_incidents = []
+    updated_incidents = []
+    
     for key, alert_group in incident_groups.items():
         if len(alert_group) == 0:
             continue
         
         first_alert = alert_group[0]
         
-        # Check if incident already exists
+        # Track unique tool sources
+        tool_sources = list(set(a['tool_source'] for a in alert_group))
+        
+        # Check if incident already exists (within last 24 hours)
+        cutoff_time = (now - timedelta(hours=24)).isoformat()
         existing = await db.incidents.find_one({
             "company_id": company_id,
             "signature": first_alert["signature"],
             "asset_id": first_alert["asset_id"],
-            "status": {"$ne": "resolved"}
+            "status": {"$ne": "resolved"},
+            "created_at": {"$gte": cutoff_time}
         })
         
         if existing:
-            # Update existing incident
+            # Update existing incident with new alerts and tool sources
+            new_alert_ids = list(set(existing.get("alert_ids", []) + [a["id"] for a in alert_group]))
+            existing_tools = set(existing.get("tool_sources", []))
+            updated_tools = list(existing_tools.union(set(tool_sources)))
+            
+            # Recalculate priority with updated data
+            incident_for_calc = Incident(**existing)
+            incident_for_calc.alert_count = len(new_alert_ids)
+            incident_for_calc.tool_sources = updated_tools
+            priority_score = calculate_priority_score(incident_for_calc, company, alert_group)
+            
             await db.incidents.update_one(
                 {"id": existing["id"]},
                 {
                     "$set": {
-                        "alert_count": len(alert_group),
+                        "alert_ids": new_alert_ids,
+                        "alert_count": len(new_alert_ids),
+                        "tool_sources": updated_tools,
+                        "priority_score": priority_score,
                         "updated_at": datetime.now(timezone.utc).isoformat()
-                    },
-                    "$addToSet": {"alert_ids": {"$each": [a["id"] for a in alert_group]}}
+                    }
                 }
             )
+            updated_incidents.append(existing["id"])
+            
+            # Broadcast update via WebSocket
+            await manager.broadcast({
+                "type": "incident_updated",
+                "data": {
+                    "incident_id": existing["id"],
+                    "alert_count": len(new_alert_ids),
+                    "tool_sources": updated_tools,
+                    "priority_score": priority_score
+                }
+            })
             continue
         
         # Create new incident
@@ -732,11 +780,15 @@ async def correlate_alerts(company_id: str):
             company_id=company_id,
             alert_ids=[a["id"] for a in alert_group],
             alert_count=len(alert_group),
+            tool_sources=tool_sources,
             signature=first_alert["signature"],
             asset_id=first_alert["asset_id"],
             asset_name=first_alert["asset_name"],
             severity=first_alert["severity"]
         )
+        
+        # Calculate priority score
+        incident.priority_score = calculate_priority_score(incident, company, alert_group)
         
         doc = incident.model_dump()
         await db.incidents.insert_one(doc)
@@ -753,11 +805,30 @@ async def correlate_alerts(company_id: str):
             "id": str(uuid.uuid4()),
             "company_id": company_id,
             "type": "incident_created",
-            "message": f"Incident created: {incident.signature} on {incident.asset_name} ({incident.alert_count} alerts)",
+            "message": f"Incident created: {incident.signature} on {incident.asset_name} ({incident.alert_count} alerts from {len(tool_sources)} tools)",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "severity": incident.severity
         }
         await db.activities.insert_one(activity)
+        
+        # Create notification for critical incidents
+        if incident.severity in ["critical", "high"]:
+            notification = Notification(
+                user_id="admin",  # Notify all admins
+                company_id=company_id,
+                incident_id=incident.id,
+                type="incident_created",
+                title=f"{incident.severity.upper()} Incident Created",
+                message=f"{incident.signature} on {incident.asset_name} - Priority: {incident.priority_score}",
+                priority=incident.severity
+            )
+            await db.notifications.insert_one(notification.model_dump())
+        
+        # Broadcast new incident via WebSocket
+        await manager.broadcast({
+            "type": "incident_created",
+            "data": incident.model_dump()
+        })
     
     # Update KPIs
     total_alerts = len(alerts)
