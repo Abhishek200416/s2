@@ -188,13 +188,14 @@ const CompanyManagement = ({ onCompanyChange }) => {
                 Manage MSP client companies, assets, and policies
               </CardDescription>
             </div>
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="create-company-button">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Company
-                </Button>
-              </DialogTrigger>
+            <Button 
+              onClick={() => setShowOnboardingDialog(true)}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white" 
+              data-testid="create-company-button"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Onboard New Company
+            </Button>
               <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create New Company</DialogTitle>
