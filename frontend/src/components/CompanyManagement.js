@@ -657,6 +657,13 @@ const CompanyManagement = ({ onCompanyChange }) => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* New Comprehensive Onboarding Dialog */}
+      <CompanyOnboardingDialog
+        open={showOnboardingDialog}
+        onOpenChange={setShowOnboardingDialog}
+        onSuccess={handleOnboardingSuccess}
+      />
     </div>
   );
 };
