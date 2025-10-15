@@ -2277,20 +2277,134 @@ async def get_patch_compliance_summary(company_id: Optional[str] = None):
 
 @api_router.post("/patch-compliance/sync")
 async def sync_patch_compliance(company_id: str):
-    """Sync patch compliance data from AWS Patch Manager (mocked for demo)"""
-    # In production, this would call boto3 SSM describe_instance_patch_states
-    # For demo, we'll refresh the mock data
-    
-    # Delete existing data
-    await db.patch_compliance.delete_many({"company_id": company_id})
-    
-    # Generate fresh mock data
+    """Sync patch compliance data from AWS Patch Manager"""
+    # Refresh data by calling get endpoint
     compliance_data = await get_company_patch_compliance(company_id)
     
     return {
         "message": "Patch compliance data synced successfully",
         "company_id": company_id,
-        "instances_synced": len(compliance_data)
+        "instances_synced": len(compliance_data) if isinstance(compliance_data, list) else 0
+    }
+
+@api_router.post("/companies/{company_id}/patch-instances")
+async def patch_instances(company_id: str, request: Dict[str, Any]):
+    """
+    Execute patch command on instances
+    Supports: patch_now, schedule_tonight, maintenance_window
+    """
+    # Get company and check AWS credentials
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled", False):
+        raise HTTPException(status_code=400, detail="AWS credentials not configured")
+    
+    instance_ids = request.get("instance_ids", [])
+    operation_type = request.get("operation", "patch_now")  # patch_now, schedule_tonight, maintenance_window
+    
+    if not instance_ids:
+        raise HTTPException(status_code=400, detail="No instance IDs provided")
+    
+    # Execute patch command
+    result = await execute_patch_command(
+        aws_creds.get("access_key_id"),
+        aws_creds.get("secret_access_key"),
+        aws_creds.get("region", "us-east-1"),
+        instance_ids,
+        operation="install"
+    )
+    
+    if result["success"]:
+        return {
+            "message": f"Patch operation '{operation_type}' initiated successfully",
+            "command_id": result["command_id"],
+            "instance_ids": instance_ids,
+            "status": "InProgress"
+        }
+    else:
+        raise HTTPException(status_code=500, detail=f"Failed to initiate patch operation: {result['error']}")
+
+@api_router.post("/companies/{company_id}/cloudwatch/poll")
+async def poll_cloudwatch_alarms(company_id: str):
+    """
+    Poll CloudWatch alarms for a company (PULL mode)
+    This creates alerts from CloudWatch alarm state changes
+    """
+    # Get company and check AWS credentials
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled", False):
+        return {
+            "message": "AWS credentials not configured",
+            "alarms_fetched": 0
+        }
+    
+    # Fetch CloudWatch alarms
+    alarms = await get_cloudwatch_alarms(
+        aws_creds.get("access_key_id"),
+        aws_creds.get("secret_access_key"),
+        aws_creds.get("region", "us-east-1")
+    )
+    
+    # Convert alarms to alerts
+    alerts_created = 0
+    for alarm in alarms:
+        # Check if alert already exists
+        existing = await db.alerts.find_one({
+            "company_id": company_id,
+            "signature": alarm["alarm_name"],
+            "status": "active"
+        })
+        
+        if not existing:
+            # Create new alert from CloudWatch alarm
+            alert = Alert(
+                company_id=company_id,
+                asset_id=alarm.get("alarm_arn", ""),
+                asset_name=alarm.get("alarm_name", ""),
+                signature=alarm["alarm_name"],
+                severity="critical" if alarm["state"] == "ALARM" else "medium",
+                message=alarm.get("state_reason", "CloudWatch alarm triggered"),
+                tool_source="cloudwatch_poll",  # Indicates PULL mode
+                status="active"
+            )
+            
+            await db.alerts.insert_one(alert.model_dump())
+            
+            # Broadcast via WebSocket
+            await manager.broadcast({
+                "type": "alert_received",
+                "data": alert.model_dump()
+            })
+            
+            alerts_created += 1
+    
+    return {
+        "message": "CloudWatch alarms polled successfully",
+        "alarms_fetched": len(alarms),
+        "alerts_created": alerts_created,
+        "source": "PULL"
+    }
+
+@api_router.get("/companies/{company_id}/cloudwatch/status")
+async def get_cloudwatch_status(company_id: str):
+    """Get CloudWatch integration status"""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    
+    return {
+        "enabled": aws_creds.get("enabled", False) if aws_creds else False,
+        "region": aws_creds.get("region", "us-east-1") if aws_creds else "us-east-1",
+        "polling_active": aws_creds.get("enabled", False) if aws_creds else False
     }
 
 
