@@ -1582,12 +1582,25 @@ class ExecuteRunbookSSMRequest(BaseModel):
     instance_ids: List[str] = []  # Target EC2 instances or on-prem servers
 
 @api_router.post("/incidents/{incident_id}/execute-runbook-ssm")
-async def execute_runbook_with_ssm(incident_id: str, request: ExecuteRunbookSSMRequest):
+async def execute_runbook_with_ssm(
+    incident_id: str, 
+    request: ExecuteRunbookSSMRequest,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
     """
-    Execute a runbook using AWS SSM Run Command
+    Execute a runbook using AWS SSM Run Command with approval gates
+    
+    Risk Levels:
+    - low: Auto-execute (no approval needed)
+    - medium: Requires Company Admin or MSP Admin approval
+    - high: Requires MSP Admin approval only
+    
     This endpoint simulates SSM execution with mock data for demo purposes
     In production, this would call boto3 SSM client
     """
+    # Get current user
+    user = await get_current_user(credentials)
+    
     # Get incident
     incident = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
     if not incident:
@@ -1597,6 +1610,62 @@ async def execute_runbook_with_ssm(incident_id: str, request: ExecuteRunbookSSMR
     runbook = await db.runbooks.find_one({"id": request.runbook_id}, {"_id": 0})
     if not runbook:
         raise HTTPException(status_code=404, detail="Runbook not found")
+    
+    # Check risk level and approval requirements
+    risk_level = runbook.get("risk_level", "low")
+    user_role = user.get("role", "technician")
+    
+    # Low risk: Auto-approve
+    if risk_level == "low":
+        approval_status = "auto_approved"
+    
+    # Medium risk: Requires Company Admin or MSP Admin
+    elif risk_level == "medium":
+        if user_role in ["msp_admin", "admin", "company_admin"]:
+            approval_status = "approved"
+        else:
+            # Create approval request
+            approval_request = ApprovalRequest(
+                incident_id=incident_id,
+                runbook_id=request.runbook_id,
+                company_id=incident["company_id"],
+                risk_level=risk_level,
+                requested_by=user["id"]
+            )
+            await db.approval_requests.insert_one(approval_request.model_dump())
+            
+            return {
+                "message": "Medium-risk runbook requires approval",
+                "approval_request_id": approval_request.id,
+                "risk_level": risk_level,
+                "status": "pending_approval",
+                "required_role": "company_admin or msp_admin"
+            }
+    
+    # High risk: Requires MSP Admin only
+    elif risk_level == "high":
+        if user_role in ["msp_admin", "admin"]:
+            approval_status = "approved"
+        else:
+            # Create approval request
+            approval_request = ApprovalRequest(
+                incident_id=incident_id,
+                runbook_id=request.runbook_id,
+                company_id=incident["company_id"],
+                risk_level=risk_level,
+                requested_by=user["id"]
+            )
+            await db.approval_requests.insert_one(approval_request.model_dump())
+            
+            return {
+                "message": "High-risk runbook requires MSP Admin approval",
+                "approval_request_id": approval_request.id,
+                "risk_level": risk_level,
+                "status": "pending_approval",
+                "required_role": "msp_admin"
+            }
+    else:
+        approval_status = "auto_approved"
     
     # Mock SSM Command ID (in production, this would come from boto3)
     command_id = f"cmd-{str(uuid.uuid4())[:8]}"
