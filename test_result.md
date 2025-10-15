@@ -106,7 +106,7 @@ user_problem_statement: |
   PRODUCTION-GRADE AWS MSP ALERT WHISPERER SYSTEM:
   Enterprise-ready MSP platform with AWS best practices:
   
-  ✅ COMPLETED (Previous Phase):
+  ✅ COMPLETED (Previous Phases):
   1. Remove ALL fake data generators
   2. Real-time monitoring with WebSocket live updates
   3. Enhanced priority scoring: priority = severity + critical_asset_bonus + duplicate_factor + multi_tool_bonus - age_decay
@@ -118,20 +118,69 @@ user_problem_statement: |
   9. Notification system for critical alerts
   10. Browser notifications for high-priority alerts
   11. Only real data from company webhooks - NO FAKE DATA
+  12. HMAC-SHA256 webhook authentication with replay protection (X-Signature, X-Timestamp headers)
+  13. Event-driven correlation with configurable time window (5-15 min)
+  14. Aggregation key system (asset|signature) for intelligent grouping
+  15. Per-company webhook security configuration (enable/disable HMAC)
+  16. Per-company correlation settings (time window, auto-correlate)
+  17. Multi-tenant isolation patterns (per-tenant API keys, data partitioning)
+  18. AWS Secrets Manager integration documentation
+  19. AWS Systems Manager (SSM) remote execution documentation
+  20. Cross-account IAM role setup for MSP client access
+  21. API Gateway WebSocket migration guide
+  22. Patch Manager compliance integration documentation
+  23. Comprehensive AWS_INTEGRATION_GUIDE.md with production patterns
   
-  🚀 NEW (Production-Grade AWS MSP Features):
-  1. HMAC-SHA256 webhook authentication with replay protection (X-Signature, X-Timestamp headers)
-  2. Event-driven correlation with configurable time window (5-15 min)
-  3. Aggregation key system (asset|signature) for intelligent grouping
-  4. Per-company webhook security configuration (enable/disable HMAC)
-  5. Per-company correlation settings (time window, auto-correlate)
-  6. Multi-tenant isolation patterns (per-tenant API keys, data partitioning)
-  7. AWS Secrets Manager integration documentation
-  8. AWS Systems Manager (SSM) remote execution documentation
-  9. Cross-account IAM role setup for MSP client access
-  10. API Gateway WebSocket migration guide
-  11. Patch Manager compliance integration documentation
-  12. Comprehensive AWS_INTEGRATION_GUIDE.md with production patterns
+  🚀 SUPERHACK ENHANCEMENTS (ALL 7 COMPLETED):
+  1. ✅ Delivery Idempotency & Retries
+     - X-Delivery-ID header support
+     - Automatic content-based deduplication
+     - 24-hour duplicate detection
+     - Delivery attempt tracking
+  
+  2. ✅ Rate Limiting + Backpressure
+     - Per-company configurable limits (1-1000 req/min)
+     - Burst size support for alert storms
+     - Sliding window rate limiting
+     - 429 response with detailed error messages
+     - Frontend UI for configuration
+  
+  3. ✅ Correlation Safeguards (Dedup Keys)
+     - 4 dedup key patterns documented (asset|signature, asset|signature|tool, signature, asset)
+     - Time window rationale (5/10/15 min)
+     - Best practices for each pattern
+     - Frontend UI with visual explanations
+  
+  4. ✅ Approval Gates for Runbooks
+     - Risk-based approval workflow (low/medium/high)
+     - Low: Auto-execute immediately
+     - Medium: Company Admin or MSP Admin approval
+     - High: MSP Admin approval only
+     - 1-hour expiration on approval requests
+     - Frontend approval dashboard
+  
+  5. ✅ Role-Based Access & Audit Logs
+     - 3 RBAC roles: MSP Admin, Company Admin, Technician
+     - Comprehensive permission matrix
+     - SystemAuditLog for all critical operations
+     - Frontend RBAC viewer and audit log timeline
+     - Action tracking: runbook_executed, approval_granted, incident_assigned, etc.
+  
+  6. ✅ Enhanced Webhook Security Docs
+     - GitHub-style webhook pattern explanation (X-Hub-Signature-256)
+     - Constant-time comparison anti-timing-attack
+     - HMAC-SHA256 cryptographic integrity
+     - Timestamp replay protection (5-min window)
+     - Idempotency documentation with code examples
+     - Response code guide (200/401/429)
+  
+  7. ✅ Cross-Account IAM Onboarding Guide
+     - Enhanced trust policy display with copy buttons
+     - Permissions policy JSON
+     - AWS CLI commands for role creation
+     - External ID security explanation
+     - Step-by-step onboarding flow
+     - Security best practices
 
 backend:
   - task: "Remove fake alert generator endpoint"
