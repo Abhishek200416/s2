@@ -469,6 +469,205 @@ async def verify_webhook_signature(
     
     return True
 
+
+# AWS Integration Helper Functions
+async def verify_aws_credentials(access_key_id: str, secret_access_key: str, region: str = "us-east-1") -> Dict[str, Any]:
+    """
+    Verify AWS credentials by attempting to connect to AWS services
+    Returns verification result with details
+    """
+    result = {
+        "verified": False,
+        "services": {},
+        "error": None
+    }
+    
+    try:
+        # Create boto3 session with provided credentials
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+        
+        # Test EC2 connectivity
+        try:
+            ec2 = session.client('ec2')
+            response = ec2.describe_instances(MaxResults=5)
+            result["services"]["ec2"] = {
+                "available": True,
+                "instance_count": sum(len(r['Instances']) for r in response.get('Reservations', []))
+            }
+        except Exception as e:
+            result["services"]["ec2"] = {"available": False, "error": str(e)}
+        
+        # Test CloudWatch connectivity
+        try:
+            cloudwatch = session.client('cloudwatch')
+            cloudwatch.list_metrics(MaxRecords=1)
+            result["services"]["cloudwatch"] = {"available": True}
+        except Exception as e:
+            result["services"]["cloudwatch"] = {"available": False, "error": str(e)}
+        
+        # Test SSM connectivity
+        try:
+            ssm = session.client('ssm')
+            ssm.describe_instance_information(MaxResults=1)
+            result["services"]["ssm"] = {"available": True}
+        except Exception as e:
+            result["services"]["ssm"] = {"available": False, "error": str(e)}
+        
+        # Test Patch Manager
+        try:
+            ssm = session.client('ssm')
+            ssm.describe_patch_baselines(MaxResults=1)
+            result["services"]["patch_manager"] = {"available": True}
+        except Exception as e:
+            result["services"]["patch_manager"] = {"available": False, "error": str(e)}
+        
+        # If at least one service is available, consider it verified
+        if any(svc.get("available", False) for svc in result["services"].values()):
+            result["verified"] = True
+        else:
+            result["error"] = "No AWS services accessible with provided credentials"
+            
+    except Exception as e:
+        result["error"] = f"AWS credentials verification failed: {str(e)}"
+    
+    return result
+
+async def get_cloudwatch_alarms(access_key_id: str, secret_access_key: str, region: str = "us-east-1") -> List[Dict[str, Any]]:
+    """
+    Fetch CloudWatch alarms for monitoring (PULL mode)
+    """
+    try:
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+        
+        cloudwatch = session.client('cloudwatch')
+        response = cloudwatch.describe_alarms(
+            StateValue='ALARM',  # Only fetch alarms in ALARM state
+            MaxRecords=100
+        )
+        
+        alarms = []
+        for alarm in response.get('MetricAlarms', []):
+            alarms.append({
+                "alarm_name": alarm['AlarmName'],
+                "alarm_arn": alarm['AlarmArn'],
+                "state": alarm['StateValue'],
+                "state_reason": alarm.get('StateReason', ''),
+                "metric_name": alarm.get('MetricName', ''),
+                "namespace": alarm.get('Namespace', ''),
+                "timestamp": alarm.get('StateUpdatedTimestamp', datetime.now(timezone.utc)).isoformat()
+            })
+        
+        return alarms
+    except Exception as e:
+        logging.error(f"Error fetching CloudWatch alarms: {str(e)}")
+        return []
+
+async def get_patch_compliance(access_key_id: str, secret_access_key: str, region: str = "us-east-1") -> List[Dict[str, Any]]:
+    """
+    Fetch real patch compliance data from AWS Patch Manager
+    """
+    try:
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+        
+        ssm = session.client('ssm')
+        
+        # Get all managed instances
+        instances_response = ssm.describe_instance_information()
+        instances = instances_response.get('InstanceInformationList', [])
+        
+        compliance_data = []
+        
+        for instance in instances:
+            instance_id = instance['InstanceId']
+            
+            # Get patch compliance for this instance
+            try:
+                compliance_response = ssm.describe_instance_patch_states(
+                    InstanceIds=[instance_id]
+                )
+                
+                for patch_state in compliance_response.get('InstancePatchStates', []):
+                    compliance_data.append({
+                        "instance_id": instance_id,
+                        "instance_name": instance.get('ComputerName', instance_id),
+                        "platform": instance.get('PlatformType', 'Unknown'),
+                        "compliance_status": "compliant" if patch_state.get('FailedCount', 0) == 0 else "non_compliant",
+                        "installed_count": patch_state.get('InstalledCount', 0),
+                        "missing_count": patch_state.get('MissingCount', 0),
+                        "failed_count": patch_state.get('FailedCount', 0),
+                        "critical_missing": patch_state.get('CriticalNonCompliantCount', 0),
+                        "security_missing": patch_state.get('SecurityNonCompliantCount', 0),
+                        "last_scan": patch_state.get('OperationEndTime', datetime.now(timezone.utc)).isoformat(),
+                        "baseline_id": patch_state.get('BaselineId', 'N/A')
+                    })
+            except Exception as e:
+                logging.error(f"Error getting patch compliance for {instance_id}: {str(e)}")
+                continue
+        
+        return compliance_data
+    except Exception as e:
+        logging.error(f"Error fetching patch compliance: {str(e)}")
+        return []
+
+async def execute_patch_command(
+    access_key_id: str,
+    secret_access_key: str,
+    region: str,
+    instance_ids: List[str],
+    operation: str = "install"  # install or scan
+) -> Dict[str, Any]:
+    """
+    Execute AWS SSM patch command on instances
+    """
+    try:
+        session = boto3.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=region
+        )
+        
+        ssm = session.client('ssm')
+        
+        # Determine document based on operation
+        document_name = "AWS-RunPatchBaseline"
+        
+        response = ssm.send_command(
+            InstanceIds=instance_ids,
+            DocumentName=document_name,
+            Parameters={
+                "Operation": [operation.capitalize()]
+            },
+            Comment=f"Alert Whisperer - Patch {operation}"
+        )
+        
+        command_id = response['Command']['CommandId']
+        
+        return {
+            "success": True,
+            "command_id": command_id,
+            "instance_ids": instance_ids,
+            "operation": operation,
+            "status": "InProgress"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 async def check_rate_limit(company_id: str) -> bool:
     """
     Check and enforce rate limiting for company
