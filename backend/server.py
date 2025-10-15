@@ -1450,10 +1450,13 @@ async def get_chat_messages(company_id: str, limit: int = 50):
     
     return list(reversed(messages))
 
+class ChatMessageRequest(BaseModel):
+    message: str
+
 @api_router.post("/chat/{company_id}")
 async def send_chat_message(
     company_id: str, 
-    message: str,
+    message_data: ChatMessageRequest,
     current_user: User = Depends(get_current_user)
 ):
     """Send a chat message"""
@@ -1462,7 +1465,7 @@ async def send_chat_message(
         user_id=current_user.id,
         user_name=current_user.name,
         user_role=current_user.role,
-        message=message
+        message=message_data.message
     )
     
     await db.chat_messages.insert_one(chat_message.model_dump())
