@@ -2663,6 +2663,289 @@ async def get_unread_count(current_user: User = Depends(get_current_user)):
     return {"count": count}
 
 
+# ============= Approval Request Endpoints =============
+@api_router.get("/approval-requests")
+async def get_approval_requests(
+    current_user: User = Depends(get_current_user),
+    status: Optional[str] = None
+):
+    """Get approval requests (for admins)"""
+    if not check_permission(current_user.model_dump(), "approve_runbooks"):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    # Admins see all, company admins see only their companies
+    if current_user.role == "company_admin":
+        query["company_id"] = {"$in": current_user.company_ids}
+    
+    requests = await db.approval_requests.find(
+        query,
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    return requests
+
+@api_router.post("/approval-requests/{request_id}/approve")
+async def approve_runbook_request(
+    request_id: str,
+    approval_notes: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Approve a runbook execution request"""
+    if not check_permission(current_user.model_dump(), "approve_runbooks"):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # Get approval request
+    approval_req = await db.approval_requests.find_one({"id": request_id}, {"_id": 0})
+    if not approval_req:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+    
+    if approval_req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Request is already {approval_req['status']}")
+    
+    # Check if expired
+    if datetime.fromisoformat(approval_req["expires_at"]) < datetime.now(timezone.utc):
+        await db.approval_requests.update_one(
+            {"id": request_id},
+            {"$set": {"status": "expired", "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        raise HTTPException(status_code=400, detail="Approval request has expired")
+    
+    # Check role permissions for risk level
+    risk_level = approval_req.get("risk_level", "medium")
+    if risk_level == "high" and current_user.role not in ["msp_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Only MSP Admin can approve high-risk runbooks")
+    
+    # Approve the request
+    await db.approval_requests.update_one(
+        {"id": request_id},
+        {
+            "$set": {
+                "status": "approved",
+                "approved_by": current_user.id,
+                "approval_notes": approval_notes,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Create audit log
+    await create_audit_log(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        company_id=approval_req["company_id"],
+        action="approval_granted",
+        resource_type="approval_request",
+        resource_id=request_id,
+        details={
+            "incident_id": approval_req["incident_id"],
+            "runbook_id": approval_req["runbook_id"],
+            "risk_level": risk_level,
+            "approval_notes": approval_notes
+        },
+        status="success"
+    )
+    
+    return {"message": "Runbook execution approved", "request_id": request_id}
+
+@api_router.post("/approval-requests/{request_id}/reject")
+async def reject_runbook_request(
+    request_id: str,
+    rejection_reason: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Reject a runbook execution request"""
+    if not check_permission(current_user.model_dump(), "approve_runbooks"):
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # Get approval request
+    approval_req = await db.approval_requests.find_one({"id": request_id}, {"_id": 0})
+    if not approval_req:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+    
+    if approval_req["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Request is already {approval_req['status']}")
+    
+    # Reject the request
+    await db.approval_requests.update_one(
+        {"id": request_id},
+        {
+            "$set": {
+                "status": "rejected",
+                "approved_by": current_user.id,
+                "approval_notes": rejection_reason,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Create audit log
+    await create_audit_log(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        company_id=approval_req["company_id"],
+        action="approval_rejected",
+        resource_type="approval_request",
+        resource_id=request_id,
+        details={
+            "incident_id": approval_req["incident_id"],
+            "runbook_id": approval_req["runbook_id"],
+            "risk_level": approval_req.get("risk_level", "medium"),
+            "rejection_reason": rejection_reason
+        },
+        status="success"
+    )
+    
+    return {"message": "Runbook execution rejected", "request_id": request_id}
+
+
+# ============= Rate Limit Management Endpoints =============
+@api_router.get("/companies/{company_id}/rate-limit")
+async def get_rate_limit_config(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get rate limit configuration for a company"""
+    if current_user.role not in ["msp_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Only admins can view rate limit config")
+    
+    config = await db.rate_limits.find_one({"company_id": company_id}, {"_id": 0})
+    if not config:
+        # Return default config
+        return RateLimitConfig(company_id=company_id).model_dump()
+    
+    return config
+
+@api_router.put("/companies/{company_id}/rate-limit")
+async def update_rate_limit_config(
+    company_id: str,
+    requests_per_minute: int,
+    burst_size: int,
+    enabled: bool = True,
+    current_user: User = Depends(get_current_user)
+):
+    """Update rate limit configuration for a company"""
+    if current_user.role not in ["msp_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Only admins can update rate limit config")
+    
+    # Validate values
+    if requests_per_minute < 1 or requests_per_minute > 1000:
+        raise HTTPException(status_code=400, detail="Requests per minute must be between 1 and 1000")
+    
+    if burst_size < requests_per_minute:
+        raise HTTPException(status_code=400, detail="Burst size must be >= requests per minute")
+    
+    # Update or create config
+    await db.rate_limits.update_one(
+        {"company_id": company_id},
+        {
+            "$set": {
+                "requests_per_minute": requests_per_minute,
+                "burst_size": burst_size,
+                "enabled": enabled,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        },
+        upsert=True
+    )
+    
+    # Create audit log
+    await create_audit_log(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        company_id=company_id,
+        action="rate_limit_updated",
+        resource_type="company",
+        resource_id=company_id,
+        details={
+            "requests_per_minute": requests_per_minute,
+            "burst_size": burst_size,
+            "enabled": enabled
+        },
+        status="success"
+    )
+    
+    return {"message": "Rate limit configuration updated"}
+
+
+# ============= Audit Log Endpoints =============
+@api_router.get("/audit-logs")
+async def get_audit_logs(
+    current_user: User = Depends(get_current_user),
+    company_id: Optional[str] = None,
+    action: Optional[str] = None,
+    limit: int = 100
+):
+    """Get audit logs (admin only)"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    query = {}
+    
+    # Company admins can only see their companies
+    if current_user.role == "company_admin":
+        query["company_id"] = {"$in": current_user.company_ids}
+    elif company_id:
+        query["company_id"] = company_id
+    
+    if action:
+        query["action"] = action
+    
+    logs = await db.audit_logs.find(
+        query,
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(limit).to_list(limit)
+    
+    return logs
+
+@api_router.get("/audit-logs/summary")
+async def get_audit_log_summary(
+    current_user: User = Depends(get_current_user),
+    company_id: Optional[str] = None
+):
+    """Get audit log summary statistics"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    query = {}
+    if current_user.role == "company_admin":
+        query["company_id"] = {"$in": current_user.company_ids}
+    elif company_id:
+        query["company_id"] = company_id
+    
+    # Get counts by action type
+    pipeline = [
+        {"$match": query},
+        {"$group": {
+            "_id": "$action",
+            "count": {"$sum": 1}
+        }}
+    ]
+    
+    action_counts = await db.audit_logs.aggregate(pipeline).to_list(None)
+    
+    # Get total count
+    total = await db.audit_logs.count_documents(query)
+    
+    # Get recent critical actions
+    recent_critical = await db.audit_logs.find(
+        {**query, "action": {"$in": ["runbook_executed", "approval_granted", "approval_rejected"]}},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(10).to_list(10)
+    
+    return {
+        "total_logs": total,
+        "action_counts": {item["_id"]: item["count"] for item in action_counts},
+        "recent_critical_actions": recent_critical
+    }
+
+
 # ============= WebSocket Endpoint for Real-Time Updates =============
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
