@@ -1,7 +1,7 @@
 """Memory Service for Agent Core"""
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import uuid
 
 class MemoryMessage(BaseModel):
