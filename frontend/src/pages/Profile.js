@@ -92,6 +92,16 @@ const Profile = ({ user, onLogout, onUpdate }) => {
   return (
     <div className="min-h-screen bg-slate-950 py-8">
       <div className="max-w-4xl mx-auto px-6">
+        <div className="mb-6 flex items-center gap-4">
+          <Button
+            onClick={() => navigate('/dashboard')}
+            variant="ghost"
+            className="text-slate-400 hover:text-white hover:bg-slate-800"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">Profile Settings</h1>
           <p className="text-slate-400">Manage your account information and security</p>
