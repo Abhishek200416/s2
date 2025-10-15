@@ -1737,6 +1737,27 @@ async def execute_runbook_with_ssm(
         }
     )
     
+    # Create audit log entry
+    await create_audit_log(
+        user_id=user["id"],
+        user_email=user["email"],
+        user_role=user["role"],
+        company_id=incident["company_id"],
+        action="runbook_executed",
+        resource_type="incident",
+        resource_id=incident_id,
+        details={
+            "runbook_id": request.runbook_id,
+            "runbook_name": runbook["name"],
+            "risk_level": risk_level,
+            "approval_status": approval_status,
+            "command_id": command_id,
+            "instance_ids": instance_ids,
+            "duration_seconds": duration
+        },
+        status="success"
+    )
+    
     # Broadcast incident update
     await manager.broadcast({
         "type": "incident_updated",
@@ -1752,7 +1773,9 @@ async def execute_runbook_with_ssm(
         "incident_id": incident_id,
         "status": "Success",
         "duration_seconds": duration,
-        "instance_ids": instance_ids
+        "instance_ids": instance_ids,
+        "risk_level": risk_level,
+        "approval_status": approval_status
     }
 
 @api_router.get("/incidents/{incident_id}/ssm-executions", response_model=List[SSMExecution])
