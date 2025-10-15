@@ -436,32 +436,69 @@ const CompanyManagement = ({ onCompanyChange }) => {
               </div>
             </div>
 
-            {/* What Happens Next */}
+            {/* What Happens Next - Enhanced Automation Flow */}
             <div className="p-5 bg-gradient-to-r from-cyan-500/10 to-teal-500/10 border border-cyan-500/30 rounded-lg">
               <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                 <Send className="w-5 h-5 text-cyan-400" />
-                What Happens Next?
+                Automated MSP Workflow
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 mt-2"></span>
+                  <div className="w-8 h-8 bg-cyan-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-cyan-400 font-bold text-sm">1</span>
+                  </div>
                   <div>
-                    <p className="text-white font-medium">Alerts are Received</p>
-                    <p className="text-sm text-slate-400">All alerts sent with this API key are automatically received and stored</p>
+                    <p className="text-white font-medium">Real-Time Alert Reception</p>
+                    <p className="text-sm text-slate-400">All alerts sent with this API key are instantly received, validated, and stored with WebSocket broadcasting to connected clients</p>
                   </div>
                 </div>
+                
                 <div className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 mt-2"></span>
+                  <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-purple-400 font-bold text-sm">2</span>
+                  </div>
                   <div>
-                    <p className="text-white font-medium">AI Correlation</p>
-                    <p className="text-sm text-slate-400">Similar alerts are grouped into incidents for easier management</p>
+                    <p className="text-white font-medium">AI-Powered Correlation & Priority Scoring</p>
+                    <p className="text-sm text-slate-400">
+                      Intelligent algorithms group similar alerts within a 15-minute window by signature and asset. 
+                      Priority score calculated: <code className="text-amber-400 text-xs">severity + critical_asset + duplicates + multi_tool - age_decay</code>
+                    </p>
                   </div>
                 </div>
+
                 <div className="flex items-start gap-3">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 mt-2"></span>
+                  <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-emerald-400 font-bold text-sm">3</span>
+                  </div>
                   <div>
-                    <p className="text-white font-medium">Technician Assignment</p>
-                    <p className="text-sm text-slate-400">Incidents can be assigned to your technicians for resolution</p>
+                    <p className="text-white font-medium">Automated Decision Engine</p>
+                    <p className="text-sm text-slate-400">
+                      System attempts automated resolution first using predefined playbooks. If successful, incident is self-healed and closed automatically. If not, proceeds to technician assignment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-orange-400 font-bold text-sm">4</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">Intelligent Technician Assignment</p>
+                    <p className="text-sm text-slate-400">
+                      For incidents requiring human intervention, system automatically assigns to available technicians based on expertise, workload, and priority. Critical incidents trigger instant notifications.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-pink-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-pink-400 font-bold text-sm">5</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">Resolution Tracking & Analytics</p>
+                    <p className="text-sm text-slate-400">
+                      Track MTTR (Mean Time To Resolution), noise reduction %, self-healed incidents, and technician performance. All metrics visible in real-time dashboard.
+                    </p>
                   </div>
                 </div>
               </div>
