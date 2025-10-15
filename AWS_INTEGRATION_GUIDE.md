@@ -209,7 +209,18 @@ POST /api/companies/{company_id}/webhook-security/disable
 
 ---
 
-## 🔄 Event-Driven Correlation
+## 🔄 Event Correlation (NOT AI)
+
+### **What It Is**
+
+Event Correlation is a **rule-based, configurable system** (NOT AI/ML) that groups related alerts within a time window using deterministic aggregation keys.
+
+**Why NOT AI:**
+- Deterministic behavior (predictable, auditable)
+- No training data required
+- Immediate deployment
+- Clear audit trail
+- Industry-standard approach (matches Datadog Event Aggregation, PagerDuty Alert Grouping)
 
 ### **Configurable Time Window**
 
