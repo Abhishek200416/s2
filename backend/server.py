@@ -2197,10 +2197,8 @@ async def get_company_patch_compliance(company_id: str):
     # Check if AWS credentials are configured and enabled
     aws_creds = company.get("aws_credentials", {})
     if not aws_creds or not aws_creds.get("enabled", False):
-        return {
-            "error": "AWS credentials not configured",
-            "message": "Please configure AWS credentials in company settings to fetch patch compliance data"
-        }
+        # Return empty list when AWS is not configured (no demo data)
+        return []
     
     # Fetch real patch compliance from AWS
     compliance_list = await get_patch_compliance(
