@@ -21,6 +21,9 @@ import json
 import hmac
 import hashlib
 import time
+import boto3
+from botocore.exceptions import ClientError, BotoCoreError
+from concurrent.futures import ThreadPoolExecutor
 
 
 ROOT_DIR = Path(__file__).parent
