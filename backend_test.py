@@ -224,8 +224,255 @@ class AlertWhispererTester:
         else:
             self.log_result("Webhook Invalid API Key", False, "No response received for invalid API key test")
     
+    def test_fake_generator_removed(self):
+        """Test 4: Verify Fake Alert Generator Removed"""
+        print("\n=== Testing Fake Alert Generator Removal ===")
+        
+        # Test that fake alert generator endpoint returns 404
+        response = self.make_request('POST', '/alerts/generate')
+        if response is not None and response.status_code == 404:
+            self.log_result("Fake Generator Removed", True, "POST /api/alerts/generate correctly returns 404")
+        elif response is not None:
+            self.log_result("Fake Generator Removed", False, f"Expected 404 for fake generator, got: {response.status_code}")
+        else:
+            self.log_result("Fake Generator Removed", False, "No response received for fake generator test")
+    
+    def test_realtime_metrics(self):
+        """Test 5: Real-Time Metrics Endpoint"""
+        print("\n=== Testing Real-Time Metrics Endpoint ===")
+        
+        # Test real-time metrics endpoint
+        response = self.make_request('GET', '/metrics/realtime')
+        if response and response.status_code == 200:
+            metrics = response.json()
+            
+            # Check required fields
+            required_fields = ['alerts', 'incidents', 'kpis', 'timestamp']
+            missing_fields = [field for field in required_fields if field not in metrics]
+            
+            if not missing_fields:
+                # Check alert counts structure
+                alerts = metrics.get('alerts', {})
+                alert_fields = ['critical', 'high', 'medium', 'low', 'total']
+                alert_missing = [field for field in alert_fields if field not in alerts]
+                
+                # Check incident counts structure
+                incidents = metrics.get('incidents', {})
+                incident_fields = ['new', 'in_progress', 'resolved', 'escalated', 'total']
+                incident_missing = [field for field in incident_fields if field not in incidents]
+                
+                # Check KPIs structure
+                kpis = metrics.get('kpis', {})
+                kpi_fields = ['noise_reduction_pct', 'self_healed_count', 'mttr_minutes']
+                kpi_missing = [field for field in kpi_fields if field not in kpis]
+                
+                if not alert_missing and not incident_missing and not kpi_missing:
+                    self.log_result("Real-Time Metrics", True, f"Metrics endpoint working: {alerts['total']} alerts, {incidents['total']} incidents, {kpis['noise_reduction_pct']:.1f}% noise reduction")
+                else:
+                    missing_all = alert_missing + incident_missing + kpi_missing
+                    self.log_result("Real-Time Metrics", False, f"Missing metric fields: {missing_all}")
+            else:
+                self.log_result("Real-Time Metrics", False, f"Missing required fields: {missing_fields}")
+        else:
+            self.log_result("Real-Time Metrics", False, f"Failed to get metrics: {response.status_code if response else 'No response'}")
+    
+    def test_chat_system(self):
+        """Test 6: Chat System"""
+        print("\n=== Testing Chat System ===")
+        
+        # Test get chat messages
+        response = self.make_request('GET', '/chat/comp-acme')
+        if response and response.status_code == 200:
+            messages = response.json()
+            self.log_result("Get Chat Messages", True, f"Retrieved {len(messages)} chat messages for Acme Corp")
+            
+            # Test send chat message
+            test_message = {"message": "Test message from backend testing"}
+            response = self.make_request('POST', '/chat/comp-acme', json=test_message)
+            if response and response.status_code == 200:
+                sent_message = response.json()
+                if sent_message.get('message') == "Test message from backend testing":
+                    self.log_result("Send Chat Message", True, f"Message sent successfully by {sent_message.get('user_name')}")
+                    
+                    # Test mark messages as read
+                    response = self.make_request('PUT', '/chat/comp-acme/mark-read')
+                    if response and response.status_code == 200:
+                        self.log_result("Mark Chat Read", True, "Messages marked as read successfully")
+                    else:
+                        self.log_result("Mark Chat Read", False, f"Failed to mark messages as read: {response.status_code if response else 'No response'}")
+                else:
+                    self.log_result("Send Chat Message", False, "Message content doesn't match what was sent")
+            else:
+                self.log_result("Send Chat Message", False, f"Failed to send message: {response.status_code if response else 'No response'}")
+        else:
+            self.log_result("Get Chat Messages", False, f"Failed to get chat messages: {response.status_code if response else 'No response'}")
+    
+    def test_notification_system(self):
+        """Test 7: Notification System"""
+        print("\n=== Testing Notification System ===")
+        
+        # Test get all notifications
+        response = self.make_request('GET', '/notifications')
+        if response and response.status_code == 200:
+            notifications = response.json()
+            self.log_result("Get Notifications", True, f"Retrieved {len(notifications)} notifications")
+            
+            # Test get unread count
+            response = self.make_request('GET', '/notifications/unread-count')
+            if response and response.status_code == 200:
+                unread_data = response.json()
+                unread_count = unread_data.get('count', 0)
+                self.log_result("Get Unread Count", True, f"Unread notifications count: {unread_count}")
+                
+                # If there are notifications, test marking one as read
+                if len(notifications) > 0:
+                    first_notification = notifications[0]
+                    notification_id = first_notification.get('id')
+                    if notification_id:
+                        response = self.make_request('PUT', f'/notifications/{notification_id}/read')
+                        if response and response.status_code == 200:
+                            self.log_result("Mark Notification Read", True, f"Notification {notification_id[:8]}... marked as read")
+                        else:
+                            self.log_result("Mark Notification Read", False, f"Failed to mark notification as read: {response.status_code if response else 'No response'}")
+                    else:
+                        self.log_result("Mark Notification Read", False, "No notification ID found to test marking as read")
+                else:
+                    self.log_result("Mark Notification Read", True, "No notifications to mark as read (expected)")
+            else:
+                self.log_result("Get Unread Count", False, f"Failed to get unread count: {response.status_code if response else 'No response'}")
+        else:
+            self.log_result("Get Notifications", False, f"Failed to get notifications: {response.status_code if response else 'No response'}")
+    
+    def test_enhanced_correlation(self, api_key=None):
+        """Test 8: Enhanced Correlation with Priority Scoring"""
+        print("\n=== Testing Enhanced Correlation with Priority Scoring ===")
+        
+        if not api_key:
+            # Get API key from companies endpoint
+            response = self.make_request('GET', '/companies/comp-acme')
+            if response and response.status_code == 200:
+                company = response.json()
+                api_key = company.get('api_key')
+        
+        if not api_key:
+            self.log_result("Enhanced Correlation Setup", False, "No API key available for correlation testing")
+            return
+        
+        # First, create a test alert via webhook
+        webhook_payload = {
+            "asset_name": "srv-web-01",
+            "signature": "high_cpu",
+            "severity": "critical",
+            "message": "CPU usage 95% - correlation test",
+            "tool_source": "Datadog"
+        }
+        
+        response = self.make_request('POST', f'/webhooks/alerts?api_key={api_key}', json=webhook_payload)
+        if response and response.status_code == 200:
+            webhook_result = response.json()
+            alert_id = webhook_result.get('alert_id')
+            self.log_result("Create Test Alert", True, f"Test alert created with ID: {alert_id}")
+            
+            # Wait a moment for the alert to be processed
+            time.sleep(1)
+            
+            # Now correlate alerts
+            response = self.make_request('POST', '/incidents/correlate?company_id=comp-acme')
+            if response and response.status_code == 200:
+                correlation_result = response.json()
+                incidents_created = correlation_result.get('incidents_created', 0)
+                self.log_result("Correlate Alerts", True, f"Correlation completed: {incidents_created} incidents created")
+                
+                # Check if incidents have priority scores and tool sources
+                response = self.make_request('GET', '/incidents?company_id=comp-acme')
+                if response and response.status_code == 200:
+                    incidents = response.json()
+                    
+                    # Find our test incident
+                    test_incident = None
+                    for incident in incidents:
+                        if incident.get('signature') == 'high_cpu' and incident.get('asset_name') == 'srv-web-01':
+                            test_incident = incident
+                            break
+                    
+                    if test_incident:
+                        priority_score = test_incident.get('priority_score')
+                        tool_sources = test_incident.get('tool_sources', [])
+                        
+                        if priority_score is not None and tool_sources:
+                            self.log_result("Priority Scoring", True, f"Incident has priority_score: {priority_score}, tool_sources: {tool_sources}")
+                        else:
+                            missing = []
+                            if priority_score is None:
+                                missing.append("priority_score")
+                            if not tool_sources:
+                                missing.append("tool_sources")
+                            self.log_result("Priority Scoring", False, f"Incident missing: {missing}")
+                    else:
+                        self.log_result("Priority Scoring", False, "Test incident not found after correlation")
+                else:
+                    self.log_result("Priority Scoring", False, f"Failed to get incidents: {response.status_code if response else 'No response'}")
+            else:
+                self.log_result("Correlate Alerts", False, f"Failed to correlate alerts: {response.status_code if response else 'No response'}")
+        else:
+            self.log_result("Create Test Alert", False, f"Failed to create test alert: {response.status_code if response else 'No response'}")
+    
+    def test_webhook_realtime_broadcasting(self, api_key=None):
+        """Test 9: Webhook Real-Time Broadcasting Structure"""
+        print("\n=== Testing Webhook Real-Time Broadcasting ===")
+        
+        if not api_key:
+            # Get API key from companies endpoint
+            response = self.make_request('GET', '/companies/comp-acme')
+            if response and response.status_code == 200:
+                company = response.json()
+                api_key = company.get('api_key')
+        
+        if not api_key:
+            self.log_result("Webhook Broadcasting Setup", False, "No API key available for webhook broadcasting test")
+            return
+        
+        # Send another alert via webhook to test broadcasting structure
+        webhook_payload = {
+            "asset_name": "srv-app-01",
+            "signature": "memory_leak",
+            "severity": "high",
+            "message": "Memory usage increasing - broadcasting test",
+            "tool_source": "Zabbix"
+        }
+        
+        response = self.make_request('POST', f'/webhooks/alerts?api_key={api_key}', json=webhook_payload)
+        if response and response.status_code == 200:
+            webhook_result = response.json()
+            alert_id = webhook_result.get('alert_id')
+            message = webhook_result.get('message')
+            
+            if alert_id and message:
+                self.log_result("Webhook Broadcasting", True, f"Webhook response includes alert_id: {alert_id}")
+                
+                # Verify alert is stored in database
+                response = self.make_request('GET', f'/alerts?company_id=comp-acme')
+                if response and response.status_code == 200:
+                    alerts = response.json()
+                    found_alert = any(alert.get('id') == alert_id for alert in alerts)
+                    if found_alert:
+                        self.log_result("Alert Storage", True, "Alert confirmed stored in database")
+                    else:
+                        self.log_result("Alert Storage", False, "Alert not found in database")
+                else:
+                    self.log_result("Alert Storage", False, f"Failed to verify alert storage: {response.status_code if response else 'No response'}")
+            else:
+                missing = []
+                if not alert_id:
+                    missing.append("alert_id")
+                if not message:
+                    missing.append("message")
+                self.log_result("Webhook Broadcasting", False, f"Webhook response missing: {missing}")
+        else:
+            self.log_result("Webhook Broadcasting", False, f"Failed to send webhook alert: {response.status_code if response else 'No response'}")
+    
     def test_existing_features(self):
-        """Test 4: Existing Features (smoke test)"""
+        """Test 10: Existing Features (smoke test)"""
         print("\n=== Testing Existing Features (Smoke Test) ===")
         
         # Test seed endpoint
@@ -243,14 +490,6 @@ class AlertWhispererTester:
             self.log_result("Get Alerts", True, f"Retrieved {len(alerts)} active alerts for Acme Corp")
         else:
             self.log_result("Get Alerts", False, f"Failed to get alerts: {response.status_code if response else 'No response'}")
-        
-        # Test correlate alerts
-        response = self.make_request('POST', '/incidents/correlate?company_id=comp-acme')
-        if response and response.status_code == 200:
-            correlation_result = response.json()
-            self.log_result("Correlate Alerts", True, f"Alert correlation completed: {correlation_result.get('incidents_created', 0)} incidents created")
-        else:
-            self.log_result("Correlate Alerts", False, f"Failed to correlate alerts: {response.status_code if response else 'No response'}")
     
     def run_all_tests(self):
         """Run all test scenarios"""
