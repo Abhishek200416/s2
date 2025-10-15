@@ -1044,6 +1044,74 @@ agent_communication:
       - Annotations required for proxy upgrade headers
       
       All frontend services running. Ready for testing.
+  - agent: "main"
+    message: |
+      PRODUCTION-GRADE AWS MSP ENHANCEMENTS COMPLETE!
+      
+      ✅ Backend Improvements:
+      1. HMAC Webhook Security:
+         - Added HMAC-SHA256 signature verification
+         - Timestamp validation with 5-min replay protection
+         - Constant-time comparison to prevent timing attacks
+         - Per-company enable/disable HMAC
+         - X-Signature and X-Timestamp headers
+         - compute_webhook_signature() and verify_webhook_signature() functions
+         - generate_hmac_secret() for secure secret generation
+      
+      2. Webhook Security Endpoints:
+         - GET /api/companies/{company_id}/webhook-security
+         - POST /api/companies/{company_id}/webhook-security/enable
+         - POST /api/companies/{company_id}/webhook-security/disable
+         - POST /api/companies/{company_id}/webhook-security/regenerate-secret
+      
+      3. Configurable Correlation:
+         - Event-driven correlation with 5-15 min configurable window
+         - CorrelationConfig model (time_window_minutes, aggregation_key, auto_correlate)
+         - Aggregation key: asset|signature
+         - Per-company correlation settings
+         - Auto-creates default config if not exists
+      
+      4. Correlation Configuration Endpoints:
+         - GET /api/companies/{company_id}/correlation-config
+         - PUT /api/companies/{company_id}/correlation-config
+         - Validation: time_window_minutes must be 5-15
+      
+      ✅ Frontend Improvements:
+      1. Advanced Settings Page (/advanced-settings):
+         - Tab 1: Webhook Security (HMAC)
+           * Enable/disable HMAC with visual status
+           * View/copy HMAC secret
+           * Regenerate secret with confirmation
+           * Configuration details (headers, replay window)
+           * Python code example for signing
+         - Tab 2: Correlation Settings
+           * Interactive 5-15 min time window slider
+           * Auto-correlate toggle
+           * Min alerts for incident config
+           * Example scenario visualization
+         - Tab 3: AWS Integration
+           * Quick reference cards for AWS services
+           * Link to comprehensive AWS_INTEGRATION_GUIDE.md
+           * Production benefits checklist
+      
+      2. Navigation:
+         - Added "Advanced Settings" button in Dashboard header (cyan theme)
+         - Route: /advanced-settings
+         - Positioned next to Technicians button
+      
+      ✅ Documentation:
+      - Created AWS_INTEGRATION_GUIDE.md (comprehensive 500+ line guide)
+      - HMAC webhook authentication with code examples
+      - Event-driven correlation patterns
+      - Multi-tenant isolation best practices
+      - AWS Secrets Manager integration
+      - AWS Systems Manager (SSM) remote execution
+      - Cross-account IAM roles setup
+      - API Gateway WebSocket migration guide
+      - Patch Manager compliance integration
+      - Security best practices checklist
+      
+      Ready for backend testing of new endpoints!
   - agent: "testing"
     message: |
       FRONTEND TESTING COMPLETE - ALL CRITICAL FEATURES WORKING (95% Success Rate)
