@@ -1,13 +1,37 @@
 # 📊 KPI Tracking & Proof Methodology
 
-> **Quantifiable Results for Alert Whisperer MSP Platform**
-> How we measure, track, and prove the 40-70% noise reduction and operational improvements
+> **Target-Based Performance Metrics for Alert Whisperer MSP Platform**
+> How we measure, track, and set realistic targets for noise reduction and operational improvements
 
 ---
 
-## 🎯 Core KPIs
+## ⚠️ Important: Targets vs Guarantees
 
-### 1. Alert Noise Reduction (Target: ≥40%)
+**These percentages are TARGET RANGES, not guaranteed outcomes:**
+
+- Actual results vary based on:
+  - Alert volume and diversity
+  - Correlation configuration (time window, aggregation keys)
+  - Infrastructure complexity
+  - Baseline measurement period
+  - Tuning and optimization
+
+**Best Practice:**
+1. Capture YOUR baseline (before Alert Whisperer)
+2. Measure after implementation
+3. Compare YOUR before/after metrics
+4. Adjust correlation settings for YOUR environment
+
+---
+
+## 🎯 Core KPI Targets
+
+### 1. Alert Noise Reduction (Target Range: 40-70%)
+
+**What This Means:**
+- Industry benchmarks show event correlation typically reduces actionable items by 40-70%
+- YOUR results depend on YOUR alert patterns and configuration
+- PagerDuty/Datadog report similar ranges for event grouping
 
 **Definition:** Percentage reduction in actionable items through correlation and deduplication.
 
@@ -15,13 +39,13 @@
 ```
 Noise Reduction % = (1 - (Incidents Created / Raw Alerts Received)) × 100
 
-Example:
+Example (Target: 65%):
 - Raw Alerts Received: 1,000
 - Incidents Created: 350
 - Noise Reduction: (1 - 350/1000) × 100 = 65%
 ```
 
-**Measurement Method:**
+**How to Measure YOUR Baseline:**
 
 **Before Correlation (Baseline):**
 ```python
