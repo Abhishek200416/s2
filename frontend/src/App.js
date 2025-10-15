@@ -112,6 +112,17 @@ function App() {
                 <Navigate to="/login" replace />
             } 
           />
+          <Route 
+            path="/advanced-settings" 
+            element={
+              isAuthenticated ? 
+                <AdvancedSettings 
+                  companyId={user?.company_ids?.[0]} 
+                  companyName="Current Company"
+                /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
         </Routes>
       </BrowserRouter>
     </div>
