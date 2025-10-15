@@ -187,6 +187,31 @@ class KPI(BaseModel):
     patch_compliance_pct: float = 0.0
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+class ChatMessage(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    company_id: str
+    user_id: str
+    user_name: str
+    user_role: str
+    message: str
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    read: bool = False
+
+class Notification(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    company_id: Optional[str] = None
+    incident_id: Optional[str] = None
+    alert_id: Optional[str] = None
+    type: str  # critical_alert, incident_created, incident_assigned, action_required, action_failed
+    title: str
+    message: str
+    priority: str  # low, medium, high, critical
+    read: bool = False
+    timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
 class DecisionRequest(BaseModel):
     incident_id: str
 
