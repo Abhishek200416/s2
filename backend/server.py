@@ -985,13 +985,72 @@ async def login(credentials: UserLogin):
     user_doc.pop("password_hash", None)
     user_doc.pop("_id", None)
     
-    # Create token
-    access_token = create_access_token(data={"sub": user_doc["email"], "id": user_doc["id"]})
+    # Create tokens using new auth service (OWASP-compliant)
+    if auth_service:
+        access_token = await auth_service.create_access_token({"sub": user_doc["email"], "id": user_doc["id"]})
+        refresh_token = await auth_service.create_refresh_token(user_doc["id"], user_doc["email"])
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": user_doc
+        }
+    else:
+        # Fallback to old method if service not initialized
+        access_token = create_access_token(data={"sub": user_doc["email"], "id": user_doc["id"]})
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": user_doc
+        }
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+@api_router.post("/auth/refresh")
+async def refresh_access_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Refresh access token using refresh token
+    
+    OWASP-Compliant Token Rotation:
+    - Accepts refresh token (7-day lifetime)
+    - Returns NEW access token (30-minute lifetime)
+    - Returns NEW refresh token (7-day lifetime)
+    - Automatically revokes old refresh token
+    """
+    if not auth_service:
+        raise HTTPException(status_code=500, detail="Auth service not initialized")
+    
+    refresh_token = credentials.credentials
+    
+    # Rotate tokens
+    result = await auth_service.rotate_refresh_token(refresh_token)
+    if not result:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    
+    new_access_token, new_refresh_token = result
     
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": user_doc
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer"
+    }
+
+@api_router.post("/auth/logout-all")
+async def logout_all_devices(current_user: User = Depends(get_current_user)):
+    """
+    Logout from all devices
+    Revokes ALL refresh tokens for the current user
+    """
+    if not auth_service:
+        raise HTTPException(status_code=500, detail="Auth service not initialized")
+    
+    count = await auth_service.revoke_all_user_tokens(current_user.id)
+    
+    return {
+        "message": "Logged out from all devices",
+        "revoked_tokens": count
     }
 
 
