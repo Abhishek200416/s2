@@ -1478,6 +1478,92 @@ async def send_chat_message(
 @api_router.put
 
 
+("/chat/{company_id}/mark-read")
+async def mark_chat_messages_read(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Mark all chat messages as read for current user"""
+    await db.chat_messages.update_many(
+        {"company_id": company_id, "user_id": {"$ne": current_user.id}},
+        {"$set": {"read": True}}
+    )
+    return {"message": "Messages marked as read"}
+
+
+# ============= Notification Endpoints =============
+@api_router.get("/notifications")
+async def get_notifications(
+    current_user: User = Depends(get_current_user),
+    limit: int = 50,
+    unread_only: bool = False
+):
+    """Get notifications for current user"""
+    query = {"user_id": current_user.id}
+    if unread_only:
+        query["read"] = False
+    
+    notifications = await db.notifications.find(
+        query,
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(limit).to_list(limit)
+    
+    return notifications
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Mark a notification as read"""
+    result = await db.notifications.update_one(
+        {"id": notification_id, "user_id": current_user.id},
+        {"$set": {"read": True}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    
+    return {"message": "Notification marked as read"}
+
+@api_router.put("/notifications/mark-all-read")
+async def mark_all_notifications_read(current_user: User = Depends(get_current_user)):
+    """Mark all notifications as read for current user"""
+    await db.notifications.update_many(
+        {"user_id": current_user.id},
+        {"$set": {"read": True}}
+    )
+    return {"message": "All notifications marked as read"}
+
+@api_router.get("/notifications/unread-count")
+async def get_unread_count(current_user: User = Depends(get_current_user)):
+    """Get count of unread notifications"""
+    count = await db.notifications.count_documents({
+        "user_id": current_user.id,
+        "read": False
+    })
+    return {"count": count}
+
+
+# ============= WebSocket Endpoint for Real-Time Updates =============
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time updates"""
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive and listen for client messages
+            data = await websocket.receive_text()
+            # Echo back or handle client messages if needed
+            if data == "ping":
+                await websocket.send_json({"type": "pong"})
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+
+
 # Include the router in the main app
 app.include_router(api_router)
 
