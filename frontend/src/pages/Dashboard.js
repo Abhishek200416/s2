@@ -34,6 +34,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [kpis, setKpis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     loadCompanies();
