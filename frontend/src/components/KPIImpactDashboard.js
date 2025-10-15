@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../App';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Activity, Target, CheckCircle, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, Target, CheckCircle, AlertTriangle, Shield } from 'lucide-react';
 
 const KPIImpactDashboard = ({ companyId }) => {
   const [impactData, setImpactData] = useState(null);
