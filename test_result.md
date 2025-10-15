@@ -797,19 +797,19 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 3
-  run_ui: true
+  version: "2.0"
+  test_sequence: 4
+  run_ui: false
 
 test_plan:
   current_focus:
-    - "Create Real-Time Dashboard component"
-    - "Remove fake alert generator button"
-    - "Create Profile Management page"
-    - "Create Integration Settings page"
-    - "Add navigation to Profile and Integration Settings"
+    - "Add HMAC webhook authentication with replay protection"
+    - "Add webhook security configuration endpoints"
+    - "Add configurable correlation time window (5-15 min)"
+    - "Add correlation configuration endpoints"
+    - "Create Advanced Settings page for webhook security and correlation config"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
