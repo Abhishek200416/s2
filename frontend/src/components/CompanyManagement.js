@@ -339,6 +339,39 @@ const CompanyManagement = ({ onCompanyChange }) => {
                     </div>
                   </div>
                 )}
+
+                {/* KPI Metrics */}
+                {companyKPIs[company.id] && (
+                  <div className="pt-3 border-t border-slate-800">
+                    <p className="text-xs text-slate-500 mb-3">Key Performance Metrics</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg">
+                        <p className="text-xs text-slate-500">Noise Reduction</p>
+                        <p className={`text-lg font-bold ${companyKPIs[company.id].noise_reduction_pct >= 40 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {companyKPIs[company.id].noise_reduction_pct.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg">
+                        <p className="text-xs text-slate-500">MTTR</p>
+                        <p className="text-lg font-bold text-cyan-400">
+                          {companyKPIs[company.id].mttr_overall_minutes.toFixed(0)}m
+                        </p>
+                      </div>
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg">
+                        <p className="text-xs text-slate-500">Self-Healed</p>
+                        <p className={`text-lg font-bold ${companyKPIs[company.id].self_healed_pct >= 20 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {companyKPIs[company.id].self_healed_pct.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="bg-slate-800/50 p-2.5 rounded-lg">
+                        <p className="text-xs text-slate-500">Patch Compliance</p>
+                        <p className={`text-lg font-bold ${companyKPIs[company.id].patch_compliance_pct >= 95 ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {companyKPIs[company.id].patch_compliance_pct.toFixed(0)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
