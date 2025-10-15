@@ -1475,10 +1475,7 @@ async def send_chat_message(
     
     return chat_message
 
-@api_router.put
-
-
-("/chat/{company_id}/mark-read")
+@api_router.put("/chat/{company_id}/mark-read")
 async def mark_chat_messages_read(
     company_id: str,
     current_user: User = Depends(get_current_user)
