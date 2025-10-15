@@ -794,11 +794,11 @@ frontend:
   
   - task: "Create Advanced Settings page for webhook security and correlation config"
     implemented: true
-    working: true
+    working: "NA"
     file: "pages/AdvancedSettings.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -834,6 +834,15 @@ frontend:
           - Added "Advanced Settings" button in Dashboard header (cyan theme)
           - Button positioned next to Technicians button
           - Only accessible to authenticated users
+      - working: "NA"
+        agent: "testing"
+        comment: |
+          FRONTEND TESTING NOT PERFORMED: As per system limitations, frontend testing was not performed.
+          Backend APIs for Advanced Settings page are fully functional and tested:
+          ✅ All webhook security configuration endpoints working
+          ✅ All correlation configuration endpoints working
+          ✅ Backend provides all data needed for Advanced Settings UI
+          Frontend implementation exists but not tested due to system constraints
 
 
 metadata:
