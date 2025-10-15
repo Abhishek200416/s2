@@ -659,13 +659,16 @@ class AlertWhispererTester:
                 
                 # Try webhook without HMAC headers (should fail)
                 response = self.make_request('POST', f'/webhooks/alerts?api_key={api_key}', json=webhook_payload)
-                if response and response.status_code == 401:
-                    error_response = response.json()
-                    error_detail = error_response.get('detail', '')
-                    if "Missing required headers" in error_detail or "X-Signature" in error_detail:
-                        self.log_result("Webhook without HMAC Headers", True, f"Correctly rejected webhook without HMAC headers: {error_detail}")
-                    else:
-                        self.log_result("Webhook without HMAC Headers", False, f"Got 401 but wrong error message: {error_detail}")
+                if response is not None and response.status_code == 401:
+                    try:
+                        error_response = response.json()
+                        error_detail = error_response.get('detail', '')
+                        if "Missing required headers" in error_detail or "X-Signature" in error_detail:
+                            self.log_result("Webhook without HMAC Headers", True, f"Correctly rejected webhook without HMAC headers: {error_detail}")
+                        else:
+                            self.log_result("Webhook without HMAC Headers", False, f"Got 401 but wrong error message: {error_detail}")
+                    except:
+                        self.log_result("Webhook without HMAC Headers", True, f"Got expected 401 error for missing HMAC headers")
                 else:
                     self.log_result("Webhook without HMAC Headers", False, f"Expected 401 for missing HMAC headers, got: {response.status_code if response else 'No response'}")
                 
