@@ -492,10 +492,10 @@ class AlertWhispererTester:
             self.log_result("Get Alerts", False, f"Failed to get alerts: {response.status_code if response else 'No response'}")
     
     def run_all_tests(self):
-        """Run all test scenarios"""
-        print(f"Starting Alert Whisperer Backend API Tests")
+        """Run all test scenarios for real-time Alert Whisperer features"""
+        print(f"Starting Alert Whisperer Real-Time Features Backend API Tests")
         print(f"Backend URL: {self.base_url}")
-        print("=" * 60)
+        print("=" * 80)
         
         # Test 1: Authentication & Profile Management
         auth_success = self.test_authentication()
@@ -507,10 +507,28 @@ class AlertWhispererTester:
         # Test 2: Company & API Key Management
         api_key = self.test_company_api_keys()
         
-        # Test 3: Webhook Integration
+        # Test 3: Webhook Integration (Original)
         self.test_webhook_integration(api_key)
         
-        # Test 4: Existing Features
+        # Test 4: Verify Fake Alert Generator Removed
+        self.test_fake_generator_removed()
+        
+        # Test 5: Real-Time Metrics Endpoint
+        self.test_realtime_metrics()
+        
+        # Test 6: Chat System
+        self.test_chat_system()
+        
+        # Test 7: Notification System
+        self.test_notification_system()
+        
+        # Test 8: Enhanced Correlation with Priority Scoring
+        self.test_enhanced_correlation(api_key)
+        
+        # Test 9: Webhook Real-Time Broadcasting
+        self.test_webhook_realtime_broadcasting(api_key)
+        
+        # Test 10: Existing Features (Smoke Test)
         self.test_existing_features()
         
         return self.generate_summary()
