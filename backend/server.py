@@ -747,6 +747,140 @@ async def regenerate_api_key(company_id: str):
     return Company(**updated)
 
 
+# Webhook Security Configuration Routes
+@api_router.get("/companies/{company_id}/webhook-security", response_model=WebhookSecurityConfig)
+async def get_webhook_security_config(company_id: str):
+    """Get webhook HMAC security configuration for a company"""
+    config = await db.webhook_security.find_one({"company_id": company_id}, {"_id": 0})
+    if not config:
+        # Return default disabled config
+        return WebhookSecurityConfig(
+            company_id=company_id,
+            hmac_secret="",
+            enabled=False
+        )
+    return WebhookSecurityConfig(**config)
+
+@api_router.post("/companies/{company_id}/webhook-security/enable", response_model=WebhookSecurityConfig)
+async def enable_webhook_security(company_id: str):
+    """Enable HMAC webhook security for a company and generate secret"""
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Check if config already exists
+    existing_config = await db.webhook_security.find_one({"company_id": company_id})
+    
+    if existing_config:
+        # Update existing config to enabled
+        await db.webhook_security.update_one(
+            {"company_id": company_id},
+            {"$set": {"enabled": True, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        updated = await db.webhook_security.find_one({"company_id": company_id}, {"_id": 0})
+        return WebhookSecurityConfig(**updated)
+    else:
+        # Create new config with generated secret
+        config = WebhookSecurityConfig(
+            company_id=company_id,
+            hmac_secret=generate_hmac_secret(),
+            enabled=True
+        )
+        await db.webhook_security.insert_one(config.model_dump())
+        return config
+
+@api_router.post("/companies/{company_id}/webhook-security/disable")
+async def disable_webhook_security(company_id: str):
+    """Disable HMAC webhook security for a company"""
+    result = await db.webhook_security.update_one(
+        {"company_id": company_id},
+        {"$set": {"enabled": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Webhook security config not found")
+    return {"message": "Webhook security disabled"}
+
+@api_router.post("/companies/{company_id}/webhook-security/regenerate-secret", response_model=WebhookSecurityConfig)
+async def regenerate_webhook_secret(company_id: str):
+    """Regenerate HMAC secret for webhook security"""
+    config = await db.webhook_security.find_one({"company_id": company_id})
+    if not config:
+        raise HTTPException(status_code=404, detail="Webhook security not configured")
+    
+    new_secret = generate_hmac_secret()
+    await db.webhook_security.update_one(
+        {"company_id": company_id},
+        {"$set": {
+            "hmac_secret": new_secret,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    updated = await db.webhook_security.find_one({"company_id": company_id}, {"_id": 0})
+    return WebhookSecurityConfig(**updated)
+
+
+# Correlation Configuration Routes
+@api_router.get("/companies/{company_id}/correlation-config", response_model=CorrelationConfig)
+async def get_correlation_config(company_id: str):
+    """Get correlation configuration for a company"""
+    config = await db.correlation_config.find_one({"company_id": company_id}, {"_id": 0})
+    if not config:
+        # Return default config
+        return CorrelationConfig(
+            company_id=company_id,
+            time_window_minutes=15,
+            aggregation_key="asset|signature",
+            auto_correlate=True,
+            min_alerts_for_incident=1
+        )
+    return CorrelationConfig(**config)
+
+class CorrelationConfigUpdate(BaseModel):
+    time_window_minutes: Optional[int] = None  # 5-15 minutes
+    auto_correlate: Optional[bool] = None
+    min_alerts_for_incident: Optional[int] = None
+
+@api_router.put("/companies/{company_id}/correlation-config", response_model=CorrelationConfig)
+async def update_correlation_config(company_id: str, config_update: CorrelationConfigUpdate):
+    """Update correlation configuration for a company"""
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Validate time window
+    if config_update.time_window_minutes is not None:
+        if config_update.time_window_minutes < 5 or config_update.time_window_minutes > 15:
+            raise HTTPException(
+                status_code=400,
+                detail="Time window must be between 5 and 15 minutes"
+            )
+    
+    existing_config = await db.correlation_config.find_one({"company_id": company_id})
+    
+    if existing_config:
+        # Update existing config
+        update_data = {k: v for k, v in config_update.model_dump().items() if v is not None}
+        update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        await db.correlation_config.update_one(
+            {"company_id": company_id},
+            {"$set": update_data}
+        )
+    else:
+        # Create new config with provided values and defaults
+        new_config = CorrelationConfig(
+            company_id=company_id,
+            time_window_minutes=config_update.time_window_minutes or 15,
+            auto_correlate=config_update.auto_correlate if config_update.auto_correlate is not None else True,
+            min_alerts_for_incident=config_update.min_alerts_for_incident or 1
+        )
+        await db.correlation_config.insert_one(new_config.model_dump())
+    
+    updated = await db.correlation_config.find_one({"company_id": company_id}, {"_id": 0})
+    return CorrelationConfig(**updated)
+
+
 # Alert Routes
 @api_router.get("/alerts", response_model=List[Alert])
 async def get_alerts(company_id: Optional[str] = None, status: Optional[str] = None):
