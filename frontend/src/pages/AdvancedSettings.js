@@ -521,6 +521,68 @@ print(response.json())`}
                     </p>
                   </div>
                 </div>
+
+                {/* Deduplication Key Patterns */}
+                <div className="space-y-3">
+                  <h4 className="text-white font-semibold">Available Deduplication Key Patterns</h4>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-cyan-400 font-mono text-sm">asset|signature</span>
+                        <span className="text-xs text-green-400 border border-green-400 px-2 py-0.5 rounded">DEFAULT</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Groups alerts from same asset with same signature. Best for most scenarios.
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-cyan-400 font-mono text-sm">asset|signature|tool</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Separate incidents per monitoring tool. Use when you want distinct incidents for same issue from different sources.
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-cyan-400 font-mono text-sm">signature</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Groups all alerts with same signature across all assets. Ideal for infrastructure-wide issues (e.g., network outage).
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-800/30 rounded-lg border border-slate-700">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-cyan-400 font-mono text-sm">asset</span>
+                      </div>
+                      <p className="text-xs text-slate-400">
+                        Groups all alerts from same asset. Use for asset-centric monitoring.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Time Window Rationale */}
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <h4 className="text-blue-400 font-semibold mb-2">Time Window Best Practices</h4>
+                  <div className="space-y-2 text-xs text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-400 font-bold">5 min:</span>
+                      <span>Fast-changing environments, quick incident creation for critical production systems</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-400 font-bold">10 min:</span>
+                      <span>Balanced approach for most use cases, good noise reduction without delays</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-blue-400 font-bold">15 min:</span>
+                      <span>Reduces noise in stable environments, suitable for dev/staging (default)</span>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
