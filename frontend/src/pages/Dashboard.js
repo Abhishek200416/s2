@@ -61,6 +61,35 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
+  const loadNotifications = async () => {
+    try {
+      const response = await api.get('/notifications?limit=10');
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      await api.put(`/notifications/${notificationId}/read`);
+      await loadNotifications();
+      await loadUnreadCount();
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.put('/notifications/mark-all-read');
+      await loadNotifications();
+      await loadUnreadCount();
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    }
+  };
+
   const loadCompanies = async () => {
     try {
       const response = await api.get('/companies');
