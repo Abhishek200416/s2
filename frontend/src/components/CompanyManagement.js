@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 const CompanyManagement = ({ onCompanyChange }) => {
   const [companies, setCompanies] = useState([]);
+  const [companyKPIs, setCompanyKPIs] = useState({});
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
@@ -32,8 +33,22 @@ const CompanyManagement = ({ onCompanyChange }) => {
     try {
       const response = await api.get('/companies');
       setCompanies(response.data);
+      // Load KPIs for each company
+      response.data.forEach(company => loadCompanyKPIs(company.id));
     } catch (error) {
       console.error('Failed to load companies:', error);
+    }
+  };
+
+  const loadCompanyKPIs = async (companyId) => {
+    try {
+      const response = await api.get(`/metrics/realtime?company_id=${companyId}`);
+      setCompanyKPIs(prev => ({
+        ...prev,
+        [companyId]: response.data.kpis
+      }));
+    } catch (error) {
+      console.error(`Failed to load KPIs for company ${companyId}:`, error);
     }
   };
 
