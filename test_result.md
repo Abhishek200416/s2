@@ -779,7 +779,7 @@ agent_communication:
          - POST /api/incidents/correlate?company_id=comp-acme - Alert correlation ✅
       
       All backend APIs are functioning correctly. No critical issues found.
-      Backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
+      Backend URL: https://cloudsentry-4.preview.emergentagent.com/api
   - agent: "testing"
     message: |
       REAL-TIME FEATURES TESTING COMPLETE - ALL TESTS PASSED (27/27 - 100% Success Rate)
@@ -833,7 +833,7 @@ agent_communication:
          - Real-time metrics calculated correctly ✅
       
       All real-time Alert Whisperer features are functioning perfectly!
-      Backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
+      Backend URL: https://cloudsentry-4.preview.emergentagent.com/api
   - agent: "main"
     message: |
       INITIATING FRONTEND TESTING
@@ -870,7 +870,7 @@ agent_communication:
          - Fake alert generator button
          - Emergent badge
       
-      Testing frontend with backend URL: https://realtime-alerts-2.preview.emergentagent.com/api
+      Testing frontend with backend URL: https://cloudsentry-4.preview.emergentagent.com/api
   - agent: "main"
     message: |
       ADDITIONAL UI/UX IMPROVEMENTS COMPLETED:
