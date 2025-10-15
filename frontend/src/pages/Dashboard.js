@@ -249,6 +249,16 @@ const Dashboard = ({ user, onLogout }) => {
                 <Settings className="w-4 h-4 mr-2" />
                 Technicians
               </Button>
+
+              <Button
+                onClick={() => navigate('/advanced-settings')}
+                variant="outline"
+                size="sm"
+                className="border-cyan-700 text-cyan-300 hover:bg-cyan-900/20 hover:text-cyan-200"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Advanced Settings
+              </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
