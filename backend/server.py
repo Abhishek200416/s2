@@ -1129,6 +1129,58 @@ async def update_correlation_config(company_id: str, config_update: CorrelationC
     updated = await db.correlation_config.find_one({"company_id": company_id}, {"_id": 0})
     return CorrelationConfig(**updated)
 
+@api_router.get("/correlation/dedup-keys")
+async def get_dedup_key_options():
+    """
+    Get available deduplication key patterns for correlation
+    
+    Returns examples and explanations of different aggregation strategies
+    """
+    return {
+        "available_keys": [
+            {
+                "key": "asset|signature",
+                "name": "Asset + Signature",
+                "description": "Groups alerts from same asset with same signature (default)",
+                "example": "server-01|disk_space_low",
+                "use_case": "Standard correlation for most scenarios"
+            },
+            {
+                "key": "asset|signature|tool",
+                "name": "Asset + Signature + Tool",
+                "description": "Separate incidents for same issue reported by different tools",
+                "example": "server-01|disk_space_low|Datadog",
+                "use_case": "When you want distinct incidents per monitoring tool"
+            },
+            {
+                "key": "signature",
+                "name": "Signature Only",
+                "description": "Groups all alerts with same signature across all assets",
+                "example": "disk_space_low",
+                "use_case": "Infrastructure-wide issues (e.g., network outage)"
+            },
+            {
+                "key": "asset",
+                "name": "Asset Only",
+                "description": "Groups all alerts from same asset regardless of signature",
+                "example": "server-01",
+                "use_case": "Asset-centric monitoring"
+            }
+        ],
+        "time_window_rationale": {
+            "5_minutes": "Fast-changing environments, quick incident creation",
+            "10_minutes": "Balanced approach for most use cases",
+            "15_minutes": "Reduces noise in stable environments (default)"
+        },
+        "best_practices": [
+            "Start with default 'asset|signature' and 15-minute window",
+            "Use 'asset|signature|tool' if you have overlapping monitoring tools",
+            "Use 'signature' for infrastructure-wide alert storms",
+            "Shorter windows (5 min) for critical production systems",
+            "Longer windows (15 min) for dev/staging to reduce noise"
+        ]
+    }
+
 
 # Alert Routes
 @api_router.get("/alerts", response_model=List[Alert])
