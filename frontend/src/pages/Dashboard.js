@@ -387,6 +387,10 @@ const Dashboard = ({ user, onLogout }) => {
                 />
               </TabsContent>
 
+              <TabsContent value="impact">
+                <KPIImpactDashboard companyId={selectedCompany} companyName={currentCompany?.name} />
+              </TabsContent>
+
               <TabsContent value="correlation">
                 <AlertCorrelation companyId={selectedCompany} companyName={currentCompany?.name} />
               </TabsContent>
