@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL
-BACKEND_URL = "https://secops-guardian.preview.emergentagent.com/api"
+BACKEND_URL = "https://guidance-compare.preview.emergentagent.com/api"
 
 class CriticalTester:
     def __init__(self):
