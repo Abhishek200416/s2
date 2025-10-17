@@ -91,18 +91,47 @@ class HealthResponse(BaseModel):
 # ============= Agent Core =============
 
 class DecisionAgent:
-    """AI Decision Engine wrapped as an Agent"""
+    """Multi-Provider AI Decision Engine
+    
+    Supports multiple AI providers:
+    - Gemini (Google): Default
+    - AWS Bedrock: Enterprise AWS-native (Claude models)
+    - Deterministic Rules: Fallback
+    """
     
     def __init__(self, db, tools_registry):
         self.db = db
         self.tools = tools_registry
         self.decisions_collection = db["agent_decisions"]
-        self.mode = os.getenv("AGENT_MODE", "local")  # local or remote
+        self.provider = AGENT_PROVIDER
         
-        # Initialize Gemini (for local mode)
-        if self.mode == "local":
-            genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-            self.model = genai.GenerativeModel('gemini-2.5-pro')
+        # Initialize Gemini if selected and available
+        if self.provider == "gemini" and GEMINI_AVAILABLE:
+            api_key = os.environ.get('GEMINI_API_KEY')
+            if api_key:
+                genai.configure(api_key=api_key)
+                self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                print(f"✅ Gemini agent initialized (model: gemini-2.0-flash-exp)")
+            else:
+                print("⚠️  GEMINI_API_KEY not set - falling back to rules")
+                self.provider = "rules"
+        
+        # Initialize Bedrock if selected and available
+        elif self.provider.startswith("bedrock") and BEDROCK_AVAILABLE:
+            try:
+                self.bedrock_client = BedrockAgentClient()
+                if self.bedrock_client.available:
+                    self.bedrock_agent = BedrockDecisionAgent(db, tools_registry, self.bedrock_client)
+                    print(f"✅ Bedrock agent initialized (provider: {self.provider})")
+                else:
+                    print("⚠️  Bedrock client not available - falling back to rules")
+                    self.provider = "rules"
+            except Exception as e:
+                print(f"⚠️  Bedrock initialization failed: {e} - falling back to rules")
+                self.provider = "rules"
+        
+        elif self.provider == "rules":
+            print("✅ Using deterministic rules engine (no AI)")
     
     async def decide(self, request: DecisionRequest) -> DecisionResponse:
         """Make a decision about an incident"""
