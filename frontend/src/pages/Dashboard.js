@@ -44,6 +44,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMSPGuide, setShowMSPGuide] = useState(false);
 
   useEffect(() => {
     loadCompanies();
