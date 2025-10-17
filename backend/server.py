@@ -946,6 +946,78 @@ Provide a brief technical explanation suitable for an operations dashboard."""
     return decision
 
 
+# ============= SLA Monitoring Background Task =============
+async def sla_monitor_task():
+    """Background task to monitor SLA breaches and trigger escalations"""
+    while True:
+        try:
+            if sla_service_instance:
+                # Get all active incidents
+                incidents = await db.incidents.find(
+                    {"status": {"$in": ["new", "in_progress"]}},
+                    {"_id": 0}
+                ).to_list(1000)
+                
+                escalated_count = 0
+                
+                for incident in incidents:
+                    sla_data = incident.get("sla", {})
+                    
+                    if not sla_data or not sla_data.get("enabled"):
+                        continue
+                    
+                    # Check SLA status
+                    status = await sla_service_instance.check_sla_status(incident["id"])
+                    
+                    if not status or not status.get("enabled"):
+                        continue
+                    
+                    # Handle response SLA breach
+                    if status.get("response_sla_breached") and not incident.get("assigned_to"):
+                        result = await sla_service_instance.handle_sla_breach(
+                            incident_id=incident["id"],
+                            breach_type="response"
+                        )
+                        if result.get("escalated"):
+                            escalated_count += 1
+                            # Broadcast escalation
+                            await manager.broadcast({
+                                "type": "sla_breach",
+                                "data": {
+                                    "incident_id": incident["id"],
+                                    "breach_type": "response",
+                                    "status": "escalated"
+                                }
+                            })
+                    
+                    # Handle resolution SLA breach
+                    elif status.get("resolution_sla_breached"):
+                        result = await sla_service_instance.handle_sla_breach(
+                            incident_id=incident["id"],
+                            breach_type="resolution"
+                        )
+                        if result.get("escalated"):
+                            escalated_count += 1
+                            # Broadcast escalation
+                            await manager.broadcast({
+                                "type": "sla_breach",
+                                "data": {
+                                    "incident_id": incident["id"],
+                                    "breach_type": "resolution",
+                                    "status": "escalated"
+                                }
+                            })
+                
+                if escalated_count > 0:
+                    logger.info(f"⏱️  SLA Monitor: Escalated {escalated_count} incidents due to SLA breach")
+        
+        except Exception as e:
+            logger.error(f"❌ SLA monitor error: {e}")
+        
+        # Check every 5 minutes
+        await asyncio.sleep(5 * 60)
+
+
 # ============= Routes =============
 @api_router.get("/")
 async def root():
