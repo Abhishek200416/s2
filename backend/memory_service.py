@@ -1,4 +1,13 @@
-"""Memory Service for Agent Core"""
+"""Memory Service for Agent Core
+
+Bedrock-Compatible Memory Pattern:
+- sessionId: Short-term memory key (per incident/conversation)
+- memoryId: Long-term memory key (per company/signature pattern)
+
+This aligns with AWS Bedrock Agent Runtime memory model where:
+- sessionId tracks individual incident conversations
+- memoryId tracks company-wide resolution patterns
+"""
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
@@ -11,16 +20,28 @@ class MemoryMessage(BaseModel):
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class ShortTermMemory(BaseModel):
-    """Short-term conversational memory (TTL 24-48h)"""
-    incident_id: str
+    """Short-term conversational memory (TTL 24-48h)
+    
+    Maps to Bedrock sessionId pattern:
+    - session_id: incident_id (unique per incident conversation)
+    - Used for tracking single incident resolution flow
+    """
+    session_id: str  # Bedrock-compatible: incident_id
+    incident_id: str  # Legacy field for compatibility
     company_id: str
+    memory_id: Optional[str] = None  # Link to long-term memory
     messages: List[MemoryMessage] = []
     expires_at: datetime
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class LongTermMemory(BaseModel):
-    """Long-term resolution memory (indexed, searchable)"""
-    memory_id: str = Field(default_factory=lambda: f"mem-{uuid.uuid4().hex[:12]}")
+    """Long-term resolution memory (indexed, searchable)
+    
+    Maps to Bedrock memoryId pattern:
+    - memory_id: company_id or company_id|signature (pattern-based)
+    - Used for retrieving similar past resolutions
+    """
+    memory_id: str  # Bedrock-compatible: company_id or company_id|signature
     company_id: str
     signature: str  # Alert signature for matching
     tags: List[str] = []  # Searchable tags
@@ -28,6 +49,7 @@ class LongTermMemory(BaseModel):
     outcome: str  # success, partial, failed
     runbook_used: Optional[str] = None
     incident_id: str
+    session_id: Optional[str] = None  # Link to short-term memory
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class MemoryService:
