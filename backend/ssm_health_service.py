@@ -356,6 +356,56 @@ class SSMHealthService:
         }
         return suggestions.get(error_code, "Check SSM agent installation and IAM permissions.")
     
+    def _get_detailed_troubleshooting(self, error_code: str) -> List[str]:
+        """Get detailed troubleshooting steps based on error code"""
+        troubleshooting_guides = {
+            "InvalidInstanceId": [
+                "1. Verify the instance ID is correct (format: i-xxxxxxxxxxxxx)",
+                "2. Check you're connected to the correct AWS region",
+                "3. Ensure the instance exists and is not terminated",
+                "4. Confirm you have EC2:DescribeInstances permission"
+            ],
+            "InvalidInstanceInformationFilterValue": [
+                "1. Install SSM Agent on the instance using platform-specific commands",
+                "2. Start the SSM Agent service (sudo systemctl start amazon-ssm-agent)",
+                "3. Attach an IAM role with SSM permissions to the instance",
+                "4. Verify network connectivity - instance must reach SSM endpoints",
+                "5. Wait 5-10 minutes for the agent to register with SSM",
+                "6. Check security groups allow outbound HTTPS (443) traffic"
+            ],
+            "AccessDeniedException": [
+                "1. Verify your IAM user/role has these permissions:",
+                "   - ssm:DescribeInstanceInformation",
+                "   - ssm:SendCommand",
+                "   - ssm:GetCommandInvocation",
+                "   - ec2:DescribeInstances",
+                "2. Check if the IAM policy is attached to your user/role",
+                "3. Ensure no Service Control Policies (SCPs) are blocking access",
+                "4. Verify you're using the correct AWS credentials"
+            ],
+            "ThrottlingException": [
+                "1. Wait 1-2 minutes before retrying",
+                "2. Reduce the frequency of API calls",
+                "3. Consider implementing exponential backoff",
+                "4. Contact AWS Support if throttling persists"
+            ],
+            "UnsupportedPlatformType": [
+                "1. SSM Agent supports: Amazon Linux, Ubuntu, RHEL, SUSE, Windows Server",
+                "2. Verify your OS version is supported",
+                "3. Check if the OS is up to date",
+                "4. For unsupported OS, consider using AWS Hybrid Activations"
+            ]
+        }
+        
+        return troubleshooting_guides.get(error_code, [
+            "1. Check SSM Agent installation and status",
+            "2. Verify IAM instance profile is attached",
+            "3. Ensure network connectivity (outbound HTTPS)",
+            "4. Review CloudWatch Logs for SSM Agent errors",
+            "5. Restart SSM Agent service",
+            "6. Contact AWS Support if issue persists"
+        ])
+    
     async def get_connection_setup_guide(self, platform: str = "linux") -> Dict[str, Any]:
         """Get step-by-step setup guide for SSM agent
         
