@@ -904,26 +904,36 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold text-white flex items-center gap-2">
                     <Cloud className="w-4 h-4 text-cyan-400" />
-                    AWS Integration (Optional)
+                    Company Credentials (What You Collected)
                   </h4>
                   <div className="bg-slate-900 p-3 rounded space-y-1 text-sm">
                     {formData.aws_access_key_id ? (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Access Key ID:</span>
+                          <span className="text-slate-400">AWS Access Key:</span>
                           <span className="text-white">{formData.aws_access_key_id.substring(0, 8)}...</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-400">Region:</span>
+                          <span className="text-slate-400">AWS Region:</span>
                           <span className="text-white">{formData.aws_region}</span>
                         </div>
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 mt-2">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Will be verified on creation
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">AWS Account:</span>
+                          <span className="text-white">{formData.aws_account_id || 'Not provided'}</span>
+                        </div>
+                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30 mt-2">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Can pull CloudWatch alarms + Execute SSM runbooks
                         </Badge>
                       </>
                     ) : (
-                      <div className="text-slate-500">Not configured (can be added later)</div>
+                      <>
+                        <div className="text-slate-500">No AWS credentials provided</div>
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 mt-2">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Company will send alerts via webhook (PUSH mode)
+                        </Badge>
+                      </>
                     )}
                   </div>
                 </div>
