@@ -171,6 +171,7 @@ class Incident(BaseModel):
     priority_score: float = 0.0
     status: str = "new"  # new, in_progress, resolved, escalated
     assigned_to: Optional[str] = None
+    assigned_at: Optional[str] = None
     signature: str
     asset_id: str
     asset_name: str
@@ -181,6 +182,16 @@ class Incident(BaseModel):
     ssm_command_id: Optional[str] = None
     remediation_duration_seconds: Optional[int] = None
     remediation_status: Optional[str] = None  # InProgress, Success, Failed, TimedOut
+    # SLA tracking fields
+    sla: Optional[Dict[str, Any]] = None  # SLA deadlines and tracking
+    escalated: bool = False
+    escalated_at: Optional[str] = None
+    escalation_reason: Optional[str] = None
+    escalation_level: int = 0
+    resolved_at: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None  # For AI analysis and other metadata
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
