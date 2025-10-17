@@ -435,6 +435,9 @@ const Dashboard = ({ user, onLogout }) => {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
+                {/* How It Works Guide - Always Visible */}
+                <HowItWorksGuide />
+                
                 <RealTimeDashboard 
                   companyId={selectedCompany} 
                   companyName={currentCompany?.name} 
