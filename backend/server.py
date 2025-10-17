@@ -1777,6 +1777,177 @@ async def get_sla_compliance_report(
     return report
 
 
+# ============= Ticketing Integration Routes =============
+
+@api_router.get("/companies/{company_id}/ticketing-config")
+async def get_ticketing_config(company_id: str):
+    """Get ticketing system configuration for a company"""
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Get ticketing config (stored separately for security)
+    ticketing_config = await db.ticketing_configs.find_one({"company_id": company_id}, {"_id": 0})
+    
+    if not ticketing_config:
+        # Return default disabled config
+        return {
+            "company_id": company_id,
+            "enabled": False,
+            "system_type": None,
+            "config": {}
+        }
+    
+    # Mask sensitive fields (don't send passwords/tokens to frontend)
+    if ticketing_config.get('config'):
+        config = ticketing_config['config'].copy()
+        if 'password' in config:
+            config['password'] = '********'
+        if 'api_token' in config:
+            config['api_token'] = '********'
+        ticketing_config['config'] = config
+    
+    return ticketing_config
+
+
+@api_router.put("/companies/{company_id}/ticketing-config")
+async def update_ticketing_config(company_id: str, request: dict):
+    """
+    Update ticketing system configuration
+    
+    Supported systems:
+    - servicenow: ServiceNow integration
+    - jira: Jira integration
+    - zendesk: Zendesk integration
+    """
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    system_type = request.get('system_type')
+    enabled = request.get('enabled', False)
+    config = request.get('config', {})
+    
+    if system_type not in ['servicenow', 'jira', 'zendesk', None]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid system_type. Supported: servicenow, jira, zendesk"
+        )
+    
+    # Validate required fields based on system type
+    if enabled and system_type:
+        if system_type == 'servicenow':
+            required = ['instance_url', 'username', 'password']
+        elif system_type == 'jira':
+            required = ['instance_url', 'username', 'api_token', 'project_key']
+        elif system_type == 'zendesk':
+            required = ['subdomain', 'email', 'api_token']
+        else:
+            required = []
+        
+        missing = [f for f in required if f not in config]
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing required fields for {system_type}: {', '.join(missing)}"
+            )
+    
+    # Update or create ticketing config
+    ticketing_doc = {
+        "company_id": company_id,
+        "enabled": enabled,
+        "system_type": system_type,
+        "config": config,
+        "updated_at": datetime.utcnow().isoformat()
+    }
+    
+    await db.ticketing_configs.update_one(
+        {"company_id": company_id},
+        {"$set": ticketing_doc},
+        upsert=True
+    )
+    
+    # Return masked config
+    if config:
+        config_masked = config.copy()
+        if 'password' in config_masked:
+            config_masked['password'] = '********'
+        if 'api_token' in config_masked:
+            config_masked['api_token'] = '********'
+        ticketing_doc['config'] = config_masked
+    
+    return ticketing_doc
+
+
+@api_router.post("/companies/{company_id}/ticketing-config/test")
+async def test_ticketing_connection(company_id: str):
+    """Test ticketing system connection"""
+    from ticketing_service import ticketing_service
+    
+    ticketing_config = await db.ticketing_configs.find_one({"company_id": company_id})
+    if not ticketing_config or not ticketing_config.get('enabled'):
+        raise HTTPException(status_code=400, detail="Ticketing integration not configured")
+    
+    # Create a test incident
+    test_incident = {
+        "id": "test-incident-001",
+        "signature": "Test Connection",
+        "asset_name": "test-system",
+        "severity": "low",
+        "priority_score": 10,
+        "alert_count": 1,
+        "tool_sources": ["Alert Whisperer Test"],
+        "status": "new",
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    try:
+        result = await ticketing_service.create_ticket(
+            ticket_config=ticketing_config['config'],
+            incident=test_incident
+        )
+        
+        if result:
+            # Clean up test ticket if possible
+            # Note: Actual cleanup would require delete endpoints for each system
+            return {
+                "success": True,
+                "message": "Connection test successful",
+                "test_ticket": result
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to create test ticket. Check credentials and configuration."
+            }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Connection test failed: {str(e)}"
+        )
+
+
+@api_router.get("/incidents/{incident_id}/ticket-info")
+async def get_incident_ticket_info(incident_id: str):
+    """Get external ticket information for an incident"""
+    incident = await db.incidents.find_one({"id": incident_id})
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    ticket_info = incident.get('external_ticket', {})
+    
+    if not ticket_info:
+        return {
+            "has_ticket": False,
+            "message": "No external ticket linked to this incident"
+        }
+    
+    return {
+        "has_ticket": True,
+        "ticket_info": ticket_info
+    }
+
+
 # Alert Routes
 @api_router.get("/alerts", response_model=List[Alert])
 async def get_alerts(company_id: Optional[str] = None, status: Optional[str] = None):
