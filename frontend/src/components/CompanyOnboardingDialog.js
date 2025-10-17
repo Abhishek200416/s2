@@ -163,10 +163,14 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
         </DialogHeader>
 
         <Tabs value={currentStep} onValueChange={setCurrentStep} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-5 bg-slate-800">
             <TabsTrigger value="basic" className="data-[state=active]:bg-cyan-500">
               <Building2 className="w-4 h-4 mr-2" />
               Basic
+            </TabsTrigger>
+            <TabsTrigger value="credentials" className="data-[state=active]:bg-cyan-500">
+              <Cloud className="w-4 h-4 mr-2" />
+              Credentials
             </TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-cyan-500">
               <Shield className="w-4 h-4 mr-2" />
