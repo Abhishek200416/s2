@@ -41,7 +41,6 @@ msp_router = APIRouter(prefix="/api/msp")
 
 @msp_router.get("/runbooks", response_model=List[EnhancedRunbook])
 async def get_enhanced_runbooks(
-    db,
     company_id: Optional[str] = None,
     category: Optional[str] = None,
     cloud_provider: Optional[str] = None
