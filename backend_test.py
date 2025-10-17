@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Alert Whisperer Backend API Test Suite - Real-Time Features Testing
-Tests new real-time features: fake alert generator removal, real-time metrics, 
-chat system, notifications, enhanced correlation with priority scoring
+Alert Whisperer Backend API Test Suite - Enhanced SSM Connection Validation Testing
+Tests enhanced SSM connection validation system with comprehensive validation steps:
+- SSM Setup Guide Enhancement (prerequisites, security_notes, troubleshooting_commands)
+- SSM Connection with Enhanced Validation (validation_steps, troubleshooting arrays)
+- All existing real-time features and production-grade AWS MSP capabilities
 """
 
 import requests
