@@ -60,16 +60,26 @@ class MemoryService:
         self.short_memory = db["short_memory"]
         self.long_memory = db["long_memory"]
     
-    async def add_short_term(self, incident_id: str, company_id: str, message: MemoryMessage):
-        """Add message to short-term memory"""
+    async def add_short_term(self, incident_id: str, company_id: str, message: MemoryMessage, memory_id: Optional[str] = None):
+        """Add message to short-term memory (Bedrock sessionId pattern)
+        
+        Args:
+            incident_id: Incident identifier (becomes session_id)
+            company_id: Company identifier
+            message: Message to add to conversation
+            memory_id: Optional link to long-term memory pattern
+        """
         expires_at = datetime.now(timezone.utc) + timedelta(hours=48)
+        session_id = incident_id  # Map incident_id to session_id
         
         await self.short_memory.update_one(
-            {"incident_id": incident_id},
+            {"session_id": session_id},
             {
                 "$push": {"messages": message.dict()},
                 "$set": {
+                    "incident_id": incident_id,  # Keep for compatibility
                     "company_id": company_id,
+                    "memory_id": memory_id,
                     "expires_at": expires_at
                 },
                 "$setOnInsert": {
@@ -80,10 +90,14 @@ class MemoryService:
         )
     
     async def get_short_term(self, incident_id: str) -> Optional[ShortTermMemory]:
-        """Get short-term memory for incident"""
-        doc = await self.short_memory.find_one({"incident_id": incident_id})
+        """Get short-term memory for incident (by session_id)"""
+        session_id = incident_id
+        doc = await self.short_memory.find_one({"session_id": session_id})
         if not doc:
-            return None
+            # Fallback to old field for backward compatibility
+            doc = await self.short_memory.find_one({"incident_id": incident_id})
+            if not doc:
+                return None
         
         return ShortTermMemory(**doc)
     
