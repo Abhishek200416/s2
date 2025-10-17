@@ -129,7 +129,7 @@ async def execute_runbook(
 
 
 @msp_router.get("/runbooks/executions/{execution_id}", response_model=RunbookExecution)
-async def get_execution_status(db, execution_id: str):
+async def get_execution_status( execution_id: str):
     """Get runbook execution status and logs"""
     execution = await db.runbook_executions.find_one({"id": execution_id}, {"_id": 0})
     if not execution:
@@ -168,7 +168,7 @@ async def get_execution_status(db, execution_id: str):
 # ============= Auto-Assignment Endpoints =============
 
 @msp_router.post("/auto-assignment/rules", response_model=AutoAssignmentRule)
-async def create_auto_assignment_rule(db, request: CreateAutoAssignmentRuleRequest):
+async def create_auto_assignment_rule( request: CreateAutoAssignmentRuleRequest):
     """Create auto-assignment rule for a company"""
     rule = AutoAssignmentRule(**request.model_dump())
     await db.auto_assignment_rules.insert_one(rule.model_dump())
@@ -176,7 +176,7 @@ async def create_auto_assignment_rule(db, request: CreateAutoAssignmentRuleReque
 
 
 @msp_router.get("/auto-assignment/rules/{company_id}", response_model=List[AutoAssignmentRule])
-async def get_auto_assignment_rules(db, company_id: str):
+async def get_auto_assignment_rules( company_id: str):
     """Get auto-assignment rules for a company"""
     rules = await db.auto_assignment_rules.find(
         {"company_id": company_id},
@@ -186,7 +186,7 @@ async def get_auto_assignment_rules(db, company_id: str):
 
 
 @msp_router.put("/technicians/{user_id}/skills", response_model=TechnicianSkills)
-async def update_technician_skills(db, user_id: str, request: UpdateTechnicianSkillsRequest):
+async def update_technician_skills( user_id: str, request: UpdateTechnicianSkillsRequest):
     """Update technician skills and availability"""
     # Initialize if doesn't exist
     await initialize_technician_skills(db, user_id, request.skills)
@@ -210,7 +210,7 @@ async def update_technician_skills(db, user_id: str, request: UpdateTechnicianSk
 
 
 @msp_router.get("/technicians/{user_id}/skills", response_model=TechnicianSkills)
-async def get_technician_skills(db, user_id: str):
+async def get_technician_skills( user_id: str):
     """Get technician skills and workload"""
     skills = await db.technician_skills.find_one({"user_id": user_id}, {"_id": 0})
     if not skills:
@@ -224,7 +224,7 @@ async def get_technician_skills(db, user_id: str):
 # ============= Escalation Endpoints =============
 
 @msp_router.post("/escalation/policies", response_model=EscalationPolicy)
-async def create_escalation_policy(db, request: CreateEscalationPolicyRequest):
+async def create_escalation_policy( request: CreateEscalationPolicyRequest):
     """Create escalation policy for a company"""
     policy = EscalationPolicy(**request.model_dump())
     await db.escalation_policies.insert_one(policy.model_dump())
@@ -232,7 +232,7 @@ async def create_escalation_policy(db, request: CreateEscalationPolicyRequest):
 
 
 @msp_router.get("/escalation/policies/{company_id}", response_model=List[EscalationPolicy])
-async def get_escalation_policies(db, company_id: str):
+async def get_escalation_policies( company_id: str):
     """Get escalation policies for a company"""
     policies = await db.escalation_policies.find(
         {"company_id": company_id},
@@ -266,7 +266,7 @@ async def manual_escalate_incident(
 # ============= SLA Endpoints =============
 
 @msp_router.post("/sla/policies", response_model=SLAPolicy)
-async def create_sla_policy(db, request: CreateSLAPolicyRequest):
+async def create_sla_policy( request: CreateSLAPolicyRequest):
     """Create SLA policy for a company"""
     policy = SLAPolicy(**request.model_dump())
     await db.sla_policies.insert_one(policy.model_dump())
@@ -274,7 +274,7 @@ async def create_sla_policy(db, request: CreateSLAPolicyRequest):
 
 
 @msp_router.get("/sla/policies/{company_id}", response_model=List[SLAPolicy])
-async def get_sla_policies(db, company_id: str):
+async def get_sla_policies( company_id: str):
     """Get SLA policies for a company"""
     policies = await db.sla_policies.find(
         {"company_id": company_id},
@@ -284,7 +284,7 @@ async def get_sla_policies(db, company_id: str):
 
 
 @msp_router.get("/sla/tracking/{incident_id}", response_model=SLATracking)
-async def get_sla_tracking(db, incident_id: str):
+async def get_sla_tracking( incident_id: str):
     """Get SLA tracking for an incident"""
     tracking = await db.sla_tracking.find_one({"incident_id": incident_id}, {"_id": 0})
     if not tracking:
@@ -329,7 +329,7 @@ async def update_email_notification_settings(
 
 
 @msp_router.get("/notifications/settings/{company_id}", response_model=EmailNotificationSettings)
-async def get_email_notification_settings(db, company_id: str):
+async def get_email_notification_settings( company_id: str):
     """Get email notification settings for a company"""
     settings = await db.email_notification_settings.find_one({"company_id": company_id}, {"_id": 0})
     if not settings:
@@ -343,7 +343,7 @@ async def get_email_notification_settings(db, company_id: str):
 # ============= Company Onboarding Endpoints =============
 
 @msp_router.get("/onboarding/status/{company_id}", response_model=CompanyOnboardingStatus)
-async def get_onboarding_status(db, company_id: str):
+async def get_onboarding_status( company_id: str):
     """Get onboarding status for a company"""
     status = await db.company_onboarding_status.find_one({"company_id": company_id}, {"_id": 0})
     if not status:
@@ -354,7 +354,7 @@ async def get_onboarding_status(db, company_id: str):
 
 
 @msp_router.post("/onboarding/complete-step/{company_id}")
-async def complete_onboarding_step(db, company_id: str, step: str):
+async def complete_onboarding_step( company_id: str, step: str):
     """Mark an onboarding step as complete"""
     await db.company_onboarding_status.update_one(
         {"company_id": company_id},
