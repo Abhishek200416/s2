@@ -181,7 +181,7 @@ class SLATester:
             self.log_result("Get API Key", False, "No API key available for webhook testing")
             return None
         
-        # Create alert via webhook (use existing asset)
+        # Create multiple alerts via webhook for correlation (need 2+ with same signature)
         webhook_payload = {
             "asset_name": "srv-app-01",
             "signature": "sla_test_alert",
@@ -190,11 +190,21 @@ class SLATester:
             "tool_source": "SLATester"
         }
         
+        # Create first alert
         response = self.make_request('POST', f'/webhooks/alerts?api_key={api_key}', json=webhook_payload)
         if response and response.status_code == 200:
             alert_result = response.json()
-            alert_id = alert_result.get('alert_id')
-            self.log_result("Create Alert via Webhook", True, f"SLA test alert created: {alert_id}")
+            alert_id_1 = alert_result.get('alert_id')
+            print(f"✓ Created first alert: {alert_id_1}")
+        
+        # Create second alert with same signature for correlation
+        time.sleep(0.5)
+        webhook_payload["message"] = "SLA testing alert - critical severity (second alert)"
+        response = self.make_request('POST', f'/webhooks/alerts?api_key={api_key}', json=webhook_payload)
+        if response and response.status_code == 200:
+            alert_result = response.json()
+            alert_id_2 = alert_result.get('alert_id')
+            self.log_result("Create Alert via Webhook", True, f"SLA test alerts created: {alert_id_1}, {alert_id_2}")
             
             # Wait a moment then correlate
             time.sleep(1)
