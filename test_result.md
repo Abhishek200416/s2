@@ -1187,6 +1187,53 @@ frontend:
             * Step-by-step CLI commands
           - Integrated new components: RateLimitSettings, ApprovalGates, RBACSettings
 
+  - task: "Simplify company onboarding with all-in-one configuration"
+    implemented: true
+    working: true
+    file: "components/CompanyOnboardingDialog.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Simplified MSP-Like Onboarding:
+          - Redesigned onboarding to 4-tab flow:
+            1. Basic Info (company name, maintenance window)
+            2. Security Settings (HMAC, rate limiting with sliders)
+            3. Correlation Settings (time window, auto-correlate, AI explanation)
+            4. Review & Create (comprehensive summary)
+          
+          - All settings configured in one place
+          - No need to navigate to separate "Advanced Settings"
+          - Interactive controls: Switches, sliders with real-time values
+          - Visual badges showing enabled/disabled states
+          - AI integration highlighted (Bedrock + Gemini)
+          
+          Auto-Configuration on Creation:
+          - Calls webhook security enable API
+          - Configures correlation settings API
+          - Sets up rate limiting API
+          - All happens automatically, user sees results immediately
+
+  - task: "Remove Advanced Settings navigation"
+    implemented: true
+    working: true
+    file: "pages/Dashboard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Simplified Navigation:
+          - Removed "Advanced Settings" button from Dashboard header
+          - Settings now configured during company onboarding
+          - Cleaner, more streamlined MSP workflow
+          - Focus on: Companies → Technicians → Alerts → Incidents
+
 
 metadata:
   created_by: "main_agent"
