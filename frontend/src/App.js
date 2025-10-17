@@ -7,6 +7,9 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Technicians from './pages/Technicians';
 import AdvancedSettings from './pages/AdvancedSettings';
+import RunbookLibrary from './pages/RunbookLibrary';
+import TechnicianSkills from './pages/TechnicianSkills';
+import MSPSettings from './pages/MSPSettings';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
