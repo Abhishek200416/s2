@@ -289,3 +289,147 @@ async def initialize_technician_skills(db, user_id: str, skills: List[str] = Non
     )
     
     await db.technician_skills.insert_one(tech_skills.model_dump())
+
+    
+    async def _add_to_overflow_queue(
+        self,
+        incident_id: str,
+        company_id: str,
+        incident_data: Dict[str, Any]
+    ) -> None:
+        """Add incident to overflow queue when all technicians are busy
+        
+        Args:
+            incident_id: Incident ID
+            company_id: Company ID
+            incident_data: Incident details
+        """
+        # Create queue entry
+        queue_entry = {
+            "id": f"queue-{incident_id}",
+            "incident_id": incident_id,
+            "company_id": company_id,
+            "priority_score": incident_data.get("priority_score", 50),
+            "severity": incident_data.get("severity", "medium"),
+            "queued_at": datetime.now(timezone.utc).isoformat(),
+            "status": "queued",
+            "notified": False
+        }
+        
+        await self.db.incident_overflow_queue.insert_one(queue_entry)
+        
+        # Update incident status
+        await self.db.incidents.update_one(
+            {"id": incident_id},
+            {
+                "$set": {
+                    "status": "queued",
+                    "queued_at": datetime.now(timezone.utc).isoformat(),
+                    "queue_reason": "All technicians at capacity"
+                }
+            }
+        )
+        
+        # Send notification to managers
+        try:
+            from email_service import email_service
+            
+            # Get company managers
+            managers = await self.db.users.find({
+                "role": {"$in": ["msp_admin", "company_admin"]},
+                "company_ids": company_id
+            }, {"_id": 0}).to_list(100)
+            
+            for manager in managers:
+                email_body = f"""
+                <h2>⚠️ Incident Queue Alert</h2>
+                <p>A high-priority incident has been added to the overflow queue because all technicians are at capacity.</p>
+                
+                <h3>Incident Details:</h3>
+                <ul>
+                    <li><strong>Priority:</strong> {incident_data.get('priority_score', 'N/A')}</li>
+                    <li><strong>Severity:</strong> {incident_data.get('severity', 'N/A')}</li>
+                    <li><strong>Asset:</strong> {incident_data.get('asset_name', 'N/A')}</li>
+                    <li><strong>Issue:</strong> {incident_data.get('signature', 'N/A')}</li>
+                </ul>
+                
+                <p>The incident will be automatically assigned when a technician becomes available.</p>
+                <p><strong>Action Required:</strong> Consider adding more technicians or manually assigning this incident.</p>
+                """
+                
+                await email_service.send_email(
+                    to_email=manager.get("email"),
+                    subject=f"🚨 Overflow Queue Alert - Incident {incident_id}",
+                    body=email_body
+                )
+            
+            # Mark as notified
+            await self.db.incident_overflow_queue.update_one(
+                {"id": queue_entry["id"]},
+                {"$set": {"notified": True}}
+            )
+            
+        except Exception as e:
+            print(f"❌ Failed to send overflow notification: {e}")
+    
+    async def process_overflow_queue(self, company_id: str) -> Dict[str, Any]:
+        """Process queued incidents when technicians become available
+        
+        Called when:
+        - A technician resolves an incident
+        - A technician's status changes to available
+        
+        Args:
+            company_id: Company ID
+        
+        Returns:
+            Dict with processed count and results
+        """
+        # Get queued incidents (highest priority first)
+        queued = await self.db.incident_overflow_queue.find(
+            {"company_id": company_id, "status": "queued"},
+            {"_id": 0}
+        ).sort("priority_score", -1).to_list(100)
+        
+        if not queued:
+            return {"success": True, "processed": 0, "message": "No queued incidents"}
+        
+        processed = 0
+        results = []
+        
+        for queue_entry in queued:
+            incident_id = queue_entry["incident_id"]
+            
+            # Try to assign
+            incident = await self.db.incidents.find_one({"id": incident_id}, {"_id": 0})
+            if not incident:
+                # Remove from queue if incident doesn't exist
+                await self.db.incident_overflow_queue.delete_one({"id": queue_entry["id"]})
+                continue
+            
+            result = await self.assign_incident(
+                incident_id=incident_id,
+                company_id=company_id,
+                incident_data=incident
+            )
+            
+            if result.get("success"):
+                # Successfully assigned - remove from queue
+                await self.db.incident_overflow_queue.delete_one({"id": queue_entry["id"]})
+                processed += 1
+                results.append({
+                    "incident_id": incident_id,
+                    "assigned_to": result.get("assigned_to"),
+                    "status": "assigned"
+                })
+            else:
+                # Still no available techs - stop processing
+                break
+        
+        return {
+            "success": True,
+            "processed": processed,
+            "remaining_in_queue": len(queued) - processed,
+            "results": results
+        }
+
