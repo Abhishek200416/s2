@@ -502,6 +502,11 @@ const Dashboard = ({ user, onLogout }) => {
           </>
         )}
       </main>
+
+      {/* MSP Workflow Guide Modal */}
+      {showMSPGuide && (
+        <MSPWorkflowGuide onClose={() => setShowMSPGuide(false)} />
+      )}
     </div>
   );
 };
