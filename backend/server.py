@@ -2691,6 +2691,37 @@ async def get_ssm_setup_guide(platform: str):
     guide = await ssm_health_service.get_connection_setup_guide(platform)
     return guide
 
+@api_router.get("/ssm/check-instances")
+async def check_ssm_instances():
+    """Check for SSM-enabled instances (used during onboarding before company creation)"""
+    try:
+        # Get all instances with SSM agent
+        instances = await ssm_health_service.get_all_ssm_instances()
+        
+        online_count = sum(1 for i in instances if i.get('is_online'))
+        
+        return {
+            "instances": instances,
+            "total_instances": len(instances),
+            "online_instances": online_count,
+            "offline_instances": len(instances) - online_count
+        }
+    except Exception as e:
+        logger.error(f"Error checking SSM instances: {str(e)}")
+        return {
+            "instances": [],
+            "total_instances": 0,
+            "online_instances": 0,
+            "offline_instances": 0,
+            "error": str(e)
+        }
+
+@api_router.post("/ssm/test-connection")
+async def test_ssm_connection_pre_onboarding(instance_id: str):
+    """Test SSM connection (used during onboarding before company creation)"""
+    result = await ssm_health_service.test_ssm_connection(instance_id)
+    return result
+
 
 # Webhook & Integration Routes
 class WebhookAlert(BaseModel):
