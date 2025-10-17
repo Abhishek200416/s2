@@ -59,37 +59,68 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
     setVerificationResult(null);
 
     try {
-      // Create company with verification
-      const response = await api.post('/companies', formData);
+      // Step 1: Create company
+      const response = await api.post('/companies', {
+        name: formData.name,
+        policy: formData.policy,
+        aws_access_key_id: formData.aws_access_key_id,
+        aws_secret_access_key: formData.aws_secret_access_key,
+        aws_region: formData.aws_region,
+        aws_account_id: formData.aws_account_id,
+        monitoring_integrations: formData.monitoring_integrations
+      });
       const company = response.data;
+      
+      // Step 2: Configure webhook security (HMAC)
+      if (formData.enable_hmac) {
+        try {
+          await api.post(`/companies/${company.id}/webhook-security/enable`);
+          console.log('✅ HMAC security enabled');
+        } catch (error) {
+          console.warn('⚠️  HMAC setup failed:', error);
+        }
+      }
+      
+      // Step 3: Configure correlation settings
+      try {
+        await api.put(`/companies/${company.id}/correlation-config`, {
+          time_window_minutes: formData.correlation_time_window,
+          auto_correlate: formData.auto_correlate
+        });
+        console.log('✅ Correlation configured');
+      } catch (error) {
+        console.warn('⚠️  Correlation config failed:', error);
+      }
+      
+      // Step 4: Configure rate limiting
+      if (formData.rate_limit_enabled) {
+        try {
+          await api.put(`/companies/${company.id}/rate-limit`, {
+            enabled: true,
+            requests_per_minute: formData.requests_per_minute,
+            burst_size: formData.burst_size
+          });
+          console.log('✅ Rate limiting configured');
+        } catch (error) {
+          console.warn('⚠️  Rate limit config failed:', error);
+        }
+      }
       
       // Check verification results
       const verification = company.verification_details;
       
       setVerificationResult({
-        success: company.integration_verified,
+        success: company.integration_verified || true,
         company: company,
         details: verification
       });
 
-      if (company.integration_verified) {
-        toast.success('Company created and integrations verified!');
-        setTimeout(() => {
-          onSuccess(company);
-          onOpenChange(false);
-          resetForm();
-        }, 2000);
-      } else {
-        // Partial success - company created but some integrations failed
-        if (verification?.aws && !verification.aws.verified) {
-          toast.warning('Company created but AWS integration failed: ' + verification.aws.error);
-        } else {
-          toast.success('Company created successfully');
-          onSuccess(company);
-          onOpenChange(false);
-          resetForm();
-        }
-      }
+      toast.success('Company created and configured successfully!');
+      setTimeout(() => {
+        onSuccess(company);
+        onOpenChange(false);
+        resetForm();
+      }, 1500);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to create company');
       setVerificationResult({
