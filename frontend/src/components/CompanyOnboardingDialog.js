@@ -237,10 +237,10 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
 
                 <div className="flex justify-end">
                   <Button 
-                    onClick={() => setCurrentStep('security')}
+                    onClick={() => setCurrentStep('credentials')}
                     className="bg-cyan-600 hover:bg-cyan-700"
                   >
-                    Next: Security Settings →
+                    Next: Company Credentials →
                   </Button>
                 </div>
               </CardContent>
