@@ -2295,6 +2295,36 @@ async def update_incident(incident_id: str, update: IncidentUpdate):
     # Get updated incident
     updated_incident = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
     
+    # === Sync to External Ticketing System ===
+    try:
+        from ticketing_service import ticketing_service
+        
+        external_ticket = incident.get('external_ticket')
+        if external_ticket:
+            ticketing_config = await db.ticketing_configs.find_one({"company_id": incident["company_id"]})
+            
+            if ticketing_config and ticketing_config.get('enabled'):
+                update_type = "status_change"
+                if update.resolution_notes:
+                    update_type = "resolution"
+                elif update.assigned_to:
+                    update_type = "assignment"
+                
+                success = await ticketing_service.update_ticket(
+                    ticket_config=ticketing_config['config'],
+                    external_ticket_id=external_ticket['external_ticket_id'],
+                    incident=updated_incident,
+                    update_type=update_type
+                )
+                
+                if success:
+                    print(f"✅ Updated external ticket: {external_ticket['ticket_number']}")
+                else:
+                    print(f"⚠️  Failed to update external ticket: {external_ticket['ticket_number']}")
+    except Exception as e:
+        print(f"⚠️  Ticketing sync error (non-critical): {e}")
+    # === End Ticketing Sync ===
+    
     # Broadcast update
     await manager.broadcast({
         "type": "incident_updated",
