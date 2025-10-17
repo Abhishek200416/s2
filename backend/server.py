@@ -1726,6 +1726,27 @@ async def correlate_alerts(company_id: str):
         # Calculate priority score
         incident.priority_score = calculate_priority_score(incident, company, alert_group)
         
+        # AI-Enhanced Pattern Detection (runs async, doesn't block correlation)
+        try:
+            from ai_service import ai_service
+            ai_analysis = await ai_service.analyze_incident_patterns(alert_group)
+            
+            # Add AI insights to incident description if pattern detected
+            if ai_analysis.get("pattern_detected"):
+                incident.description = f"{incident.description}\n\n🤖 AI Analysis: {ai_analysis.get('root_cause', 'Pattern detected')}"
+                
+                # Store AI analysis in metadata
+                if not hasattr(incident, 'metadata'):
+                    incident.metadata = {}
+                incident.metadata['ai_analysis'] = {
+                    'provider': ai_analysis.get('method', 'unknown'),
+                    'pattern_type': ai_analysis.get('pattern_type', 'unknown'),
+                    'confidence': ai_analysis.get('confidence', 0),
+                    'recommendation': ai_analysis.get('recommendation', '')
+                }
+        except Exception as e:
+            print(f"⚠️  AI pattern detection failed (non-critical): {e}")
+        
         doc = incident.model_dump()
         await db.incidents.insert_one(doc)
         created_incidents.append(incident)
