@@ -186,18 +186,29 @@ class DecisionAgent:
         return DecisionResponse(**decision_doc)
     
     async def decide_stream(self, request: DecisionRequest) -> Iterator[str]:
-        """Stream decision making process (SSE format)"""
+        """Stream decision making process (SSE format - AgentCore compatible)"""
+        # Route to Bedrock if configured
+        if self.provider.startswith("bedrock") and hasattr(self, 'bedrock_agent'):
+            async for chunk in self.bedrock_agent.decide_stream(
+                incident_id=request.incident_id,
+                company_id=request.company_id,
+                incident_data=request.incident_data
+            ):
+                yield chunk
+            return
+        
+        # Gemini or deterministic streaming
         yield "event: start\ndata: {}\n\n"
         
         # Get memory
         memory = await self._get_memory(request.incident_id, request.company_id)
-        yield f"event: memory\ndata: {{\"loaded\": true}}\n\n"
+        yield f"event: memory\ndata: {{\"loaded\": true, \"session_id\": \"{request.incident_id}\", \"memory_id\": \"{request.company_id}\"}}\n\n"
         
         # Build prompt
         prompt = self._build_decision_prompt(request.incident_data, memory)
         
         # Stream decision
-        if self._should_use_deterministic(request.incident_data):
+        if self._should_use_deterministic(request.incident_data) or self.provider == "rules":
             decision = await self._deterministic_decision(request.incident_data)
             yield f"data: {json.dumps(decision['reasoning'])}\n\n"
         else:
