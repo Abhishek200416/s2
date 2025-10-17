@@ -1569,6 +1569,131 @@ async def get_dedup_key_options():
     }
 
 
+# ============= SLA Management Routes =============
+
+@api_router.get("/companies/{company_id}/sla-config")
+async def get_sla_config(company_id: str):
+    """Get SLA configuration for a company"""
+    if not sla_service_instance:
+        raise HTTPException(status_code=503, detail="SLA service not available")
+    
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    config = await sla_service_instance.get_sla_config(company_id)
+    return config
+
+
+class SLAConfigUpdate(BaseModel):
+    """Update SLA configuration"""
+    enabled: Optional[bool] = None
+    business_hours_only: Optional[bool] = None
+    business_hours: Optional[Dict[str, Any]] = None
+    response_time_minutes: Optional[Dict[str, int]] = None
+    resolution_time_minutes: Optional[Dict[str, int]] = None
+    escalation_enabled: Optional[bool] = None
+    escalation_before_breach_minutes: Optional[int] = None
+    escalation_chain: Optional[List[Dict[str, Any]]] = None
+
+
+@api_router.put("/companies/{company_id}/sla-config")
+async def update_sla_config(company_id: str, config_update: SLAConfigUpdate):
+    """Update SLA configuration for a company"""
+    if not sla_service_instance:
+        raise HTTPException(status_code=503, detail="SLA service not available")
+    
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Get existing config
+    existing_config = await sla_service_instance.get_sla_config(company_id)
+    
+    # Update with new values
+    update_data = {k: v for k, v in config_update.model_dump().items() if v is not None}
+    updated_config = {**existing_config, **update_data}
+    
+    # Save updated config
+    config = await sla_service_instance.save_sla_config(company_id, updated_config)
+    return config
+
+
+@api_router.get("/incidents/{incident_id}/sla-status")
+async def get_incident_sla_status(incident_id: str):
+    """Get current SLA status for an incident"""
+    if not sla_service_instance:
+        raise HTTPException(status_code=503, detail="SLA service not available")
+    
+    incident = await db.incidents.find_one({"id": incident_id})
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    status = await sla_service_instance.check_sla_status(incident_id)
+    return status
+
+
+class SLAEscalateRequest(BaseModel):
+    """Request to escalate incident due to SLA"""
+    breach_type: str  # "response" or "resolution"
+    reason: Optional[str] = None
+
+
+@api_router.post("/incidents/{incident_id}/sla-escalate")
+async def escalate_incident_sla(incident_id: str, request: SLAEscalateRequest):
+    """Manually escalate an incident due to SLA breach"""
+    if not sla_service_instance:
+        raise HTTPException(status_code=503, detail="SLA service not available")
+    
+    incident = await db.incidents.find_one({"id": incident_id})
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    result = await sla_service_instance.handle_sla_breach(
+        incident_id=incident_id,
+        breach_type=request.breach_type
+    )
+    
+    # Broadcast escalation via WebSocket
+    await manager.broadcast({
+        "type": "incident_escalated",
+        "data": {
+            "incident_id": incident_id,
+            "breach_type": request.breach_type,
+            "escalated": result.get("escalated", False)
+        }
+    })
+    
+    return result
+
+
+@api_router.get("/companies/{company_id}/sla-report")
+async def get_sla_compliance_report(
+    company_id: str,
+    days: int = 30
+):
+    """Get SLA compliance report for a company
+    
+    Query Parameters:
+    - days: Number of days to look back (default: 30)
+    """
+    if not sla_service_instance:
+        raise HTTPException(status_code=503, detail="SLA service not available")
+    
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    if days < 1 or days > 365:
+        raise HTTPException(
+            status_code=400,
+            detail="Days must be between 1 and 365"
+        )
+    
+    report = await sla_service_instance.get_sla_compliance_report(company_id, days)
+    return report
+
+
 # Alert Routes
 @api_router.get("/alerts", response_model=List[Alert])
 async def get_alerts(company_id: Optional[str] = None, status: Optional[str] = None):
