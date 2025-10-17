@@ -407,17 +407,24 @@ class SSMHealthService:
         ])
     
     async def get_connection_setup_guide(self, platform: str = "linux") -> Dict[str, Any]:
-        """Get step-by-step setup guide for SSM agent
+        """Get comprehensive step-by-step setup guide for SSM agent
         
         Args:
             platform: 'linux', 'windows', 'ubuntu', 'amazon-linux'
         
         Returns:
-            Setup guide with commands and instructions
+            Enhanced setup guide with detailed instructions, commands, and validation steps
         """
         guides = {
             "ubuntu": {
                 "platform": "Ubuntu",
+                "description": "Complete setup guide for Ubuntu-based EC2 instances",
+                "prerequisites": [
+                    "✅ EC2 instance running Ubuntu 16.04 or later",
+                    "✅ SSH access to the instance",
+                    "✅ sudo privileges on the instance",
+                    "✅ Internet connectivity (outbound HTTPS/443)"
+                ],
                 "install_commands": [
                     "sudo snap install amazon-ssm-agent --classic",
                     "sudo systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service",
@@ -426,12 +433,54 @@ class SSMHealthService:
                 "verify_commands": [
                     "sudo systemctl status snap.amazon-ssm-agent.amazon-ssm-agent.service"
                 ],
+                "expected_output": "Active: active (running)",
+                "troubleshooting_commands": [
+                    "# Check agent logs",
+                    "sudo journalctl -u snap.amazon-ssm-agent.amazon-ssm-agent -n 50",
+                    "",
+                    "# Restart if needed",
+                    "sudo systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service",
+                    "",
+                    "# Check connectivity to SSM endpoints",
+                    "curl -I https://ssm.us-east-2.amazonaws.com"
+                ],
+                "iam_setup_steps": [
+                    "1. Go to AWS Console → IAM → Roles",
+                    "2. Click 'Create role'",
+                    "3. Select 'AWS service' → 'EC2'",
+                    "4. Search and attach: 'AmazonSSMManagedInstanceCore'",
+                    "5. Name the role: 'AlertWhisperer-SSM-Role'",
+                    "6. Go to EC2 Console → Select your instance",
+                    "7. Actions → Security → Modify IAM role",
+                    "8. Select 'AlertWhisperer-SSM-Role' and save"
+                ],
+                "wait_time": "5-10 minutes for agent to register with AWS SSM",
+                "verification_steps": [
+                    "1. Install SSM Agent using the commands above",
+                    "2. Verify service is running (should show 'active (running)')",
+                    "3. Attach IAM role to the EC2 instance",
+                    "4. Wait 5-10 minutes for registration",
+                    "5. Click 'Check Connection' button below to test"
+                ],
                 "iam_role_policy": self._get_iam_trust_policy(),
-                "iam_permissions": self._get_iam_permissions_policy()
+                "iam_permissions": self._get_iam_permissions_policy(),
+                "security_notes": [
+                    "🔒 No SSH keys needed after setup",
+                    "🔒 No inbound firewall rules required",
+                    "🔒 All communication over HTTPS (443)",
+                    "🔒 Full audit trail in CloudWatch Logs"
+                ]
             },
             "amazon-linux": {
-                "platform": "Amazon Linux",
+                "platform": "Amazon Linux 2 / AL2023",
+                "description": "SSM Agent is pre-installed on Amazon Linux - just configure IAM",
+                "prerequisites": [
+                    "✅ EC2 instance running Amazon Linux 2 or AL2023",
+                    "✅ Instance has internet connectivity",
+                    "✅ IAM instance profile with SSM permissions"
+                ],
                 "install_commands": [
+                    "# SSM Agent is pre-installed, but if needed:",
                     "sudo yum install -y amazon-ssm-agent",
                     "sudo systemctl enable amazon-ssm-agent",
                     "sudo systemctl start amazon-ssm-agent"
@@ -439,21 +488,100 @@ class SSMHealthService:
                 "verify_commands": [
                     "sudo systemctl status amazon-ssm-agent"
                 ],
+                "expected_output": "Active: active (running)",
+                "troubleshooting_commands": [
+                    "# Check agent logs",
+                    "sudo tail -f /var/log/amazon/ssm/amazon-ssm-agent.log",
+                    "",
+                    "# Restart if needed",
+                    "sudo systemctl restart amazon-ssm-agent",
+                    "",
+                    "# Check if IAM role is attached",
+                    "curl http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+                ],
+                "iam_setup_steps": [
+                    "1. AWS Console → IAM → Roles → Create role",
+                    "2. Trusted entity: AWS service → EC2",
+                    "3. Add permission: AmazonSSMManagedInstanceCore",
+                    "4. Name: AlertWhisperer-SSM-Role",
+                    "5. EC2 Console → Instance → Actions → Security → Modify IAM role",
+                    "6. Attach the role and save"
+                ],
+                "wait_time": "2-5 minutes (faster on Amazon Linux)",
+                "verification_steps": [
+                    "1. Verify SSM Agent is running",
+                    "2. Attach IAM role to EC2 instance",
+                    "3. Wait 2-5 minutes",
+                    "4. Test connection using button below"
+                ],
                 "iam_role_policy": self._get_iam_trust_policy(),
-                "iam_permissions": self._get_iam_permissions_policy()
+                "iam_permissions": self._get_iam_permissions_policy(),
+                "security_notes": [
+                    "🔒 Amazon Linux comes with SSM Agent pre-configured",
+                    "🔒 Just attach IAM role - no SSH needed",
+                    "🔒 Automatic updates keep agent secure"
+                ]
             },
             "windows": {
                 "platform": "Windows Server",
+                "description": "SSM Agent setup for Windows Server instances",
+                "prerequisites": [
+                    "✅ Windows Server 2012 R2 or later",
+                    "✅ RDP access to the instance",
+                    "✅ Administrator privileges",
+                    "✅ Internet connectivity (outbound HTTPS/443)"
+                ],
                 "install_commands": [
-                    "Download SSM Agent installer from:",
-                    "https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe",
-                    "Run the installer with Administrator privileges"
+                    "# Download installer",
+                    "Invoke-WebRequest -Uri 'https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe' -OutFile 'C:\\AmazonSSMAgentSetup.exe'",
+                    "",
+                    "# Install (run as Administrator)",
+                    "Start-Process -FilePath 'C:\\AmazonSSMAgentSetup.exe' -ArgumentList '/quiet' -Wait",
+                    "",
+                    "# Start service",
+                    "Start-Service AmazonSSMAgent"
                 ],
                 "verify_commands": [
                     "Get-Service AmazonSSMAgent"
                 ],
+                "expected_output": "Status: Running",
+                "troubleshooting_commands": [
+                    "# Check service status",
+                    "Get-Service AmazonSSMAgent | Select-Object *",
+                    "",
+                    "# View agent logs",
+                    "Get-Content 'C:\\ProgramData\\Amazon\\SSM\\Logs\\amazon-ssm-agent.log' -Tail 50",
+                    "",
+                    "# Restart service",
+                    "Restart-Service AmazonSSMAgent",
+                    "",
+                    "# Test connectivity",
+                    "Test-NetConnection -ComputerName ssm.us-east-2.amazonaws.com -Port 443"
+                ],
+                "iam_setup_steps": [
+                    "1. AWS Console → IAM → Roles",
+                    "2. Create role → AWS service → EC2",
+                    "3. Attach policy: AmazonSSMManagedInstanceCore",
+                    "4. Role name: AlertWhisperer-SSM-Role",
+                    "5. EC2 Console → Right-click instance",
+                    "6. Security → Modify IAM role",
+                    "7. Select the role and apply"
+                ],
+                "wait_time": "5-10 minutes for Windows agent registration",
+                "verification_steps": [
+                    "1. Download and install SSM Agent",
+                    "2. Verify service is Running",
+                    "3. Attach IAM role via EC2 console",
+                    "4. Wait 5-10 minutes",
+                    "5. Test connection below"
+                ],
                 "iam_role_policy": self._get_iam_trust_policy(),
-                "iam_permissions": self._get_iam_permissions_policy()
+                "iam_permissions": self._get_iam_permissions_policy(),
+                "security_notes": [
+                    "🔒 No RDP needed after SSM setup",
+                    "🔒 Session Manager provides secure shell access",
+                    "🔒 All actions logged to CloudWatch"
+                ]
             }
         }
         
