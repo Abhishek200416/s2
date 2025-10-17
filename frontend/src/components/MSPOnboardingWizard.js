@@ -352,10 +352,25 @@ const MSPOnboardingWizard = ({ onSuccess, onCancel }) => {
 
             {setupGuide && (
               <>
+                {/* Prerequisites */}
+                {setupGuide.prerequisites && (
+                  <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                    <h4 className="text-blue-300 font-semibold mb-2 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      Prerequisites
+                    </h4>
+                    <ul className="text-slate-300 text-sm space-y-1">
+                      {setupGuide.prerequisites.map((prereq, idx) => (
+                        <li key={idx}>{prereq}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 {/* Installation Commands */}
                 <div>
                   <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
-                    <Code className="w-4 h-4" />
+                    <Terminal className="w-4 h-4" />
                     Step 1: Install SSM Agent
                   </h4>
                   {setupGuide.install_commands.map((cmd, index) => (
@@ -375,7 +390,7 @@ const MSPOnboardingWizard = ({ onSuccess, onCancel }) => {
                           )}
                         </Button>
                       </div>
-                      <pre className="bg-black text-green-400 p-4 rounded-b-lg overflow-x-auto border border-t-0 border-slate-700">
+                      <pre className="bg-black text-green-400 p-4 rounded-b-lg overflow-x-auto border border-t-0 border-slate-700 text-sm">
                         <code>{cmd}</code>
                       </pre>
                     </div>
@@ -405,42 +420,152 @@ const MSPOnboardingWizard = ({ onSuccess, onCancel }) => {
                           )}
                         </Button>
                       </div>
-                      <pre className="bg-black text-green-400 p-4 rounded-b-lg overflow-x-auto border border-t-0 border-slate-700">
+                      <pre className="bg-black text-green-400 p-4 rounded-b-lg overflow-x-auto border border-t-0 border-slate-700 text-sm">
                         <code>{cmd}</code>
                       </pre>
                     </div>
                   ))}
+                  {setupGuide.expected_output && (
+                    <div className="bg-green-900/20 border border-green-500/30 rounded p-3 text-sm">
+                      <span className="text-green-300 font-medium">Expected Output: </span>
+                      <span className="text-slate-300">{setupGuide.expected_output}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* IAM Role Setup */}
+                {/* IAM Role Setup with Detailed Steps */}
                 <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <Shield className="w-5 h-5 text-amber-400 mt-0.5" />
+                    <Shield className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <h4 className="text-amber-300 font-semibold mb-2">Step 3: Configure IAM Role</h4>
-                      <p className="text-slate-300 text-sm mb-3">
-                        The EC2 instance needs an IAM role with SSM permissions. Create a role with this policy:
-                      </p>
-                      <div className="relative">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleCopy(JSON.stringify(setupGuide.iam_role_policy, null, 2), 'iam-policy')}
-                          className="absolute top-2 right-2 z-10"
-                        >
-                          {copiedIndex === 'iam-policy' ? (
-                            <Check className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <pre className="bg-black text-blue-300 p-4 rounded-lg overflow-x-auto text-xs">
-                          <code>{JSON.stringify(setupGuide.iam_role_policy, null, 2)}</code>
-                        </pre>
+                      <h4 className="text-amber-300 font-semibold mb-2">Step 3: Configure IAM Role (CRITICAL)</h4>
+                      
+                      {setupGuide.iam_setup_steps && (
+                        <div className="mb-3">
+                          <p className="text-slate-300 text-sm mb-2">Follow these steps to create and attach the IAM role:</p>
+                          <ol className="text-slate-300 text-sm space-y-1 list-decimal list-inside">
+                            {setupGuide.iam_setup_steps.map((step, idx) => (
+                              <li key={idx} className="ml-2">{step}</li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      <div className="space-y-3 mt-4">
+                        <div>
+                          <div className="text-slate-300 text-sm mb-2">Trust Policy:</div>
+                          <div className="relative">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleCopy(JSON.stringify(setupGuide.iam_role_policy, null, 2), 'iam-trust')}
+                              className="absolute top-2 right-2 z-10"
+                            >
+                              {copiedIndex === 'iam-trust' ? (
+                                <Check className="w-4 h-4 text-green-400" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <pre className="bg-black text-blue-300 p-4 rounded-lg overflow-x-auto text-xs">
+                              <code>{JSON.stringify(setupGuide.iam_role_policy, null, 2)}</code>
+                            </pre>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-slate-300 text-sm mb-2">Permissions Policy (or use AmazonSSMManagedInstanceCore):</div>
+                          <div className="relative">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleCopy(JSON.stringify(setupGuide.iam_permissions, null, 2), 'iam-perms')}
+                              className="absolute top-2 right-2 z-10"
+                            >
+                              {copiedIndex === 'iam-perms' ? (
+                                <Check className="w-4 h-4 text-green-400" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <pre className="bg-black text-blue-300 p-4 rounded-lg overflow-x-auto text-xs">
+                              <code>{JSON.stringify(setupGuide.iam_permissions, null, 2)}</code>
+                            </pre>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Wait Time Notice */}
+                {setupGuide.wait_time && (
+                  <div className="bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-cyan-400 mt-0.5" />
+                      <div>
+                        <h4 className="text-cyan-300 font-semibold mb-1">Wait Time Required</h4>
+                        <p className="text-slate-300 text-sm">
+                          After installation and IAM role attachment, wait <strong>{setupGuide.wait_time}</strong> before testing the connection.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Security Notes */}
+                {setupGuide.security_notes && (
+                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                    <h4 className="text-green-300 font-semibold mb-2 flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Security Benefits
+                    </h4>
+                    <ul className="text-slate-300 text-sm space-y-1">
+                      {setupGuide.security_notes.map((note, idx) => (
+                        <li key={idx}>{note}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Troubleshooting Commands (Expandable) */}
+                {setupGuide.troubleshooting_commands && (
+                  <details className="bg-slate-900/50 border border-slate-700 rounded-lg p-4">
+                    <summary className="text-white font-semibold cursor-pointer flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-400" />
+                      Troubleshooting Commands (Click to expand)
+                    </summary>
+                    <div className="mt-3 space-y-2">
+                      {setupGuide.troubleshooting_commands.map((cmd, idx) => (
+                        <div key={idx}>
+                          {cmd.startsWith('#') ? (
+                            <div className="text-slate-400 text-sm mt-3 mb-1 font-medium">{cmd}</div>
+                          ) : cmd.trim() === '' ? (
+                            <div className="h-2" />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleCopy(cmd, `troubleshoot-${idx}`)}
+                                className="h-7 flex-shrink-0"
+                              >
+                                {copiedIndex === `troubleshoot-${idx}` ? (
+                                  <Check className="w-4 h-4 text-green-400" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                              <pre className="bg-black text-amber-400 p-2 rounded flex-1 overflow-x-auto text-xs">
+                                <code>{cmd}</code>
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
               </>
             )}
           </CardContent>
