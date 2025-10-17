@@ -271,6 +271,15 @@ const Dashboard = ({ user, onLogout }) => {
               </Button>
 
               <Button
+                onClick={() => navigate('/help')}
+                variant="outline"
+                size="sm"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                ❓ Help
+              </Button>
+
+              <Button
                 onClick={() => navigate('/technicians')}
                 variant="outline"
                 size="sm"
