@@ -2037,6 +2037,76 @@ async def correlate_alerts(company_id: str):
         "incidents": created_incidents
     }
 
+
+class IncidentUpdate(BaseModel):
+    """Update incident details"""
+    status: Optional[str] = None
+    assigned_to: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    resolved_by: Optional[str] = None
+
+
+@api_router.put("/incidents/{incident_id}")
+async def update_incident(incident_id: str, update: IncidentUpdate):
+    """Update incident status, assignment, or resolution"""
+    incident = await db.incidents.find_one({"id": incident_id})
+    if not incident:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    # Track assignment time for SLA
+    if update.assigned_to and not incident.get("assigned_to"):
+        update_data["assigned_to"] = update.assigned_to
+        update_data["assigned_at"] = datetime.now(timezone.utc).isoformat()
+        update_data["status"] = "in_progress"
+    elif update.assigned_to:
+        update_data["assigned_to"] = update.assigned_to
+    
+    # Track resolution time for SLA
+    if update.status == "resolved" and incident.get("status") != "resolved":
+        update_data["status"] = "resolved"
+        update_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
+        if update.resolved_by:
+            update_data["resolved_by"] = update.resolved_by
+        if update.resolution_notes:
+            update_data["resolution_notes"] = update.resolution_notes
+        
+        # Calculate MTTR for KPI
+        created_at = datetime.fromisoformat(incident["created_at"].replace('Z', '+00:00'))
+        resolved_at = datetime.now(timezone.utc)
+        mttr_minutes = (resolved_at - created_at).total_seconds() / 60
+        
+        # Update company KPIs
+        await db.kpis.update_one(
+            {"company_id": incident["company_id"]},
+            {
+                "$inc": {"incidents_resolved_count": 1, "total_mttr_minutes": mttr_minutes},
+                "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}
+            },
+            upsert=True
+        )
+    elif update.status:
+        update_data["status"] = update.status
+    
+    # Apply updates
+    await db.incidents.update_one(
+        {"id": incident_id},
+        {"$set": update_data}
+    )
+    
+    # Get updated incident
+    updated_incident = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
+    
+    # Broadcast update
+    await manager.broadcast({
+        "type": "incident_updated",
+        "data": updated_incident
+    })
+    
+    return updated_incident
+
+
 @api_router.post("/incidents/{incident_id}/decide")
 async def decide_on_incident(incident_id: str):
     """Generate decision for an incident using AI"""
