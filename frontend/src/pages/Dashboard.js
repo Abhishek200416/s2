@@ -397,6 +397,20 @@ const Dashboard = ({ user, onLogout }) => {
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Compliance
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="agent-health" 
+                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                >
+                  <Activity className="w-4 h-4 mr-2" />
+                  Agent Health
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="asset-inventory" 
+                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                >
+                  <Server className="w-4 h-4 mr-2" />
+                  Assets
+                </TabsTrigger>
                 {user.role === 'admin' && (
                   <TabsTrigger 
                     value="companies" 
