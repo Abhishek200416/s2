@@ -138,6 +138,51 @@ user_problem_statement: |
      - 24-hour duplicate detection
      - Delivery attempt tracking
   
+  🤖 NEW: REAL AI INTEGRATION (HYBRID APPROACH):
+  24. ✅ AWS Bedrock + Gemini AI Integration
+     - Primary: AWS Bedrock (Claude 3.5 Sonnet via inference profile)
+     - Fallback: Google Gemini (gemini-1.5-pro)
+     - Hybrid approach: Rule-based (fast) + AI-enhanced (edge cases)
+     
+  25. ✅ AI-Enhanced Alert Classification
+     - Rule-based severity classification (primary, fast)
+     - AI classification for ambiguous alerts (Bedrock/Gemini)
+     - Auto-adjusts severity if AI confidence > 70%
+     - Logs severity adjustments for auditing
+     
+  26. ✅ AI-Powered Pattern Detection
+     - Rule-based correlation (asset + signature + time window)
+     - AI detects complex patterns (cascading failures, root causes)
+     - Pattern types: cascade, storm, periodic, isolated
+     - Confidence scoring and recommendations
+     
+  27. ✅ AI Remediation Suggestions
+     - Rule-based suggestions for common issues (disk space, CPU, memory)
+     - AI-powered suggestions for complex incidents
+     - Risk assessment (low/medium/high)
+     - Automation eligibility detection
+  
+  🎯 NEW: SIMPLIFIED MSP ONBOARDING:
+  28. ✅ All-in-One Company Onboarding
+     - Single integrated flow: Basic → Security → Correlation → Review
+     - Configure everything in one place (no scattered settings)
+     - Removed separate "Advanced Settings" page
+     - Real-time configuration preview in Review tab
+     
+  29. ✅ Onboarding Includes:
+     - Company basic info (name, maintenance window)
+     - Security settings (HMAC, rate limiting with sliders)
+     - Correlation settings (time window, auto-correlate with AI)
+     - Optional AWS integration
+     - All configured automatically on company creation
+     
+  30. ✅ MSP-Like Workflow:
+     - Add company → All settings configured at once
+     - API key + HMAC secret generated automatically
+     - Ready to receive alerts immediately
+     - No need to navigate multiple pages for setup
+     - Configuration summary shown before creation
+  
   2. ✅ Rate Limiting + Backpressure
      - Per-company configurable limits (1-1000 req/min)
      - Burst size support for alert storms
