@@ -718,6 +718,71 @@ backend:
           - Provides time window rationale (5/10/15 min)
           - Best practices for each dedup pattern
 
+  - task: "Add hybrid AI service (Bedrock + Gemini)"
+    implemented: true
+    working: true
+    file: "ai_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Real AI Integration (Hybrid Approach):
+          - Created HybridAIService class
+          - Primary: AWS Bedrock (Claude 3.5 Sonnet inference profile)
+          - Fallback: Google Gemini (gemini-1.5-pro)
+          - AWS credentials configured in .env (us-east-2)
+          - Gemini API key configured
+          - Both services initialized successfully on startup
+          
+          AI Capabilities:
+          1. classify_alert_severity() - Rule-based + AI for edge cases
+          2. analyze_incident_patterns() - Pattern detection (cascade, storm, periodic)
+          3. suggest_remediation() - Automated fix suggestions
+          
+          All methods use rule-based as primary (fast), AI for complex cases
+
+  - task: "Integrate AI into webhook alert endpoint"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ AI-Enhanced Alert Classification:
+          - Added AI severity classification to /api/webhooks/alerts
+          - Rule-based classification first (fast path)
+          - AI classification if rules uncertain (confidence > 70%)
+          - Auto-adjusts severity based on AI analysis
+          - Logs severity changes (original → AI-adjusted)
+          - Non-blocking: Alert accepted even if AI fails
+
+  - task: "Integrate AI into incident correlation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ AI-Powered Pattern Detection:
+          - Added AI pattern analysis to /api/incidents/correlate
+          - Rule-based correlation (asset + signature + time window)
+          - AI detects complex patterns (cascading failures, root causes)
+          - Adds AI insights to incident description
+          - Stores AI analysis in incident metadata (provider, confidence, recommendations)
+          - Pattern types: cascade, storm, periodic, isolated
+          - Non-blocking: Correlation works even if AI fails
+
 frontend:
   - task: "Remove fake alert generator button"
     implemented: true
