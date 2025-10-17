@@ -1205,7 +1205,10 @@ class AlertWhispererTester:
         # Test 15: CRITICAL TESTS from Review Request
         self.test_critical_requirements()
         
-        # Test 16: Existing Features (Smoke Test)
+        # Test 16: NEW SLA Management Endpoints (CRITICAL TEST)
+        self.test_sla_management_endpoints()
+        
+        # Test 17: Existing Features (Smoke Test)
         self.test_existing_features()
         
         return self.generate_summary()
