@@ -386,6 +386,15 @@ const Dashboard = ({ user, onLogout }) => {
                   companyId={selectedCompany} 
                   companyName={currentCompany?.name} 
                 />
+                
+                {/* Live KPI Proof with Before/After Comparison */}
+                <div className="mt-8">
+                  <h2 className="text-2xl font-bold text-white mb-4">Live KPI Proof & Impact Analysis</h2>
+                  <p className="text-slate-400 mb-6">
+                    Real-time calculations from production data • Not estimates or ranges
+                  </p>
+                  <LiveKPIProof companyId={selectedCompany} />
+                </div>
               </TabsContent>
 
               <TabsContent value="impact" className="space-y-6">
