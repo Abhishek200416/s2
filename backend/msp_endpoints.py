@@ -6,6 +6,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
 
 # Import models
 from msp_models import (
@@ -22,6 +24,14 @@ from email_service import email_service
 from auto_assignment_service import AutoAssignmentEngine, initialize_technician_skills
 from escalation_service import EscalationEngine
 from runbook_library import get_global_runbooks
+
+# Database connection (will be set by server.py)
+db = None
+
+def set_database(database):
+    """Set the database instance"""
+    global db
+    db = database
 
 # Create API router
 msp_router = APIRouter(prefix="/api/msp")
