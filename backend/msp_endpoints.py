@@ -129,7 +129,7 @@ async def execute_runbook(
 
 
 @msp_router.get("/runbooks/executions/{execution_id}", response_model=RunbookExecution)
-async def get_execution_status( execution_id: str):
+async def get_execution_status(execution_id: str):
     """Get runbook execution status and logs"""
     execution = await db.runbook_executions.find_one({"id": execution_id}, {"_id": 0})
     if not execution:
