@@ -151,9 +151,9 @@ class SLATester:
             self.log_result("Get API Key", False, "No API key available for webhook testing")
             return None
         
-        # Create alert via webhook
+        # Create alert via webhook (use existing asset)
         webhook_payload = {
-            "asset_name": "srv-sla-test-01",
+            "asset_name": "srv-app-01",
             "signature": "sla_test_alert",
             "severity": "critical",
             "message": "SLA testing alert - critical severity",
