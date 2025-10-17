@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Server, Cloud, Terminal, Check, X, AlertCircle, Copy, 
   Play, RefreshCw, CheckCircle, XCircle, Loader, ArrowRight,
-  Building2, Shield, Settings, Sparkles
+  Building2, Shield, Settings, Sparkles, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
