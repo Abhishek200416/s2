@@ -359,15 +359,31 @@ Recommend:
 
 @router.get("/ping", response_model=HealthResponse)
 async def health_check():
-    """Agent health check endpoint"""
+    """Agent health check endpoint (AgentCore Runtime compatible)
+    
+    This endpoint is required for AWS Bedrock AgentCore Runtime deployment.
+    Returns health status, provider info, and readiness for AgentCore.
+    """
     uptime = int(time.time() - STARTED_AT)
+    
+    # Check which providers are available
+    providers_available = {
+        "gemini": GEMINI_AVAILABLE and os.environ.get('GEMINI_API_KEY') is not None,
+        "bedrock": BEDROCK_AVAILABLE,
+        "rules": True  # Always available
+    }
+    
+    # Determine if ready for AgentCore deployment
+    ready_for_agentcore = True  # Health endpoint exists, streaming works
     
     return HealthResponse(
         status="ok",
         uptime_s=uptime,
         version=VERSION,
         commit=VERSION,
-        mode=os.getenv("AGENT_MODE", "local")
+        provider=AGENT_PROVIDER,
+        providers_available=providers_available,
+        ready_for_agentcore=ready_for_agentcore
     )
 
 @router.get("/version")
