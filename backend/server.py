@@ -2627,6 +2627,71 @@ aws iam get-role --role-name AlertWhispererMSPAccess --query 'Role.Arn' --output
     }
 
 
+# SSM Agent Health & Asset Inventory Routes
+from ssm_health_service import ssm_health_service
+
+@api_router.get("/companies/{company_id}/agent-health")
+async def get_company_agent_health(company_id: str):
+    """Get SSM agent health status for all company instances"""
+    # Get company
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Get agent health from AWS SSM
+    agent_health = await ssm_health_service.get_agent_health()
+    
+    return {
+        "company_id": company_id,
+        "company_name": company.get("name"),
+        "instances": agent_health,
+        "total_instances": len(agent_health),
+        "online_instances": sum(1 for inst in agent_health if inst.get('is_online')),
+        "offline_instances": sum(1 for inst in agent_health if not inst.get('is_online')),
+        "last_updated": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.get("/companies/{company_id}/assets")
+async def get_company_assets(company_id: str):
+    """Get EC2 asset inventory with SSM agent status"""
+    # Get company
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Get asset inventory from AWS
+    assets = await ssm_health_service.get_asset_inventory()
+    
+    return {
+        "company_id": company_id,
+        "company_name": company.get("name"),
+        "assets": assets,
+        "total_assets": len(assets),
+        "ssm_enabled_assets": sum(1 for asset in assets if asset.get('ssm_agent_installed')),
+        "ssm_online_assets": sum(1 for asset in assets if asset.get('ssm_agent_online')),
+        "last_updated": datetime.now(timezone.utc).isoformat()
+    }
+
+@api_router.post("/companies/{company_id}/ssm/test-connection")
+async def test_ssm_connection(company_id: str, instance_id: str):
+    """Test SSM connection to a specific instance"""
+    # Get company
+    company = await db.companies.find_one({"id": company_id})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Test connection
+    result = await ssm_health_service.test_ssm_connection(instance_id)
+    
+    return result
+
+@api_router.get("/ssm/setup-guide/{platform}")
+async def get_ssm_setup_guide(platform: str):
+    """Get SSM agent setup guide for specific platform"""
+    guide = await ssm_health_service.get_connection_setup_guide(platform)
+    return guide
+
+
 # Webhook & Integration Routes
 class WebhookAlert(BaseModel):
     asset_name: str
