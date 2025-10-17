@@ -2147,6 +2147,32 @@ async def correlate_alerts(company_id: str):
         await db.incidents.insert_one(doc)
         created_incidents.append(incident)
         
+        # === Create External Ticket (if configured) ===
+        try:
+            from ticketing_service import ticketing_service
+            
+            ticketing_config = await db.ticketing_configs.find_one({"company_id": company_id})
+            if ticketing_config and ticketing_config.get('enabled'):
+                # Create ticket in external system
+                ticket_result = await ticketing_service.create_ticket(
+                    ticket_config=ticketing_config['config'],
+                    incident=doc
+                )
+                
+                if ticket_result:
+                    # Store ticket info in incident
+                    await db.incidents.update_one(
+                        {"id": incident.id},
+                        {"$set": {"external_ticket": ticket_result}}
+                    )
+                    
+                    print(f"✅ Created {ticket_result['system_type']} ticket: {ticket_result['ticket_number']}")
+                else:
+                    print(f"⚠️  Failed to create external ticket for incident {incident.id}")
+        except Exception as e:
+            print(f"⚠️  Ticketing integration error (non-critical): {e}")
+        # === End Ticketing Integration ===
+        
         # Mark alerts as acknowledged
         await db.alerts.update_many(
             {"id": {"$in": [a["id"] for a in alert_group]}},
