@@ -2709,6 +2709,29 @@ async def receive_webhook_alert(
         ).hexdigest()[:16]
         x_delivery_id = f"auto_{content_hash}"
     
+    # AI-Enhanced Severity Classification (hybrid: rule-based + AI)
+    try:
+        from ai_service import ai_service
+        ai_classification = await ai_service.classify_alert_severity({
+            "asset_name": alert_data.asset_name,
+            "signature": alert_data.signature,
+            "message": alert_data.message,
+            "tool_source": alert_data.tool_source,
+            "severity": alert_data.severity  # Original severity for comparison
+        })
+        
+        # Use AI classification if confidence is high, otherwise keep original
+        if ai_classification.get("confidence", 0) > 0.7:
+            original_severity = alert_data.severity
+            ai_severity = ai_classification.get("severity")
+            
+            # Log if AI disagrees with original severity
+            if original_severity.lower() != ai_severity.lower():
+                print(f"ℹ️  AI adjusted severity: {original_severity} → {ai_severity} (confidence: {ai_classification.get('confidence')})")
+                alert_data.severity = ai_severity
+    except Exception as e:
+        print(f"⚠️  AI severity classification failed (non-critical): {e}")
+    
     # Create alert with idempotency tracking
     alert = Alert(
         company_id=company_id,
