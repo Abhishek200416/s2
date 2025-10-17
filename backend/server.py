@@ -3793,11 +3793,12 @@ auth_service = None
 memory_service = None
 tools_registry = None
 agent_instance = None
+sla_service_instance = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services and database indexes on startup"""
-    global auth_service, memory_service, tools_registry, agent_instance
+    global auth_service, memory_service, tools_registry, agent_instance, sla_service_instance
     
     logger.info("🚀 Starting Alert Whisperer Agent Core...")
     
@@ -3818,6 +3819,15 @@ async def startup_event():
     logger.info("🤖 Initializing agent instance...")
     agent_instance = init_agent(db, tools_registry)
     
+    # Initialize SLA service
+    try:
+        from sla_service import SLAService
+        logger.info("⏱️  Initializing SLA service...")
+        sla_service_instance = SLAService(db)
+        logger.info("✅ SLA service initialized")
+    except Exception as e:
+        logger.warning(f"⚠️  SLA service failed to initialize: {e}")
+    
     logger.info("✅ All services initialized successfully")
     logger.info(f"   Version: {os.getenv('GIT_SHA', 'dev')}")
     logger.info(f"   Agent Mode: {os.getenv('AGENT_MODE', 'local')}")
@@ -3831,6 +3841,15 @@ async def startup_event():
         logger.info("✅ Escalation monitor started")
     except Exception as e:
         logger.warning(f"⚠️  Escalation monitor failed to start: {e}")
+    
+    # Start SLA monitoring in background
+    if sla_service_instance:
+        try:
+            logger.info("⏱️  Starting SLA monitor...")
+            asyncio.create_task(sla_monitor_task())
+            logger.info("✅ SLA monitor started")
+        except Exception as e:
+            logger.warning(f"⚠️  SLA monitor failed to start: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
