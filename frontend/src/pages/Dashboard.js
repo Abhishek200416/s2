@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import RealTimeDashboard from '../components/RealTimeDashboard';
+import HowItWorksGuide from '../components/HowItWorksGuide';
 import AlertCorrelation from '../components/AlertCorrelation';
 import IncidentList from '../components/IncidentList';
 import DecisionEngine from '../components/DecisionEngine';
