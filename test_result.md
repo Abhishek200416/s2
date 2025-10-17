@@ -226,6 +226,44 @@ user_problem_statement: |
      - External ID security explanation
      - Step-by-step onboarding flow
      - Security best practices
+  
+  ⏱️  NEW: SLA MANAGEMENT & ESCALATION (COMPLETE):
+  31. ✅ SLA Configuration per Company
+     - Response time SLAs by severity (critical: 30min, high: 2hrs, medium: 8hrs, low: 24hrs)
+     - Resolution time SLAs by severity (critical: 4hrs, high: 8hrs, medium: 24hrs, low: 48hrs)
+     - Business hours support (24/7 or business hours only)
+     - Escalation chain configuration (3 levels)
+     - Configurable warning thresholds (default: 30 min before breach)
+     
+  32. ✅ Automatic SLA Tracking
+     - Calculate SLA deadlines when incidents are created
+     - Monitor SLA status in real-time (on_track, warning, breached)
+     - Track response time (time to first assignment)
+     - Track resolution time (time to resolved status)
+     - Background monitor checks breaches every 5 minutes
+     
+  33. ✅ Automatic Escalation on SLA Breach
+     - Response SLA breach → Escalate to Level 1 (Technician notification)
+     - Resolution SLA breach → Escalate to Level 2 (Company Admin) or Level 3 (MSP Admin)
+     - Email notifications via AWS SES for all escalations
+     - In-app critical notifications for breaches
+     - Automatic status update to "escalated"
+     - Audit logging for compliance
+     
+  34. ✅ SLA Compliance Reporting
+     - Response SLA compliance % by company (30-day lookback)
+     - Resolution SLA compliance % by company
+     - Average response time vs. target
+     - Average resolution time vs. target
+     - Breakdown by severity level (critical/high/medium/low)
+     - Historical trend analysis
+     
+  35. ✅ SLA Integration Points
+     - Incident creation: Auto-calculate SLA deadlines
+     - Incident assignment: Track assigned_at for response SLA
+     - Incident resolution: Track resolved_at for resolution SLA
+     - MTTR calculation on incident resolution
+     - WebSocket broadcasts for SLA breaches and escalations
 
 backend:
   - task: "Remove fake alert generator endpoint"
