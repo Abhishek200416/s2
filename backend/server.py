@@ -3703,6 +3703,16 @@ async def startup_event():
     logger.info("✅ All services initialized successfully")
     logger.info(f"   Version: {os.getenv('GIT_SHA', 'dev')}")
     logger.info(f"   Agent Mode: {os.getenv('AGENT_MODE', 'local')}")
+    
+    # Start escalation monitor in background
+    try:
+        from escalation_service import start_escalation_monitor
+        from email_service import email_service
+        logger.info("🔥 Starting escalation monitor...")
+        asyncio.create_task(start_escalation_monitor(db, email_service, interval_minutes=5))
+        logger.info("✅ Escalation monitor started")
+    except Exception as e:
+        logger.warning(f"⚠️  Escalation monitor failed to start: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
