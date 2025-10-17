@@ -82,3 +82,7 @@ android-sdk/
 .env
 backend/.env
 frontend/.env
+
+# Ignore env files
+.env
+backend/.env
