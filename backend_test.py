@@ -681,8 +681,131 @@ class AlertWhispererTester:
         else:
             self.log_result("Enable HMAC for Testing", False, f"Failed to enable HMAC for testing: {response.status_code if response else 'No response'}")
     
+    def test_ssm_setup_guide_enhancement(self):
+        """Test 13: SSM Setup Guide Enhancement (CRITICAL TEST)"""
+        print("\n=== Testing SSM Setup Guide Enhancement ===")
+        
+        platforms = ["ubuntu", "amazon-linux", "windows"]
+        
+        for platform in platforms:
+            response = self.make_request('GET', f'/ssm/setup-guide/{platform}')
+            if response and response.status_code == 200:
+                guide = response.json()
+                
+                # Check for all required enhanced fields
+                required_fields = [
+                    'prerequisites', 'install_commands', 'verify_commands', 
+                    'expected_output', 'iam_setup_steps', 'troubleshooting_commands',
+                    'wait_time', 'security_notes', 'iam_role_policy', 'iam_permissions'
+                ]
+                
+                missing_fields = [field for field in required_fields if field not in guide]
+                
+                if not missing_fields:
+                    # Verify field types and content
+                    prerequisites = guide.get('prerequisites', [])
+                    install_commands = guide.get('install_commands', [])
+                    security_notes = guide.get('security_notes', [])
+                    iam_setup_steps = guide.get('iam_setup_steps', [])
+                    
+                    if (isinstance(prerequisites, list) and len(prerequisites) > 0 and
+                        isinstance(install_commands, list) and len(install_commands) > 0 and
+                        isinstance(security_notes, list) and len(security_notes) > 0 and
+                        isinstance(iam_setup_steps, list) and len(iam_setup_steps) > 0):
+                        
+                        self.log_result(f"SSM Setup Guide - {platform.title()}", True, 
+                                      f"Enhanced guide complete: {len(prerequisites)} prerequisites, {len(install_commands)} install commands, {len(security_notes)} security notes")
+                    else:
+                        self.log_result(f"SSM Setup Guide - {platform.title()}", False, 
+                                      "Guide fields are not properly formatted arrays")
+                else:
+                    self.log_result(f"SSM Setup Guide - {platform.title()}", False, 
+                                  f"Missing enhanced fields: {missing_fields}")
+            else:
+                self.log_result(f"SSM Setup Guide - {platform.title()}", False, 
+                              f"Failed to get setup guide: {response.status_code if response else 'No response'}")
+    
+    def test_ssm_connection_validation(self):
+        """Test 14: SSM Connection with Enhanced Validation (CRITICAL TEST)"""
+        print("\n=== Testing SSM Connection with Enhanced Validation ===")
+        
+        # Test with a test instance ID
+        test_instance_id = "test-instance-123"
+        
+        response = self.make_request('POST', f'/ssm/test-connection?instance_id={test_instance_id}')
+        if response and response.status_code == 200:
+            result = response.json()
+            
+            # Check for required response structure
+            required_fields = ['success', 'validation_steps']
+            missing_fields = [field for field in required_fields if field not in result]
+            
+            if not missing_fields:
+                validation_steps = result.get('validation_steps', {})
+                
+                # Check for required validation step keys
+                expected_steps = ['instance_discovery', 'ssm_agent', 'iam_role', 'connectivity']
+                missing_steps = [step for step in expected_steps if step not in validation_steps]
+                
+                if not missing_steps:
+                    # Verify each validation step has status and message
+                    all_steps_valid = True
+                    for step_name, step_data in validation_steps.items():
+                        if not isinstance(step_data, dict) or 'status' not in step_data or 'message' not in step_data:
+                            all_steps_valid = False
+                            break
+                    
+                    if all_steps_valid:
+                        success = result.get('success', False)
+                        troubleshooting = result.get('troubleshooting', [])
+                        
+                        if not success and isinstance(troubleshooting, list) and len(troubleshooting) > 0:
+                            self.log_result("SSM Connection Validation", True, 
+                                          f"Enhanced validation working: success={success}, {len(troubleshooting)} troubleshooting steps provided")
+                        elif success:
+                            instance_details = result.get('instance_details', {})
+                            if isinstance(instance_details, dict):
+                                self.log_result("SSM Connection Validation", True, 
+                                              f"Enhanced validation working: success={success}, instance details provided")
+                            else:
+                                self.log_result("SSM Connection Validation", False, 
+                                              "Success response missing instance_details")
+                        else:
+                            self.log_result("SSM Connection Validation", False, 
+                                          "Failed response missing troubleshooting array")
+                    else:
+                        self.log_result("SSM Connection Validation", False, 
+                                      "Validation steps missing status/message fields")
+                else:
+                    self.log_result("SSM Connection Validation", False, 
+                                  f"Missing validation steps: {missing_steps}")
+            else:
+                self.log_result("SSM Connection Validation", False, 
+                              f"Missing required fields: {missing_fields}")
+        else:
+            self.log_result("SSM Connection Validation", False, 
+                          f"Failed to test SSM connection: {response.status_code if response else 'No response'}")
+        
+        # Test with invalid instance ID to verify error handling
+        invalid_instance_id = "invalid-instance-xyz"
+        response = self.make_request('POST', f'/ssm/test-connection?instance_id={invalid_instance_id}')
+        if response and response.status_code == 200:
+            result = response.json()
+            success = result.get('success', True)  # Should be False for invalid instance
+            troubleshooting = result.get('troubleshooting', [])
+            
+            if not success and isinstance(troubleshooting, list) and len(troubleshooting) > 0:
+                self.log_result("SSM Connection Error Handling", True, 
+                              f"Error handling working: returns success=False with {len(troubleshooting)} troubleshooting steps")
+            else:
+                self.log_result("SSM Connection Error Handling", False, 
+                              "Error handling not working properly - should return success=False with troubleshooting")
+        else:
+            self.log_result("SSM Connection Error Handling", False, 
+                          f"Failed to test error handling: {response.status_code if response else 'No response'}")
+    
     def test_critical_requirements(self):
-        """Test 13: CRITICAL TESTS from Review Request"""
+        """Test 15: CRITICAL TESTS from Review Request"""
         print("\n=== CRITICAL TESTS - Alert Whisperer MSP Platform ===")
         
         # CRITICAL TEST 1: Login test
