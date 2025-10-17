@@ -536,37 +536,96 @@ const MSPOnboardingWizard = ({ onSuccess, onCancel }) => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <Button
-                          size="sm"
-                          onClick={() => testConnection(instance.instance_id)}
-                          disabled={testing || !instance.is_online}
-                          className="bg-cyan-600 hover:bg-cyan-700"
-                        >
-                          {testResults[instance.instance_id]?.status === 'testing' ? (
-                            <>
-                              <Loader className="w-4 h-4 mr-2 animate-spin" />
-                              Testing...
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4 mr-2" />
-                              Test Connection
-                            </>
-                          )}
-                        </Button>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <Button
+                            size="sm"
+                            onClick={() => testConnection(instance.instance_id)}
+                            disabled={testing || !instance.is_online}
+                            className="bg-cyan-600 hover:bg-cyan-700"
+                          >
+                            {testResults[instance.instance_id]?.status === 'testing' ? (
+                              <>
+                                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                                Testing...
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4 mr-2" />
+                                Test Connection
+                              </>
+                            )}
+                          </Button>
 
-                        {testResults[instance.instance_id]?.status === 'success' && (
-                          <div className="flex items-center gap-2 text-green-400 text-sm">
-                            <CheckCircle className="w-4 h-4" />
-                            <span>Connection Successful</span>
+                          {testResults[instance.instance_id]?.status === 'success' && (
+                            <div className="flex items-center gap-2 text-green-400 text-sm">
+                              <CheckCircle className="w-4 h-4" />
+                              <span>All Validations Passed ✅</span>
+                            </div>
+                          )}
+
+                          {testResults[instance.instance_id]?.status === 'error' && (
+                            <div className="flex items-center gap-2 text-red-400 text-sm">
+                              <XCircle className="w-4 h-4" />
+                              <span>{testResults[instance.instance_id]?.error || 'Connection Failed'}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Validation Steps Display */}
+                        {testResults[instance.instance_id]?.validation_steps && (
+                          <div className="bg-slate-950 border border-slate-700 rounded p-3 space-y-2">
+                            <div className="text-sm font-medium text-slate-300 mb-2">Validation Checks:</div>
+                            {Object.entries(testResults[instance.instance_id].validation_steps).map(([key, step]) => (
+                              <div key={key} className="flex items-start gap-2 text-sm">
+                                {step.status === 'passed' && <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />}
+                                {step.status === 'failed' && <XCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />}
+                                {step.status === 'warning' && <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />}
+                                {step.status === 'checking' && <Loader className="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0 animate-spin" />}
+                                {step.status === 'pending' && <div className="w-4 h-4 mt-0.5 flex-shrink-0 rounded-full border-2 border-slate-600" />}
+                                <div className="flex-1">
+                                  <div className="font-medium text-slate-300 capitalize">{key.replace(/_/g, ' ')}</div>
+                                  <div className={`text-xs ${
+                                    step.status === 'passed' ? 'text-green-400' :
+                                    step.status === 'failed' ? 'text-red-400' :
+                                    step.status === 'warning' ? 'text-amber-400' :
+                                    'text-slate-400'
+                                  }`}>
+                                    {step.message}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
 
-                        {testResults[instance.instance_id]?.status === 'error' && (
-                          <div className="flex items-center gap-2 text-red-400 text-sm">
-                            <XCircle className="w-4 h-4" />
-                            <span>{testResults[instance.instance_id]?.error || 'Connection Failed'}</span>
+                        {/* Troubleshooting Guide */}
+                        {testResults[instance.instance_id]?.status === 'error' && testResults[instance.instance_id]?.troubleshooting && (
+                          <div className="bg-amber-900/20 border border-amber-500/30 rounded p-3 mt-2">
+                            <div className="text-sm font-medium text-amber-300 mb-2 flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4" />
+                              Troubleshooting Steps:
+                            </div>
+                            <ul className="text-sm text-slate-300 space-y-1">
+                              {testResults[instance.instance_id].troubleshooting.map((step, idx) => (
+                                <li key={idx} className="pl-4">{step}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Instance Details on Success */}
+                        {testResults[instance.instance_id]?.status === 'success' && testResults[instance.instance_id]?.instance_details && (
+                          <div className="bg-green-900/20 border border-green-500/30 rounded p-3 text-sm">
+                            <div className="font-medium text-green-300 mb-2">Instance Details:</div>
+                            <div className="grid grid-cols-2 gap-2 text-slate-300">
+                              <div>Platform: {testResults[instance.instance_id].instance_details.platform}</div>
+                              <div>Agent: v{testResults[instance.instance_id].instance_details.agent_version}</div>
+                              <div>Status: {testResults[instance.instance_id].instance_details.ping_status}</div>
+                              <div className="text-xs text-slate-400 col-span-2">
+                                Command ID: {testResults[instance.instance_id].command_id}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
