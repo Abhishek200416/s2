@@ -233,10 +233,10 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
 
                 <div className="flex justify-end">
                   <Button 
-                    onClick={() => setCurrentStep('aws')}
+                    onClick={() => setCurrentStep('security')}
                     className="bg-cyan-600 hover:bg-cyan-700"
                   >
-                    Next: AWS Integration →
+                    Next: Security Settings →
                   </Button>
                 </div>
               </CardContent>
