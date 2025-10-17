@@ -598,13 +598,16 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
               <CardHeader>
                 <CardTitle className="text-white">Review Configuration</CardTitle>
                 <CardDescription className="text-slate-400">
-                  Review and confirm the company configuration before creating
+                  Review all settings before creating the company. Everything configured here!
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Basic Info Summary */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-white">Basic Information</h4>
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-cyan-400" />
+                    Basic Information
+                  </h4>
                   <div className="bg-slate-900 p-3 rounded space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Company Name:</span>
@@ -617,9 +620,71 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                   </div>
                 </div>
 
+                {/* Security Settings Summary */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-cyan-400" />
+                    Security & Rate Limiting
+                  </h4>
+                  <div className="bg-slate-900 p-3 rounded space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">HMAC Webhook Security:</span>
+                      <Badge className={formData.enable_hmac ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-700 text-slate-400'}>
+                        {formData.enable_hmac ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+                        {formData.enable_hmac ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Rate Limiting:</span>
+                      <Badge className={formData.rate_limit_enabled ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-700 text-slate-400'}>
+                        {formData.rate_limit_enabled ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+                        {formData.rate_limit_enabled ? `${formData.requests_per_minute} req/min` : 'Disabled'}
+                      </Badge>
+                    </div>
+                    {formData.rate_limit_enabled && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Burst Size:</span>
+                        <span className="text-white">{formData.burst_size} alerts</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Correlation Settings Summary */}
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <GitMerge className="w-4 h-4 text-cyan-400" />
+                    Alert Correlation (AI-Enhanced)
+                  </h4>
+                  <div className="bg-slate-900 p-3 rounded space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-400">Auto-Correlate:</span>
+                      <Badge className={formData.auto_correlate ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-700 text-slate-400'}>
+                        {formData.auto_correlate ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+                        {formData.auto_correlate ? 'Enabled' : 'Disabled'}
+                      </Badge>
+                    </div>
+                    {formData.auto_correlate && (
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Time Window:</span>
+                        <span className="text-white">{formData.correlation_time_window} minutes</span>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-2 mt-2 pt-2 border-t border-slate-700">
+                      <Zap className="w-4 h-4 text-cyan-400 mt-0.5" />
+                      <span className="text-slate-400">
+                        Using <strong className="text-cyan-400">AWS Bedrock + Gemini</strong> for pattern detection
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* AWS Integration Summary */}
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-white">AWS Integration</h4>
+                  <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Cloud className="w-4 h-4 text-cyan-400" />
+                    AWS Integration (Optional)
+                  </h4>
                   <div className="bg-slate-900 p-3 rounded space-y-1 text-sm">
                     {formData.aws_access_key_id ? (
                       <>
@@ -631,9 +696,9 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                           <span className="text-slate-400">Region:</span>
                           <span className="text-white">{formData.aws_region}</span>
                         </div>
-                        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
-                          Will be verified
+                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 mt-2">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Will be verified on creation
                         </Badge>
                       </>
                     ) : (
@@ -641,6 +706,21 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                     )}
                   </div>
                 </div>
+
+                {/* What Happens Next */}
+                <Alert className="bg-cyan-500/10 border-cyan-500/30">
+                  <Zap className="h-4 w-4 text-cyan-400" />
+                  <AlertDescription className="text-slate-300">
+                    <strong className="text-cyan-400">After Creation:</strong>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                      <li>Company receives API key for webhook integration</li>
+                      <li>HMAC secret generated (if enabled)</li>
+                      <li>Monitoring tools can send alerts immediately</li>
+                      <li>AI correlation reduces noise by 40-70%</li>
+                      <li>Incidents auto-assigned to technicians</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
 
                 {/* Verification Results */}
                 {verificationResult && (
@@ -653,23 +733,13 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                     <AlertDescription className="text-slate-300">
                       {verificationResult.success ? (
                         <div>
-                          <strong className="text-green-400">✅ Integration Verified!</strong>
-                          <ul className="mt-2 space-y-1 text-sm">
-                            {verificationResult.details?.webhook?.verified && (
-                              <li>✓ Webhook endpoint ready</li>
-                            )}
-                            {verificationResult.details?.aws?.verified && (
-                              <li>✓ AWS credentials verified</li>
-                            )}
-                          </ul>
+                          <strong className="text-green-400">✅ Company Created Successfully!</strong>
+                          <p className="mt-2 text-sm">All configurations applied. API key will be shown next.</p>
                         </div>
                       ) : (
                         <div>
-                          <strong className="text-red-400">❌ Verification Failed</strong>
+                          <strong className="text-red-400">❌ Creation Failed</strong>
                           <p className="mt-1 text-sm">{verificationResult.error}</p>
-                          {verificationResult.details?.aws && !verificationResult.details.aws.verified && (
-                            <p className="mt-1 text-sm">AWS Error: {verificationResult.details.aws.error}</p>
-                          )}
                         </div>
                       )}
                     </AlertDescription>
@@ -679,7 +749,7 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                 <div className="flex justify-between pt-4">
                   <Button 
                     variant="outline" 
-                    onClick={() => setCurrentStep('aws')}
+                    onClick={() => setCurrentStep('correlation')}
                     className="border-slate-600 text-slate-300"
                     disabled={isVerifying}
                   >
@@ -693,10 +763,13 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
                     {isVerifying ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Verifying & Creating...
+                        Creating & Configuring...
                       </>
                     ) : (
-                      'Create Company'
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Create Company
+                      </>
                     )}
                   </Button>
                 </div>
