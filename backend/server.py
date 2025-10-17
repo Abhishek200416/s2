@@ -1924,6 +1924,28 @@ async def get_runbooks(company_id: Optional[str] = None):
     runbooks = await db.runbooks.find(query, {"_id": 0}).to_list(100)
     return runbooks
 
+@api_router.get("/runbooks/global-library")
+async def get_global_runbook_library():
+    """Get pre-built runbook library with categories"""
+    from runbook_library import get_global_runbooks
+    
+    runbooks = get_global_runbooks()
+    
+    # Organize by category
+    categories = {}
+    for runbook in runbooks:
+        category = runbook.get('category', 'other')
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(runbook)
+    
+    return {
+        "runbooks": runbooks,
+        "categories": categories,
+        "total_count": len(runbooks),
+        "category_list": list(categories.keys())
+    }
+
 class RunbookCreate(BaseModel):
     name: str
     description: str
