@@ -1944,6 +1944,23 @@ async def correlate_alerts(company_id: str):
         except Exception as e:
             print(f"⚠️  AI pattern detection failed (non-critical): {e}")
         
+        # Calculate SLA deadlines for this incident
+        if sla_service_instance:
+            try:
+                created_at = datetime.fromisoformat(incident.created_at.replace('Z', '+00:00'))
+                sla_deadlines = await sla_service_instance.calculate_sla_deadlines(
+                    company_id=company_id,
+                    severity=incident.severity,
+                    created_at=created_at
+                )
+                # Add SLA data to incident
+                if not hasattr(incident, 'sla') or incident.sla is None:
+                    incident.sla = sla_deadlines
+                else:
+                    incident.sla.update(sla_deadlines)
+            except Exception as e:
+                print(f"⚠️  SLA calculation failed (non-critical): {e}")
+        
         doc = incident.model_dump()
         await db.incidents.insert_one(doc)
         created_incidents.append(incident)
