@@ -244,6 +244,33 @@ const Dashboard = ({ user, onLogout }) => {
               </DropdownMenu>
 
               <Button
+                onClick={() => navigate('/runbooks')}
+                variant="outline"
+                size="sm"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                📚 Runbooks
+              </Button>
+
+              <Button
+                onClick={() => navigate('/technician-skills')}
+                variant="outline"
+                size="sm"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                👥 Skills
+              </Button>
+
+              <Button
+                onClick={() => navigate('/msp-settings')}
+                variant="outline"
+                size="sm"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                ⚙️ MSP Settings
+              </Button>
+
+              <Button
                 onClick={() => navigate('/technicians')}
                 variant="outline"
                 size="sm"
