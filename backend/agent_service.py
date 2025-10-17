@@ -1,4 +1,16 @@
-"""AWS Agent Core - Decision Agent Service"""
+"""AWS Agent Core - Decision Agent Service
+
+Multi-Provider Agent System:
+- Gemini (Google): Default AI provider
+- AWS Bedrock: Enterprise AWS-native option (Claude models)
+- Deterministic Rules: Fallback for simple cases
+
+Provider Selection (AGENT_PROVIDER env var):
+- 'gemini' (default): Uses Google Gemini models
+- 'bedrock-runtime': Direct AWS Bedrock model invocation
+- 'bedrock-managed': Uses AWS Bedrock managed agents (InvokeAgent)
+- 'rules': Pure deterministic rule engine
+"""
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any, Iterator
@@ -9,7 +21,22 @@ import json
 import uuid
 import asyncio
 from fastapi.responses import StreamingResponse
-import google.generativeai as genai
+
+# Try importing Google Gemini
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    print("⚠️  google-generativeai not available - Gemini disabled")
+
+# Try importing AWS Bedrock
+try:
+    from bedrock_agent_service import BedrockAgentClient, BedrockDecisionAgent
+    BEDROCK_AVAILABLE = True
+except ImportError:
+    BEDROCK_AVAILABLE = False
+    print("⚠️  Bedrock integration not available - AWS Bedrock disabled")
 
 # Agent version tracking
 VERSION = os.getenv("GIT_SHA", "dev")
@@ -18,6 +45,9 @@ STARTED_AT = time.time()
 # Agent configuration
 MAX_TOKENS_PER_DECISION = int(os.getenv("MAX_TOKENS_PER_DECISION", "2000"))
 MAX_DECISION_TIME_SECONDS = int(os.getenv("MAX_DECISION_TIME_SECONDS", "30"))
+
+# Provider configuration
+AGENT_PROVIDER = os.getenv("AGENT_PROVIDER", "gemini")  # gemini, bedrock-runtime, bedrock-managed, rules
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
