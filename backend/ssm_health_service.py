@@ -157,6 +157,14 @@ class SSMHealthService:
             print(f"❌ Asset Inventory Error: {str(e)}")
             return []
     
+    async def get_all_ssm_instances(self) -> List[Dict[str, Any]]:
+        """Get all SSM-managed instances (used during onboarding)
+        
+        Returns:
+            List of all instances with SSM agent
+        """
+        return await self.get_agent_health(company_tag=None)
+    
     async def test_ssm_connection(self, instance_id: str) -> Dict[str, Any]:
         """Test SSM connection to a specific instance
         
