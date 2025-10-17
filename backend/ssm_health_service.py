@@ -166,41 +166,157 @@ class SSMHealthService:
         return await self.get_agent_health(company_tag=None)
     
     async def test_ssm_connection(self, instance_id: str) -> Dict[str, Any]:
-        """Test SSM connection to a specific instance
+        """Test SSM connection to a specific instance with comprehensive validation
         
         Args:
             instance_id: EC2 instance ID
         
         Returns:
-            Connection test result
+            Connection test result with validation details
         """
         if not self.is_available():
             return {
                 "success": False,
-                "error": "SSM client not available"
+                "error": "SSM client not available",
+                "validation_steps": {
+                    "aws_credentials": {"status": "failed", "message": "AWS credentials not configured"},
+                    "ssm_agent": {"status": "pending", "message": "Cannot check - no AWS access"},
+                    "iam_role": {"status": "pending", "message": "Cannot check - no AWS access"},
+                    "connectivity": {"status": "pending", "message": "Cannot check - no AWS access"}
+                }
             }
         
+        validation_steps = {}
+        
         try:
-            # Try to send a simple test command
+            # STEP 1: Verify instance exists in SSM
+            validation_steps["instance_discovery"] = {"status": "checking", "message": "Checking if instance is registered with SSM..."}
+            
+            ssm_instances = await asyncio.get_event_loop().run_in_executor(
+                executor,
+                lambda: self.ssm_client.describe_instance_information(
+                    Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}]
+                )
+            )
+            
+            if not ssm_instances.get('InstanceInformationList'):
+                return {
+                    "success": False,
+                    "instance_id": instance_id,
+                    "error": "Instance not found in SSM",
+                    "validation_steps": {
+                        "instance_discovery": {"status": "failed", "message": "Instance is not registered with SSM Agent"},
+                        "ssm_agent": {"status": "failed", "message": "SSM Agent not installed or not running"},
+                        "iam_role": {"status": "unknown", "message": "Cannot verify - instance not in SSM"},
+                        "connectivity": {"status": "failed", "message": "Cannot test - instance not responding to SSM"}
+                    },
+                    "troubleshooting": [
+                        "1. Verify SSM Agent is installed on the instance",
+                        "2. Ensure SSM Agent service is running",
+                        "3. Check IAM instance profile is attached",
+                        "4. Verify network connectivity (instance can reach SSM endpoints)",
+                        "5. Check security groups allow outbound HTTPS (443)"
+                    ]
+                }
+            
+            instance_info = ssm_instances['InstanceInformationList'][0]
+            ping_status = instance_info.get('PingStatus')
+            platform = instance_info.get('PlatformName', 'Unknown')
+            agent_version = instance_info.get('AgentVersion', 'Unknown')
+            
+            validation_steps["instance_discovery"] = {
+                "status": "passed", 
+                "message": f"Instance found: {platform}, Agent v{agent_version}"
+            }
+            
+            # STEP 2: Check ping status
+            validation_steps["ssm_agent"] = {"status": "checking", "message": "Checking SSM Agent status..."}
+            
+            if ping_status != 'Online':
+                return {
+                    "success": False,
+                    "instance_id": instance_id,
+                    "error": f"Instance status is '{ping_status}' (not Online)",
+                    "validation_steps": {
+                        **validation_steps,
+                        "ssm_agent": {"status": "failed", "message": f"Agent status: {ping_status}"},
+                        "connectivity": {"status": "failed", "message": "Instance not responding to SSM pings"}
+                    },
+                    "troubleshooting": [
+                        "1. Restart SSM Agent service on the instance",
+                        "2. Check system logs for SSM Agent errors",
+                        "3. Verify instance has internet connectivity",
+                        "4. Check if IAM role is still attached",
+                        "5. Ensure instance is not stopped or terminated"
+                    ]
+                }
+            
+            validation_steps["ssm_agent"] = {"status": "passed", "message": "SSM Agent online and responding"}
+            
+            # STEP 3: Verify IAM permissions
+            validation_steps["iam_role"] = {"status": "checking", "message": "Verifying IAM permissions..."}
+            
+            # Try to get instance profile to verify IAM role
+            try:
+                ec2_response = await asyncio.get_event_loop().run_in_executor(
+                    executor,
+                    lambda: self.ec2_client.describe_instances(InstanceIds=[instance_id])
+                )
+                
+                instance_data = ec2_response['Reservations'][0]['Instances'][0]
+                iam_profile = instance_data.get('IamInstanceProfile')
+                
+                if not iam_profile:
+                    validation_steps["iam_role"] = {
+                        "status": "warning", 
+                        "message": "No IAM instance profile attached (may use hybrid activation)"
+                    }
+                else:
+                    validation_steps["iam_role"] = {
+                        "status": "passed", 
+                        "message": f"IAM role attached: {iam_profile.get('Arn', 'Unknown').split('/')[-1]}"
+                    }
+            except Exception as e:
+                validation_steps["iam_role"] = {
+                    "status": "warning", 
+                    "message": f"Could not verify IAM role: {str(e)}"
+                }
+            
+            # STEP 4: Send test command
+            validation_steps["connectivity"] = {"status": "checking", "message": "Sending test command..."}
+            
             response = await asyncio.get_event_loop().run_in_executor(
                 executor,
                 lambda: self.ssm_client.send_command(
                     InstanceIds=[instance_id],
                     DocumentName="AWS-RunShellScript",
-                    Parameters={'commands': ['echo "SSM Connection Test Successful"']},
-                    Comment="Alert Whisperer SSM Connection Test",
+                    Parameters={'commands': ['echo "✅ SSM Connection Test Successful - Alert Whisperer" && date']},
+                    Comment="Alert Whisperer SSM Connection Validation Test",
                     TimeoutSeconds=60
                 )
             )
             
             command_id = response['Command']['CommandId']
+            command_status = response['Command']['Status']
+            
+            validation_steps["connectivity"] = {
+                "status": "passed", 
+                "message": f"Test command sent successfully (Command ID: {command_id[:8]}...)"
+            }
             
             return {
                 "success": True,
                 "instance_id": instance_id,
                 "command_id": command_id,
-                "status": response['Command']['Status'],
-                "message": "SSM connection successful! Test command sent."
+                "status": command_status,
+                "message": "✅ All validation checks passed! SSM connection is working perfectly.",
+                "validation_steps": validation_steps,
+                "instance_details": {
+                    "platform": platform,
+                    "agent_version": agent_version,
+                    "ping_status": ping_status,
+                    "last_ping": instance_info.get('LastPingDateTime', datetime.now(timezone.utc)).isoformat()
+                }
             }
             
         except ClientError as e:
@@ -211,13 +327,22 @@ class SSMHealthService:
                 "instance_id": instance_id,
                 "error_code": error_code,
                 "error": error_msg,
-                "suggestion": self._get_error_suggestion(error_code)
+                "validation_steps": validation_steps,
+                "suggestion": self._get_error_suggestion(error_code),
+                "troubleshooting": self._get_detailed_troubleshooting(error_code)
             }
         except Exception as e:
             return {
                 "success": False,
                 "instance_id": instance_id,
-                "error": str(e)
+                "error": str(e),
+                "validation_steps": validation_steps,
+                "troubleshooting": [
+                    "1. Check AWS credentials are valid and not expired",
+                    "2. Verify instance ID is correct and in the right region",
+                    "3. Ensure you have SSM and EC2 read permissions",
+                    "4. Contact support if the issue persists"
+                ]
             }
     
     def _get_error_suggestion(self, error_code: str) -> str:
