@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building2, Cloud, Shield, Settings, Zap, CheckCircle2, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Building2, Cloud, Shield, Settings, Zap, CheckCircle2, XCircle, AlertCircle, Loader2, Lock, GitMerge, Gauge } from 'lucide-react';
 import { toast } from 'sonner';
 
 const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
@@ -28,7 +30,19 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
     aws_account_id: '',
     
     // Monitoring Integrations (optional)
-    monitoring_integrations: []
+    monitoring_integrations: [],
+    
+    // Webhook Security Settings
+    enable_hmac: true,
+    
+    // Correlation Settings
+    correlation_time_window: 15,
+    auto_correlate: true,
+    
+    // Rate Limiting
+    rate_limit_enabled: true,
+    requests_per_minute: 100,
+    burst_size: 20
   });
 
   const handleInputChange = (field, value) => {
