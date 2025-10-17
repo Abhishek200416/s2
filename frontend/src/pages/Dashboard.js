@@ -275,6 +275,16 @@ const Dashboard = ({ user, onLogout }) => {
                 ⚙️ MSP Settings
               </Button>
 
+              {/* MSP Workflow Guide Button - Prominent */}
+              <Button
+                onClick={() => setShowMSPGuide(true)}
+                size="sm"
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold border-0 shadow-lg"
+              >
+                <Zap className="w-4 h-4 mr-2" />
+                📘 How MSPs Work
+              </Button>
+
               <Button
                 onClick={() => navigate('/help')}
                 variant="outline"
