@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from '@/components/ui/badge';
 import { Building2, Plus, Edit, Trash2, Server, Key, Copy, Check, Send, Code, TrendingUp, TrendingDown } from 'lucide-react';
 import { toast } from 'sonner';
-import CompanyOnboardingDialog from './CompanyOnboardingDialog';
+import MSPOnboardingWizard from './MSPOnboardingWizard';
 
 const CompanyManagement = ({ onCompanyChange }) => {
   const [companies, setCompanies] = useState([]);
@@ -30,6 +30,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
     loadCompanies();
     setNewlyCreatedCompany(company);
     setShowIntegrationDialog(true);
+    setShowOnboardingDialog(false);
     if (onCompanyChange) onCompanyChange();
   };
 
