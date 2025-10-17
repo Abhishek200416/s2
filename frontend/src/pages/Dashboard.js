@@ -290,6 +290,16 @@ const Dashboard = ({ user, onLogout }) => {
                 <Settings className="w-4 h-4 mr-2" />
                 Technicians
               </Button>
+
+              <Button
+                onClick={() => navigate('/runbooks')}
+                variant="outline"
+                size="sm"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Runbooks
+              </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
