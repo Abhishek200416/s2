@@ -71,7 +71,30 @@ class SLATester:
         """Test SLA configuration endpoints"""
         print("\n=== Testing SLA Configuration Endpoints ===")
         
-        # Test 1: GET /api/companies/{company_id}/sla-config (current config)
+        # First, reset to default config to ensure consistent testing
+        default_config = {
+            "response_time_minutes": {
+                "critical": 30,
+                "high": 120,
+                "medium": 480,
+                "low": 1440
+            },
+            "resolution_time_minutes": {
+                "critical": 240,
+                "high": 480,
+                "medium": 1440,
+                "low": 2880
+            },
+            "escalation_enabled": True
+        }
+        
+        reset_response = self.make_request('PUT', '/companies/comp-acme/sla-config', json=default_config)
+        if reset_response and reset_response.status_code == 200:
+            print("✓ Reset SLA config to defaults for consistent testing")
+        else:
+            print("⚠ Warning: Could not reset SLA config, continuing with existing values")
+        
+        # Test 1: GET /api/companies/{company_id}/sla-config (verify defaults or current config)
         response = self.make_request('GET', '/companies/comp-acme/sla-config')
         if response and response.status_code == 200:
             config = response.json()
