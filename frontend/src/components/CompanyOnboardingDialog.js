@@ -247,6 +247,223 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
             </Card>
           </TabsContent>
 
+          {/* Company Credentials Tab - What MSP Collects from Client */}
+          <TabsContent value="credentials" className="space-y-4 mt-4">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-cyan-400" />
+                  Client Company Credentials
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Collect these credentials from the company to monitor their infrastructure
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Important Notice */}
+                <Alert className="bg-cyan-500/10 border-cyan-500/30">
+                  <AlertCircle className="h-4 w-4 text-cyan-400" />
+                  <AlertDescription className="text-slate-300">
+                    <strong>How Real MSPs Work:</strong> When onboarding a new company, you collect their credentials 
+                    to monitor and manage their infrastructure. These credentials allow you to:
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                      <li>Pull alerts from their AWS CloudWatch</li>
+                      <li>Monitor their servers and applications</li>
+                      <li>Execute automated remediation scripts</li>
+                      <li>Track patch compliance</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+
+                {/* AWS/Cloud Credentials */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Cloud className="w-5 h-5 text-orange-400" />
+                    <h4 className="text-white font-semibold">1. AWS Cloud Credentials</h4>
+                    <Badge variant="outline" className="text-orange-400 border-orange-400">Required for CloudWatch</Badge>
+                  </div>
+                  
+                  <Card className="bg-slate-900 border-slate-600">
+                    <CardHeader>
+                      <CardTitle className="text-sm text-white">What to Collect from Company:</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3 text-sm text-slate-300">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5" />
+                        <div>
+                          <strong>AWS Access Key ID & Secret:</strong> For programmatic access to CloudWatch alarms
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5" />
+                        <div>
+                          <strong>AWS Region:</strong> Where their resources are deployed (e.g., us-east-1)
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5" />
+                        <div>
+                          <strong>AWS Account ID:</strong> 12-digit account identifier
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5" />
+                        <div>
+                          <strong>IAM Role ARN (Recommended):</strong> Cross-account role for secure access
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="aws-access-key" className="text-slate-300">AWS Access Key ID *</Label>
+                    <Input
+                      id="aws-access-key"
+                      type="password"
+                      value={formData.aws_access_key_id}
+                      onChange={(e) => handleInputChange('aws_access_key_id', e.target.value)}
+                      placeholder="AKIA... (provided by company)"
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                    <p className="text-xs text-slate-500">Company provides this from their AWS Console → IAM → Users</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="aws-secret-key" className="text-slate-300">AWS Secret Access Key *</Label>
+                    <Input
+                      id="aws-secret-key"
+                      type="password"
+                      value={formData.aws_secret_access_key}
+                      onChange={(e) => handleInputChange('aws_secret_access_key', e.target.value)}
+                      placeholder="••••••••"
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="aws-region" className="text-slate-300">AWS Region *</Label>
+                      <Input
+                        id="aws-region"
+                        value={formData.aws_region}
+                        onChange={(e) => handleInputChange('aws_region', e.target.value)}
+                        placeholder="us-east-1"
+                        className="bg-slate-700 border-slate-600 text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="aws-account-id" className="text-slate-300">AWS Account ID *</Label>
+                      <Input
+                        id="aws-account-id"
+                        value={formData.aws_account_id}
+                        onChange={(e) => handleInputChange('aws_account_id', e.target.value)}
+                        placeholder="123456789012"
+                        className="bg-slate-700 border-slate-600 text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="h-px bg-slate-700" />
+
+                {/* Monitoring Tools API Keys */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-blue-400" />
+                    <h4 className="text-white font-semibold">2. Monitoring Tools (Optional)</h4>
+                    <Badge variant="outline" className="text-blue-400 border-blue-400">If they use these</Badge>
+                  </div>
+                  
+                  <Card className="bg-slate-900 border-slate-600">
+                    <CardContent className="space-y-2 pt-4 text-sm text-slate-300">
+                      <div className="flex justify-between items-center">
+                        <span>• <strong>Datadog API Key:</strong> For pulling metrics and alerts</span>
+                        <Badge className="bg-slate-700">Coming Soon</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>• <strong>Zabbix Server URL & Credentials:</strong> For monitoring data</span>
+                        <Badge className="bg-slate-700">Coming Soon</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span>• <strong>Prometheus Endpoint:</strong> For scraping metrics</span>
+                        <Badge className="bg-slate-700">Coming Soon</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Alert className="bg-yellow-500/10 border-yellow-500/30">
+                    <AlertCircle className="h-4 w-4 text-yellow-400" />
+                    <AlertDescription className="text-slate-300 text-sm">
+                      <strong>Alternative Method:</strong> If the company doesn't want to share credentials, 
+                      they can send alerts via webhook (PUSH mode). You'll provide them with:
+                      <ul className="list-disc list-inside mt-2">
+                        <li>Your webhook URL</li>
+                        <li>API key for authentication</li>
+                        <li>HMAC secret (if enabled)</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+
+                <div className="h-px bg-slate-700" />
+
+                {/* What You'll Be Able to Do */}
+                <div className="space-y-3">
+                  <h4 className="text-white font-semibold">With These Credentials, You Can:</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-start gap-2 text-sm">
+                      <Zap className="w-4 h-4 text-cyan-400 mt-0.5" />
+                      <span className="text-slate-300">Pull CloudWatch alarms automatically</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <Shield className="w-4 h-4 text-cyan-400 mt-0.5" />
+                      <span className="text-slate-300">Track EC2 patch compliance</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <Settings className="w-4 h-4 text-cyan-400 mt-0.5" />
+                      <span className="text-slate-300">Execute SSM runbooks remotely</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-cyan-400 mt-0.5" />
+                      <span className="text-slate-300">Auto-remediate common issues</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Security Best Practices */}
+                <Alert className="bg-green-500/10 border-green-500/30">
+                  <Shield className="h-4 w-4 text-green-400" />
+                  <AlertDescription className="text-slate-300 text-sm">
+                    <strong>Security Best Practices:</strong>
+                    <ul className="list-disc list-inside mt-2">
+                      <li>Request <strong>least-privilege IAM policies</strong> (ReadOnly + specific actions)</li>
+                      <li>Use <strong>cross-account IAM roles</strong> instead of access keys when possible</li>
+                      <li>Store credentials in <strong>AWS Secrets Manager</strong> (recommended)</li>
+                      <li>Rotate credentials every 90 days</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('basic')}
+                    className="border-slate-600 text-slate-300"
+                  >
+                    ← Back
+                  </Button>
+                  <Button 
+                    onClick={() => setCurrentStep('security')}
+                    className="bg-cyan-600 hover:bg-cyan-700"
+                  >
+                    Next: Security Settings →
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Security Settings Tab */}
           <TabsContent value="security" className="space-y-4 mt-4">
             <Card className="bg-slate-800 border-slate-700">
