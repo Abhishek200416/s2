@@ -126,6 +126,30 @@ function App() {
                 <Navigate to="/login" replace />
             } 
           />
+          <Route 
+            path="/runbooks" 
+            element={
+              isAuthenticated ? 
+                <RunbookLibrary /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
+            path="/technician-skills" 
+            element={
+              isAuthenticated ? 
+                <TechnicianSkills /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
+          <Route 
+            path="/msp-settings" 
+            element={
+              isAuthenticated ? 
+                <MSPSettings /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
         </Routes>
       </BrowserRouter>
     </div>
