@@ -459,6 +459,14 @@ const Dashboard = ({ user, onLogout }) => {
                 <PatchCompliance companyId={selectedCompany} />
               </TabsContent>
 
+              <TabsContent value="agent-health">
+                <AgentHealthDashboard companyId={selectedCompany} />
+              </TabsContent>
+
+              <TabsContent value="asset-inventory">
+                <AssetInventory companyId={selectedCompany} />
+              </TabsContent>
+
               {user.role === 'admin' && (
                 <TabsContent value="companies">
                   <CompanyManagement onCompanyChange={loadCompanies} />
