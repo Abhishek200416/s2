@@ -140,7 +140,13 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
       aws_secret_access_key: '',
       aws_region: 'us-east-1',
       aws_account_id: '',
-      monitoring_integrations: []
+      monitoring_integrations: [],
+      enable_hmac: true,
+      correlation_time_window: 15,
+      auto_correlate: true,
+      rate_limit_enabled: true,
+      requests_per_minute: 100,
+      burst_size: 20
     });
     setCurrentStep('basic');
     setVerificationResult(null);
