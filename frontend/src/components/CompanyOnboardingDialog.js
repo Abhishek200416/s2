@@ -163,18 +163,22 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
         </DialogHeader>
 
         <Tabs value={currentStep} onValueChange={setCurrentStep} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-4 bg-slate-800">
             <TabsTrigger value="basic" className="data-[state=active]:bg-cyan-500">
               <Building2 className="w-4 h-4 mr-2" />
-              Basic Info
+              Basic
             </TabsTrigger>
-            <TabsTrigger value="aws" className="data-[state=active]:bg-cyan-500">
-              <Cloud className="w-4 h-4 mr-2" />
-              AWS Integration
+            <TabsTrigger value="security" className="data-[state=active]:bg-cyan-500">
+              <Shield className="w-4 h-4 mr-2" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="correlation" className="data-[state=active]:bg-cyan-500">
+              <GitMerge className="w-4 h-4 mr-2" />
+              Correlation
             </TabsTrigger>
             <TabsTrigger value="review" className="data-[state=active]:bg-cyan-500">
-              <Settings className="w-4 h-4 mr-2" />
-              Review & Create
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Review
             </TabsTrigger>
           </TabsList>
 
