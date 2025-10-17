@@ -151,6 +151,14 @@ function App() {
                 <Navigate to="/login" replace />
             } 
           />
+          <Route 
+            path="/help" 
+            element={
+              isAuthenticated ? 
+                <HelpCenter /> : 
+                <Navigate to="/login" replace />
+            } 
+          />
         </Routes>
       </BrowserRouter>
     </div>
