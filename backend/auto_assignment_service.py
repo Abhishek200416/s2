@@ -63,9 +63,13 @@ class AutoAssignmentEngine:
         )
         
         if not technicians:
+            # OVERFLOW QUEUE: No available technicians
+            # Add to queue and notify managers
+            await self._add_to_overflow_queue(incident_id, company_id, incident_data)
             return {
                 "success": False,
-                "reason": "No available technicians match the requirements"
+                "reason": "All technicians busy - added to overflow queue",
+                "queued": True
             }
         
         # Select technician based on strategy
