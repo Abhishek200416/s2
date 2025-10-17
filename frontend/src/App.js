@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import '@/App.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import axios from 'axios';
-import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
-import Profile from './pages/Profile';
+import Dashboard from './pages/Dashboard';
 import Technicians from './pages/Technicians';
-import AdvancedSettings from './pages/AdvancedSettings';
+import Profile from './pages/Profile';
 import RunbookLibrary from './pages/RunbookLibrary';
-import TechnicianSkills from './pages/TechnicianSkills';
-import MSPSettings from './pages/MSPSettings';
 import HelpCenter from './pages/HelpCenter';
+import { Toaster } from 'sonner';
+import ProductTour, { useShouldShowTour } from './components/ProductTour';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
-// Create axios instance with auth
 export const api = axios.create({
-  baseURL: API
+  baseURL: BACKEND_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -33,135 +31,138 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const shouldShowTour = useShouldShowTour();
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
+    checkAuth();
   }, []);
 
-  const handleLogin = (token, userData) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setIsAuthenticated(true);
+  useEffect(() => {
+    if (isAuthenticated && shouldShowTour) {
+      setShowTour(true);
+    }
+  }, [isAuthenticated, shouldShowTour]);
+
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await api.get('/profile');
+        setUser(response.data);
+        setIsAuthenticated(true);
+      } catch (error) {
+        localStorage.removeItem('token');
+        setIsAuthenticated(false);
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleLogin = (userData) => {
     setUser(userData);
+    setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
     setUser(null);
-  };
-
-  const handleUserUpdate = (updatedUser) => {
-    setUser(updatedUser);
+    setIsAuthenticated(false);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950">
-        <div className="text-cyan-400 text-xl">Loading...</div>
+      <div className="flex items-center justify-center h-screen bg-slate-900">
+        <div className="text-white">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="App">
-      <BrowserRouter>
+    <Router>
+      <div className="App">
+        <Toaster position="top-right" />
+        {showTour && isAuthenticated && (
+          <ProductTour onComplete={() => setShowTour(false)} />
+        )}
         <Routes>
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
-              isAuthenticated ? 
-                <Navigate to="/" replace /> : 
+              !isAuthenticated ? (
                 <Login onLogin={handleLogin} />
-            } 
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
           />
-          <Route 
-            path="/" 
+          <Route
+            path="/dashboard"
             element={
-              isAuthenticated ? 
-                <Dashboard user={user} onLogout={handleLogout} /> : 
+              isAuthenticated ? (
+                <Dashboard user={user} onLogout={handleLogout} />
+              ) : (
                 <Navigate to="/login" replace />
-            } 
+              )
+            }
           />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/technicians"
             element={
-              isAuthenticated ? 
-                <Dashboard user={user} onLogout={handleLogout} /> : 
+              isAuthenticated ? (
+                <Technicians user={user} onLogout={handleLogout} />
+              ) : (
                 <Navigate to="/login" replace />
-            } 
+              )
+            }
           />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
-              isAuthenticated ? 
-                <Profile user={user} onLogout={handleLogout} onUpdate={handleUserUpdate} /> : 
+              isAuthenticated ? (
+                <Profile user={user} onLogout={handleLogout} />
+              ) : (
                 <Navigate to="/login" replace />
-            } 
+              )
+            }
           />
-          <Route 
-            path="/technicians" 
+          <Route
+            path="/runbooks"
             element={
-              isAuthenticated ? 
-                <Technicians user={user} onLogout={handleLogout} /> : 
+              isAuthenticated ? (
+                <div className="min-h-screen bg-slate-900">
+                  <div className="bg-slate-800 border-b border-slate-700 p-4">
+                    <div className="flex items-center justify-between max-w-7xl mx-auto">
+                      <h1 className="text-2xl font-bold text-white">Alert Whisperer</h1>
+                      <button
+                        onClick={handleLogout}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                  <RunbookLibrary />
+                </div>
+              ) : (
                 <Navigate to="/login" replace />
-            } 
+              )
+            }
           />
-          <Route 
-            path="/advanced-settings" 
+          <Route
+            path="/help"
             element={
-              isAuthenticated ? 
-                <AdvancedSettings 
-                  companyId={user?.company_ids?.[0]} 
-                  companyName="Current Company"
-                /> : 
+              isAuthenticated ? (
+                <HelpCenter user={user} onLogout={handleLogout} />
+              ) : (
                 <Navigate to="/login" replace />
-            } 
+              )
+            }
           />
-          <Route 
-            path="/runbooks" 
-            element={
-              isAuthenticated ? 
-                <RunbookLibrary /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
-          <Route 
-            path="/technician-skills" 
-            element={
-              isAuthenticated ? 
-                <TechnicianSkills /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
-          <Route 
-            path="/msp-settings" 
-            element={
-              isAuthenticated ? 
-                <MSPSettings /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
-          <Route 
-            path="/help" 
-            element={
-              isAuthenticated ? 
-                <HelpCenter /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </BrowserRouter>
-    </div>
+      </div>
+    </Router>
   );
 }
 
