@@ -134,9 +134,21 @@ class DecisionAgent:
             print("✅ Using deterministic rules engine (no AI)")
     
     async def decide(self, request: DecisionRequest) -> DecisionResponse:
-        """Make a decision about an incident"""
+        """Make a decision about an incident using configured provider"""
         start_time = time.time()
         
+        # Route to appropriate provider
+        if self.provider.startswith("bedrock") and hasattr(self, 'bedrock_agent'):
+            # Use Bedrock agent
+            decision_doc = await self.bedrock_agent.decide(
+                incident_id=request.incident_id,
+                company_id=request.company_id,
+                incident_data=request.incident_data,
+                stream=request.stream
+            )
+            return DecisionResponse(**decision_doc)
+        
+        # Otherwise use Gemini or deterministic
         # Get memory context
         memory = await self._get_memory(request.incident_id, request.company_id)
         
@@ -144,7 +156,7 @@ class DecisionAgent:
         prompt = self._build_decision_prompt(request.incident_data, memory)
         
         # Make decision (deterministic fallback or AI)
-        if self._should_use_deterministic(request.incident_data):
+        if self._should_use_deterministic(request.incident_data) or self.provider == "rules":
             decision = await self._deterministic_decision(request.incident_data)
         else:
             decision = await self._ai_decision(prompt, request.incident_data)
@@ -163,6 +175,7 @@ class DecisionAgent:
             "reasoning": decision["reasoning"],
             "tokens_used": decision["tokens_used"],
             "duration_ms": duration_ms,
+            "provider": self.provider,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await self.decisions_collection.insert_one(decision_doc)
