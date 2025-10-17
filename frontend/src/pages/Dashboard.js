@@ -29,6 +29,8 @@ import KPIImpactDashboard from '../components/KPIImpactDashboard';
 import LiveKPIProof from '../components/LiveKPIProof';
 import CompanyManagement from '../components/CompanyManagement';
 import ActivityFeed from '../components/ActivityFeed';
+import AgentHealthDashboard from '../components/AgentHealthDashboard';
+import AssetInventory from '../components/AssetInventory';
 
 const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
