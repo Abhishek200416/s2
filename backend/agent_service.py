@@ -84,7 +84,9 @@ class HealthResponse(BaseModel):
     uptime_s: int
     version: str
     commit: str
-    mode: str  # "local" or "remote"
+    provider: str  # "gemini", "bedrock-runtime", "bedrock-managed", "rules"
+    providers_available: Dict[str, bool]  # Which providers are available
+    ready_for_agentcore: bool  # Ready for AWS AgentCore Runtime deployment
 
 # ============= Agent Core =============
 
