@@ -184,7 +184,7 @@ class SLATester:
                         # Find our test incident
                         incident_id = None
                         for incident in incidents:
-                            if incident.get('signature') == 'sla_test_alert' and incident.get('asset_name') == 'srv-sla-test-01':
+                            if incident.get('signature') == 'sla_test_alert' and incident.get('asset_name') == 'srv-app-01':
                                 incident_id = incident.get('id')
                                 break
                         
