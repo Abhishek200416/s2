@@ -243,6 +243,245 @@ const CompanyOnboardingDialog = ({ open, onOpenChange, onSuccess }) => {
             </Card>
           </TabsContent>
 
+          {/* Security Settings Tab */}
+          <TabsContent value="security" className="space-y-4 mt-4">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-cyan-400" />
+                  Security & Rate Limiting
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Configure webhook security and rate limiting for this company
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* HMAC Webhook Security */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label className="text-slate-300 font-semibold">HMAC Webhook Security</Label>
+                      <p className="text-xs text-slate-500">
+                        Cryptographic signature verification for incoming alerts (RECOMMENDED)
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.enable_hmac}
+                      onCheckedChange={(checked) => handleInputChange('enable_hmac', checked)}
+                      className="data-[state=checked]:bg-cyan-600"
+                    />
+                  </div>
+                  
+                  {formData.enable_hmac && (
+                    <Alert className="bg-green-500/10 border-green-500/30">
+                      <CheckCircle2 className="h-4 w-4 text-green-400" />
+                      <AlertDescription className="text-slate-300 text-sm">
+                        <strong>HMAC Enabled:</strong> Webhook requests will require X-Signature header for authentication.
+                        Secret key will be generated automatically after company creation.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
+                <div className="h-px bg-slate-700" />
+
+                {/* Rate Limiting */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <Label className="text-slate-300 font-semibold">Rate Limiting</Label>
+                      <p className="text-xs text-slate-500">
+                        Protect against alert storms and API abuse
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.rate_limit_enabled}
+                      onCheckedChange={(checked) => handleInputChange('rate_limit_enabled', checked)}
+                      className="data-[state=checked]:bg-cyan-600"
+                    />
+                  </div>
+
+                  {formData.rate_limit_enabled && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-slate-300">Requests Per Minute</Label>
+                          <Badge variant="outline" className="text-cyan-400 border-cyan-400">
+                            {formData.requests_per_minute} req/min
+                          </Badge>
+                        </div>
+                        <Slider
+                          value={[formData.requests_per_minute]}
+                          onValueChange={([value]) => handleInputChange('requests_per_minute', value)}
+                          min={10}
+                          max={500}
+                          step={10}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-slate-500">
+                          Maximum webhook requests allowed per minute
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-slate-300">Burst Size</Label>
+                          <Badge variant="outline" className="text-cyan-400 border-cyan-400">
+                            {formData.burst_size} alerts
+                          </Badge>
+                        </div>
+                        <Slider
+                          value={[formData.burst_size]}
+                          onValueChange={([value]) => handleInputChange('burst_size', value)}
+                          min={5}
+                          max={100}
+                          step={5}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-slate-500">
+                          Allow temporary alert bursts during incidents
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Alert className="bg-cyan-500/10 border-cyan-500/30">
+                  <AlertCircle className="h-4 w-4 text-cyan-400" />
+                  <AlertDescription className="text-slate-300 text-sm">
+                    <strong>Best Practice:</strong> Keep HMAC enabled for production security. 
+                    Rate limiting prevents alert storms from overwhelming the system.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('basic')}
+                    className="border-slate-600 text-slate-300"
+                  >
+                    ← Back
+                  </Button>
+                  <Button 
+                    onClick={() => setCurrentStep('correlation')}
+                    className="bg-cyan-600 hover:bg-cyan-700"
+                  >
+                    Next: Correlation →
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Correlation Settings Tab */}
+          <TabsContent value="correlation" className="space-y-4 mt-4">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <GitMerge className="w-5 h-5 text-cyan-400" />
+                  Alert Correlation Settings
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Configure how alerts are correlated into incidents using AI
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Auto-Correlate Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-slate-300 font-semibold">Auto-Correlate Alerts</Label>
+                    <p className="text-xs text-slate-500">
+                      Automatically group related alerts into incidents using AI + rules
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.auto_correlate}
+                    onCheckedChange={(checked) => handleInputChange('auto_correlate', checked)}
+                    className="data-[state=checked]:bg-cyan-600"
+                  />
+                </div>
+
+                {formData.auto_correlate && (
+                  <>
+                    <div className="h-px bg-slate-700" />
+
+                    {/* Time Window */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-slate-300">Correlation Time Window</Label>
+                        <Badge variant="outline" className="text-cyan-400 border-cyan-400">
+                          {formData.correlation_time_window} minutes
+                        </Badge>
+                      </div>
+                      <Slider
+                        value={[formData.correlation_time_window]}
+                        onValueChange={([value]) => handleInputChange('correlation_time_window', value)}
+                        min={5}
+                        max={15}
+                        step={1}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-slate-500">
+                        Alerts within this time window can be correlated together
+                      </p>
+                    </div>
+
+                    {/* Correlation Strategy Info */}
+                    <Card className="bg-slate-900 border-slate-600">
+                      <CardHeader>
+                        <CardTitle className="text-sm text-white">How Correlation Works (Hybrid AI)</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-start gap-2 text-sm text-slate-300">
+                          <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5" />
+                          <div>
+                            <strong>Rule-Based (Primary):</strong> Groups alerts by asset + signature + time window
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2 text-sm text-slate-300">
+                          <Zap className="w-4 h-4 text-cyan-400 mt-0.5" />
+                          <div>
+                            <strong>AI-Enhanced (Bedrock/Gemini):</strong> Detects complex patterns, cascading failures, and root causes
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2 text-sm text-slate-300">
+                          <Settings className="w-4 h-4 text-yellow-400 mt-0.5" />
+                          <div>
+                            <strong>Priority Scoring:</strong> severity + asset criticality + duplicate count + multi-tool detection
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Alert className="bg-cyan-500/10 border-cyan-500/30">
+                      <AlertCircle className="h-4 w-4 text-cyan-400" />
+                      <AlertDescription className="text-slate-300 text-sm">
+                        <strong>Noise Reduction:</strong> AI correlation typically reduces alert noise by 40-70%, 
+                        grouping related alerts into actionable incidents for your technicians.
+                      </AlertDescription>
+                    </Alert>
+                  </>
+                )}
+
+                <div className="flex justify-between">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setCurrentStep('security')}
+                    className="border-slate-600 text-slate-300"
+                  >
+                    ← Back
+                  </Button>
+                  <Button 
+                    onClick={() => setCurrentStep('review')}
+                    className="bg-cyan-600 hover:bg-cyan-700"
+                  >
+                    Next: Review →
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* AWS Integration Tab */}
           <TabsContent value="aws" className="space-y-4 mt-4">
             <Card className="bg-slate-800 border-slate-700">
