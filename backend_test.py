@@ -1221,7 +1221,7 @@ class AlertWhispererTester:
                           f"Failed to get global library: {response.status_code if response else 'No response'}")
         
         # Test 6: Delete the test runbook
-        response = self.make_request('DELETE', f'/runbooks/{runbook_id}', headers={"Authorization": f"Bearer {self.token}"})
+        response = self.make_request('DELETE', f'/runbooks/{runbook_id}', headers={"Authorization": f"Bearer {self.auth_token}"})
         if response and response.status_code == 200:
             result = response.json()
             self.log_result("Delete Custom Runbook", True, 
