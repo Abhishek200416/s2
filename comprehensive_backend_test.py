@@ -214,7 +214,7 @@ class ComprehensiveTester:
         
         # POST /api/webhooks/alerts?api_key={valid_key} (send test alert)
         webhook_payload = {
-            "asset_name": "srv-web-01",
+            "asset_name": "srv-app-01",
             "signature": "disk_space_critical",
             "severity": "critical",
             "message": "Disk space critically low - 95% full",
