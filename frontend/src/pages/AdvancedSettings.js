@@ -158,7 +158,7 @@ const AdvancedSettings = ({ companyId, companyName }) => {
     );
   }
 
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin + '/api';
 
   return (
     <div className="min-h-screen bg-slate-950 py-8">
