@@ -78,7 +78,7 @@ manager = ConnectionManager()
 app = FastAPI()
 
 # Create a router with the /api prefix
-api_router = APIRouter()
+api_router = APIRouter(prefix="/api")
 
 
 # ============= Models =============
