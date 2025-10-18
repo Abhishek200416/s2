@@ -178,6 +178,7 @@ class Incident(BaseModel):
     asset_id: str
     asset_name: str
     severity: str
+    category: Optional[str] = None  # Network, Database, Security, Server, Application, Storage, Cloud, Custom
     decision: Optional[Dict[str, Any]] = None
     # SSM Remediation fields
     auto_remediated: bool = False
