@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Book, HelpCircle, FileText, Video, ArrowRight, CheckCircle,
   Server, Cloud, Terminal, Users, Settings, Activity, AlertCircle,
-  Play, ExternalLink, Download
+  Play, ExternalLink, Download, Building2
 } from 'lucide-react';
+import MSPIntegrationGuide from '../components/MSPIntegrationGuide';
 
 const HelpCenter = () => {
   const [expandedFaq, setExpandedFaq] = useState(null);
