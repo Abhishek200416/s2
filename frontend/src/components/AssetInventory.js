@@ -42,19 +42,13 @@ const AssetInventory = ({ companyId }) => {
 
   const filteredAssets = assets?.assets?.filter(asset => {
     const matchesSearch = 
-      asset.instance_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.instance_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (asset.private_ip && asset.private_ip.includes(searchTerm)) ||
-      (asset.public_ip && asset.public_ip.includes(searchTerm));
+      (asset.name && asset.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (asset.id && asset.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (asset.type && asset.type.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (asset.os && asset.os.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesStatus = filterStatus === 'all' || asset.state === filterStatus;
-    
-    const matchesSSM = 
-      filterSSM === 'all' ||
-      (filterSSM === 'enabled' && asset.ssm_agent_installed) ||
-      (filterSSM === 'disabled' && !asset.ssm_agent_installed);
-    
-    return matchesSearch && matchesStatus && matchesSSM;
+    // Since these are company assets not EC2, we don't have state/SSM filters
+    return matchesSearch;
   }) || [];
 
   const getStateBadge = (state) => {
