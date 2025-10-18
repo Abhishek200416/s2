@@ -265,19 +265,12 @@ class FocusedTester:
                           f"Missing required fields: {missing_fields}")
             return
         
-        # Extract decision data (handle both nested and flat structures)
-        if 'decision' in decision_result:
-            decision_data = decision_result['decision']
-            action = decision_data.get('action')
-            reason = decision_data.get('reason')
-            recommended_category = decision_data.get('recommended_technician_category')
-            priority_score = decision_result.get('priority_score') or decision_data.get('priority_score')
-        else:
-            decision_data = decision_result
-            action = decision_data.get('action')
-            reason = decision_data.get('reason')
-            recommended_category = decision_data.get('recommended_technician_category')
-            priority_score = decision_data.get('priority_score')
+        # Extract decision data (fields are at root level)
+        decision_data = decision_result
+        action = decision_data.get('action')
+        reason = decision_data.get('reason')
+        recommended_category = decision_data.get('recommended_technician_category')
+        priority_score = decision_data.get('priority_score')
         
         self.log_result("Auto-Decide Response Structure", True, 
                       f"Decision generated: action={action}, category={recommended_category}, priority={priority_score}")
