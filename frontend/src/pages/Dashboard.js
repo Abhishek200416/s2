@@ -134,7 +134,10 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const userCompanyIds = user.company_ids || [];
-  const userCompanies = companies.filter(c => userCompanyIds.includes(c.id));
+  // Admin users can see all companies, other users only see their assigned companies
+  const userCompanies = user.role === 'admin' || user.role === 'msp_admin' 
+    ? companies 
+    : companies.filter(c => userCompanyIds.includes(c.id));
   const currentCompany = companies.find(c => c.id === selectedCompany);
 
   return (
