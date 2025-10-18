@@ -187,30 +187,54 @@ const IncidentList = ({ companyId, limit }) => {
 
       {/* Decision Dialog */}
       <Dialog open={showDecisionDialog} onOpenChange={setShowDecisionDialog}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">Incident Decision</DialogTitle>
+            <DialogTitle className="text-lg">Incident Decision</DialogTitle>
             <DialogDescription className="text-slate-400">
-              Automated remediation decision with AI-assisted explanation
+              Automated remediation recommendation
             </DialogDescription>
           </DialogHeader>
 
           {decision && (
-            <div className="space-y-4 mt-4">
+            <div className="space-y-3 mt-3">
               {/* AI Explanation */}
               {decision.ai_explanation && (
-                <div className="p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
-                  <p className="text-sm text-cyan-100">{decision.ai_explanation}</p>
+                <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
+                  <p className="text-sm text-cyan-100 leading-relaxed">{decision.ai_explanation}</p>
                 </div>
               )}
 
-              {/* Decision JSON */}
-              <div className="bg-slate-950 rounded-lg p-4 border border-slate-800 font-mono text-sm overflow-x-auto">
-                <pre className="text-slate-300">{JSON.stringify(decision, null, 2)}</pre>
+              {/* Key Decision Info - Compact Cards */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                  <p className="text-xs text-slate-400 mb-1">Action</p>
+                  <p className="text-sm font-semibold text-white">{decision.action}</p>
+                </div>
+                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                  <p className="text-xs text-slate-400 mb-1">Priority Score</p>
+                  <p className="text-sm font-semibold text-white">{decision.priority_score || 'N/A'}</p>
+                </div>
               </div>
 
+              {/* Reason */}
+              <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                <p className="text-xs text-slate-400 mb-1">Reason</p>
+                <p className="text-sm text-white">{decision.reason}</p>
+              </div>
+
+              {/* Collapsible Full JSON */}
+              <details className="group">
+                <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-300 py-2 px-3 bg-slate-800/30 rounded border border-slate-700">
+                  <span className="group-open:hidden">▶ Show Full Details</span>
+                  <span className="hidden group-open:inline">▼ Hide Full Details</span>
+                </summary>
+                <div className="mt-2 bg-slate-950 rounded-lg p-3 border border-slate-800 font-mono text-xs overflow-x-auto max-h-64 overflow-y-auto">
+                  <pre className="text-slate-300">{JSON.stringify(decision, null, 2)}</pre>
+                </div>
+              </details>
+
               {/* Actions */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 {decision.approval_required && (
                   <>
                     <Button
@@ -220,7 +244,7 @@ const IncidentList = ({ companyId, limit }) => {
                       data-testid="approve-button"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Approve & Execute
+                      Execute
                     </Button>
                     <Button
                       onClick={escalateIncident}
@@ -230,7 +254,7 @@ const IncidentList = ({ companyId, limit }) => {
                       data-testid="escalate-button"
                     >
                       <XCircle className="w-4 h-4 mr-2" />
-                      Escalate to Tech
+                      Assign to Technician
                     </Button>
                   </>
                 )}
