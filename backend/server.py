@@ -4516,8 +4516,6 @@ async def get_client_dashboard_data(
 
 
 
-)
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
