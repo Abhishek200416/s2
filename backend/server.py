@@ -1317,6 +1317,7 @@ async def create_user(user_data: UserCreateRequest, current_user: User = Depends
         "email": user_data.email,
         "password_hash": get_password_hash(user_data.password),
         "role": user_data.role,
+        "category": user_data.category,  # Add category
         "company_ids": [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
