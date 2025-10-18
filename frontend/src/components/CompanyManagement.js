@@ -574,12 +574,21 @@ const CompanyManagement = ({ onCompanyChange }) => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  placeholder="OS (Optional)"
+                <Select
                   value={assetForm.os}
-                  onChange={(e) => setAssetForm({ ...assetForm, os: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                  onValueChange={(value) => setAssetForm({ ...assetForm, os: value })}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="OS (Optional)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                    <SelectItem value="Windows">Windows</SelectItem>
+                    <SelectItem value="Linux">Linux</SelectItem>
+                    <SelectItem value="MacOS">MacOS</SelectItem>
+                    <SelectItem value="Unix">Unix</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button onClick={addAsset} size="sm" className="bg-cyan-600 hover:bg-cyan-700">
                   <Plus className="w-4 h-4" />
                 </Button>
