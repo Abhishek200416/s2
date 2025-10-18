@@ -253,33 +253,6 @@ const Dashboard = ({ user, onLogout }) => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button
-                onClick={() => navigate('/runbooks')}
-                variant="outline"
-                size="sm"
-                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
-              >
-                📚 Runbooks
-              </Button>
-
-              <Button
-                onClick={() => navigate('/technician-skills')}
-                variant="outline"
-                size="sm"
-                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
-              >
-                👥 Skills
-              </Button>
-
-              <Button
-                onClick={() => navigate('/msp-settings')}
-                variant="outline"
-                size="sm"
-                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
-              >
-                ⚙️ MSP Settings
-              </Button>
-
               {/* MSP Workflow Guide Button - Prominent */}
               <Button
                 onClick={() => setShowMSPGuide(true)}
