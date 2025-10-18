@@ -275,6 +275,7 @@ const Technicians = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-slate-700 text-white">
                   <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="none">No Category</SelectItem>
                   {categories.map(cat => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
