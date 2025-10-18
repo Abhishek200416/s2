@@ -3,16 +3,21 @@ import { api } from '../App';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Zap, Play, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Zap, Play, TrendingDown, CheckCircle, AlertCircle, Settings, Clock, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AlertCorrelation = ({ companyId, companyName }) => {
   const [correlating, setCorrelating] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState([]);
   const [correlationResult, setCorrelationResult] = useState(null);
+  const [correlationStats, setCorrelationStats] = useState(null);
+  const [autoCorrelationConfig, setAutoCorrelationConfig] = useState(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
   useEffect(() => {
     loadAlerts();
+    loadAutoCorrelationConfig();
   }, [companyId]);
 
   const loadAlerts = async () => {
@@ -25,12 +30,37 @@ const AlertCorrelation = ({ companyId, companyName }) => {
     }
   };
 
+  const loadAutoCorrelationConfig = async () => {
+    try {
+      const response = await api.get(`/auto-correlation/config?company_id=${companyId}`);
+      setAutoCorrelationConfig(response.data);
+    } catch (error) {
+      console.error('Failed to load auto-correlation config:', error);
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
+
+  const updateAutoCorrelationConfig = async (updates) => {
+    try {
+      const updatedConfig = { ...autoCorrelationConfig, ...updates };
+      await api.put('/auto-correlation/config', updatedConfig);
+      setAutoCorrelationConfig(updatedConfig);
+      toast.success('Auto-correlation settings updated');
+    } catch (error) {
+      console.error('Failed to update auto-correlation config:', error);
+      toast.error('Failed to update settings');
+    }
+  };
+
   const correlateAlerts = async () => {
     setCorrelating(true);
     try {
-      const response = await api.post(`/incidents/correlate?company_id=${companyId}`);
-      setCorrelationResult(response.data);
-      toast.success(`Created ${response.data.incidents_created} incidents from ${response.data.total_alerts} alerts`);
+      // Use the new endpoint that returns statistics
+      const response = await api.post(`/auto-correlation/run?company_id=${companyId}`);
+      setCorrelationStats(response.data);
+      
+      toast.success(`Correlation complete: ${response.data.incidents_created} incidents created`);
       await loadAlerts();
     } catch (error) {
       console.error('Failed to correlate alerts:', error);
@@ -52,7 +82,7 @@ const AlertCorrelation = ({ companyId, companyName }) => {
 
   return (
     <div className="space-y-6" data-testid="alert-correlation">
-      {/* Header */}
+      {/* Header with Auto-Correlation Settings */}
       <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
         <CardHeader>
           <div className="flex items-start justify-between">
@@ -67,7 +97,64 @@ const AlertCorrelation = ({ companyId, companyName }) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Auto-Correlation Settings */}
+          {!loadingConfig && autoCorrelationConfig && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-white font-semibold">Auto-Correlation Settings</h3>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoCorrelationConfig.enabled}
+                    onChange={(e) => updateAutoCorrelationConfig({ enabled: e.target.checked })}
+                    className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-cyan-600 focus:ring-cyan-500"
+                  />
+                  <span className="text-sm text-slate-300">Enable Auto-Run</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-slate-300 font-medium mb-2 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Auto-Run Interval
+                  </label>
+                  <Select
+                    value={autoCorrelationConfig.interval_minutes?.toString()}
+                    onValueChange={(value) => updateAutoCorrelationConfig({ interval_minutes: parseInt(value) })}
+                  >
+                    <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-slate-700">
+                      <SelectItem value="1">Every 1 minute</SelectItem>
+                      <SelectItem value="2">Every 2 minutes</SelectItem>
+                      <SelectItem value="5">Every 5 minutes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    How often correlation runs automatically
+                  </p>
+                </div>
+                {autoCorrelationConfig.last_run && (
+                  <div>
+                    <label className="text-sm text-slate-300 font-medium mb-2 block">
+                      Last Run
+                    </label>
+                    <div className="text-sm text-slate-400 bg-slate-900 border border-slate-700 rounded px-3 py-2">
+                      {new Date(autoCorrelationConfig.last_run).toLocaleString()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Manual Correlation Button */}
           <div className="flex gap-3">
             <Button
               onClick={correlateAlerts}
@@ -76,34 +163,67 @@ const AlertCorrelation = ({ companyId, companyName }) => {
               data-testid="correlate-alerts-button"
             >
               <Play className="w-4 h-4 mr-2" />
-              {correlating ? 'Correlating...' : 'Correlate Alerts'}
+              {correlating ? 'Correlating...' : 'Run Correlation Now'}
             </Button>
+            <span className="text-sm text-slate-400 flex items-center">
+              {activeAlerts.length} active alerts ready for correlation
+            </span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Correlation Result */}
-      {correlationResult && (
+      {/* Correlation Statistics */}
+      {correlationStats && (
         <Card className="bg-slate-900/50 border-emerald-500/30" data-testid="correlation-result">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald-400" />
-              Correlation Complete
+              Correlation Results
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                <p className="text-3xl font-bold text-red-400" data-testid="total-alerts-count">{correlationResult.total_alerts}</p>
-                <p className="text-sm text-slate-400 mt-1">Total Alerts</p>
+                <p className="text-3xl font-bold text-cyan-400">{correlationStats.alerts_before}</p>
+                <p className="text-sm text-slate-400 mt-1">Alerts Before</p>
               </div>
               <div className="text-center p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                <p className="text-3xl font-bold text-cyan-400" data-testid="incidents-created-count">{correlationResult.incidents_created}</p>
+                <p className="text-3xl font-bold text-orange-400">{correlationStats.alerts_after}</p>
+                <p className="text-sm text-slate-400 mt-1">Alerts After</p>
+              </div>
+              <div className="text-center p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                <p className="text-3xl font-bold text-purple-400">{correlationStats.incidents_created}</p>
                 <p className="text-sm text-slate-400 mt-1">Incidents Created</p>
               </div>
               <div className="text-center p-4 bg-emerald-500/10 rounded-lg border border-emerald-500/30">
-                <p className="text-3xl font-bold text-emerald-400" data-testid="noise-reduction-pct">{correlationResult.noise_reduction_pct}%</p>
-                <p className="text-sm text-emerald-300 mt-1">Noise Reduction</p>
+                <p className="text-3xl font-bold text-emerald-400">{correlationStats.alerts_correlated}</p>
+                <p className="text-sm text-emerald-300 mt-1">Noise Removed</p>
+              </div>
+            </div>
+
+            {/* Additional Stats */}
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-amber-300 font-medium">Duplicates Found</span>
+                  <span className="text-2xl font-bold text-amber-400">{correlationStats.duplicates_found || 0}</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  {correlationStats.duplicate_groups || 0} duplicate groups identified
+                </p>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-blue-300 font-medium">Noise Reduction</span>
+                  <span className="text-2xl font-bold text-blue-400">
+                    {correlationStats.alerts_before > 0 
+                      ? Math.round((correlationStats.alerts_correlated / correlationStats.alerts_before) * 100)
+                      : 0}%
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Reduction in alert volume
+                </p>
               </div>
             </div>
           </CardContent>
@@ -153,8 +273,8 @@ const AlertCorrelation = ({ companyId, companyName }) => {
                 </div>
               ))}
               {activeAlerts.length > 20 && (
-                <p className="text-center text-slate-500 text-sm py-2">
-                  ... and {activeAlerts.length - 20} more alerts
+                <p className="text-center text-sm text-slate-500 pt-2">
+                  Showing 20 of {activeAlerts.length} alerts
                 </p>
               )}
             </div>
