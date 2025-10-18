@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import axios from 'axios';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import ClientPortal from './pages/ClientPortal';
 import Technicians from './pages/Technicians';
 import Profile from './pages/Profile';
 import RunbookLibrary from './pages/RunbookLibrary';
