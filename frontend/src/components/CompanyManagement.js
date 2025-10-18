@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, Plus, Edit, Trash2, Server, Key, Copy, Check, Send, Code, TrendingUp, TrendingDown, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import MSPOnboardingWizard from './MSPOnboardingWizard';
+import SimplifiedCompanyOnboarding from './SimplifiedCompanyOnboarding';
 
 const CompanyManagement = ({ onCompanyChange }) => {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [companyKPIs, setCompanyKPIs] = useState({});
   const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
+  const [useSimplifiedOnboarding, setUseSimplifiedOnboarding] = useState(true); // Toggle between old and new
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showIntegrationDialog, setShowIntegrationDialog] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState(null);
