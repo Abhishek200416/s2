@@ -482,6 +482,28 @@ const Dashboard = ({ user, onLogout }) => {
                 <AssetInventory companyId={selectedCompany} />
               </TabsContent>
 
+              <TabsContent value="runbooks">
+                <div className="space-y-6">
+                  <CustomRunbookManager companyId={selectedCompany} />
+                  
+                  <div className="border-t border-slate-700 pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Pre-Built Runbook Library</h3>
+                        <p className="text-slate-400 text-sm">Browse and execute ready-made automation scripts</p>
+                      </div>
+                      <Button
+                        onClick={() => navigate('/runbooks')}
+                        className="bg-cyan-600 hover:bg-cyan-700"
+                      >
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        Browse Library
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
               {user.role === 'admin' && (
                 <TabsContent value="companies">
                   <CompanyManagement onCompanyChange={loadCompanies} />
