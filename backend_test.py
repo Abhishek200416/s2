@@ -27,8 +27,8 @@ try:
             if line.startswith('REACT_APP_BACKEND_URL='):
                 BACKEND_URL = line.split('=', 1)[1].strip()
                 break
-    else:
-        BACKEND_URL = "http://localhost:8001/api"
+        else:
+            BACKEND_URL = "http://localhost:8001/api"
 except:
     BACKEND_URL = "http://localhost:8001/api"
 
