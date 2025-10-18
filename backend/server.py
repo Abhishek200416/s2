@@ -3554,16 +3554,22 @@ async def receive_webhook_alert(
         "data": alert.model_dump()
     })
     
-    # Create notification for critical alerts
+    # Create notification for high priority alerts (critical and high)
     if alert.severity in ["critical", "high"]:
         notification = Notification(
             user_id="admin",  # Notify admins
             company_id=company_id,
             alert_id=alert.id,
-            type="critical_alert",
-            title=f"{alert.severity.upper()} Alert Received",
-            message=f"{alert.signature} on {alert.asset_name}: {alert.message}",
-            priority=alert.severity
+            type=alert.severity,  # Use severity as type (critical/high)
+            title=f"🚨 {alert.severity.upper()} Alert: {alert.signature}",
+            message=f"{alert.asset_name}: {alert.message}",
+            priority=alert.severity,
+            metadata={
+                "alert_message": alert.message,
+                "asset_name": alert.asset_name,
+                "signature": alert.signature,
+                "tool_source": alert.tool_source
+            }
         )
         await db.notifications.insert_one(notification.model_dump())
         
