@@ -49,26 +49,6 @@ const AssetInventory = ({ companyId }) => {
     return matchesSearch;
   }) || [];
 
-  const getStateBadge = (state) => {
-    const badges = {
-      'running': { color: 'bg-green-500/20 text-green-400 border-green-500/30', icon: CheckCircle },
-      'stopped': { color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: XCircle },
-      'pending': { color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: Loader },
-      'stopping': { color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: Loader },
-      'terminated': { color: 'bg-slate-500/20 text-slate-400 border-slate-500/30', icon: XCircle }
-    };
-    
-    const badge = badges[state] || badges['stopped'];
-    const Icon = badge.icon;
-    
-    return (
-      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${badge.color}`}>
-        <Icon className="w-3 h-3" />
-        {state.charAt(0).toUpperCase() + state.slice(1)}
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
