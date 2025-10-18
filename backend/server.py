@@ -4328,6 +4328,15 @@ async def startup_event():
     logger.info("📊 Initializing database indexes...")
     await init_indexes(db)
     
+    # Seed database if empty
+    user_count = await db.users.count_documents({})
+    if user_count == 0:
+        logger.info("📦 Database is empty, seeding with initial data...")
+        await seed_database()
+        logger.info("✅ Database seeded successfully")
+    else:
+        logger.info(f"📊 Found {user_count} users in database, skipping seed")
+    
     # Initialize services
     logger.info("🔐 Initializing auth service...")
     auth_service = AuthService(db)
