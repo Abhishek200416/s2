@@ -244,8 +244,9 @@ const AssetInventory = ({ companyId }) => {
       </Card>
     </div>
   );
+};
 
-      {/* Summary Cards */}
+export default AssetInventory;
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-slate-900/50 border-slate-800">
           <CardContent className="p-6">
