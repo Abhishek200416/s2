@@ -131,20 +131,7 @@ function App() {
             path="/runbooks"
             element={
               isAuthenticated ? (
-                <div className="min-h-screen bg-slate-900">
-                  <div className="bg-slate-800 border-b border-slate-700 p-4">
-                    <div className="flex items-center justify-between max-w-7xl mx-auto">
-                      <h1 className="text-2xl font-bold text-white">Alert Whisperer</h1>
-                      <button
-                        onClick={handleLogout}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                  <RunbookLibrary />
-                </div>
+                <RunbookLibrary user={user} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" replace />
               )
