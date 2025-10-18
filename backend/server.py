@@ -157,6 +157,7 @@ class Alert(BaseModel):
     severity: str  # low, medium, high, critical
     message: str
     tool_source: str
+    category: Optional[str] = None  # Network, Database, Security, Server, Application, Storage, Cloud, Custom
     status: str = "active"  # active, acknowledged, resolved
     delivery_id: Optional[str] = None  # For idempotency - webhook delivery identifier
     delivery_attempts: int = 0  # Track retry attempts
