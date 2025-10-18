@@ -1138,8 +1138,111 @@ class AlertWhispererTester:
         else:
             self.log_result("Assign/Resolve Incident (SLA Tracking)", False, "No incident ID available for SLA tracking test")
 
+    def test_runbook_management_system(self):
+        """Test 17: Runbook Management System (CRUD Operations + Global Library)"""
+        print("\n=== Testing Runbook Management System ===")
+        
+        # Test 1: Get all companies for runbook association
+        response = self.make_request('GET', '/companies')
+        if response and response.status_code == 200:
+            companies = response.json()
+            if len(companies) > 0:
+                test_company_id = companies[0]['id']
+                self.log_result("Get Companies for Runbook", True, f"Retrieved {len(companies)} companies, using company_id: {test_company_id}")
+            else:
+                self.log_result("Get Companies for Runbook", False, "No companies found")
+                return
+        else:
+            self.log_result("Get Companies for Runbook", False, f"Failed to get companies: {response.status_code if response else 'No response'}")
+            return
+        
+        # Test 2: Create a custom runbook
+        runbook_data = {
+            "name": "Test Custom Runbook",
+            "description": "Test runbook for automated testing",
+            "risk_level": "low",
+            "signature": "test-custom-runbook",
+            "actions": ["echo 'Test action 1'", "echo 'Test action 2'"],
+            "health_checks": {"test": "health check"},
+            "auto_approve": True,
+            "company_id": test_company_id
+        }
+        
+        response = self.make_request('POST', '/runbooks', json=runbook_data, headers={"Authorization": f"Bearer {self.token}"})
+        if response and response.status_code == 200:
+            created_runbook = response.json()
+            runbook_id = created_runbook.get('id')
+            self.log_result("Create Custom Runbook", True, 
+                          f"Runbook created: {created_runbook.get('name')}, ID: {runbook_id}")
+        else:
+            self.log_result("Create Custom Runbook", False, 
+                          f"Failed to create runbook: {response.status_code if response else 'No response'}")
+            return
+        
+        # Test 3: Get all runbooks
+        response = self.make_request('GET', f'/runbooks?company_id={test_company_id}')
+        if response and response.status_code == 200:
+            runbooks = response.json()
+            found_test_runbook = any(rb.get('id') == runbook_id for rb in runbooks)
+            self.log_result("Get Custom Runbooks", True, 
+                          f"Retrieved {len(runbooks)} runbooks for company, test runbook found: {found_test_runbook}")
+        else:
+            self.log_result("Get Custom Runbooks", False, 
+                          f"Failed to get runbooks: {response.status_code if response else 'No response'}")
+        
+        # Test 4: Update the runbook
+        updated_data = {
+            **runbook_data,
+            "name": "Updated Test Runbook",
+            "description": "Updated description for testing"
+        }
+        response = self.make_request('PUT', f'/runbooks/{runbook_id}', json=updated_data, headers={"Authorization": f"Bearer {self.token}"})
+        if response and response.status_code == 200:
+            updated_runbook = response.json()
+            name_updated = updated_runbook.get('name') == "Updated Test Runbook"
+            desc_updated = updated_runbook.get('description') == "Updated description for testing"
+            self.log_result("Update Custom Runbook", True, 
+                          f"Runbook updated: name_changed={name_updated}, description_changed={desc_updated}")
+        else:
+            self.log_result("Update Custom Runbook", False, 
+                          f"Failed to update runbook: {response.status_code if response else 'No response'}")
+        
+        # Test 5: Get global runbook library
+        response = self.make_request('GET', '/runbooks/global-library')
+        if response and response.status_code == 200:
+            library = response.json()
+            total_count = library.get('total_count', 0)
+            categories = library.get('category_list', [])
+            runbooks_list = library.get('runbooks', [])
+            self.log_result("Get Global Runbook Library", True, 
+                          f"Global library retrieved: {total_count} runbooks across {len(categories)} categories ({', '.join(categories[:5])}...)")
+        else:
+            self.log_result("Get Global Runbook Library", False, 
+                          f"Failed to get global library: {response.status_code if response else 'No response'}")
+        
+        # Test 6: Delete the test runbook
+        response = self.make_request('DELETE', f'/runbooks/{runbook_id}', headers={"Authorization": f"Bearer {self.token}"})
+        if response and response.status_code == 200:
+            result = response.json()
+            self.log_result("Delete Custom Runbook", True, 
+                          f"Runbook deleted successfully: {result.get('message')}")
+        else:
+            self.log_result("Delete Custom Runbook", False, 
+                          f"Failed to delete runbook: {response.status_code if response else 'No response'}")
+        
+        # Test 7: Verify deletion
+        response = self.make_request('GET', f'/runbooks?company_id={test_company_id}')
+        if response and response.status_code == 200:
+            runbooks = response.json()
+            still_exists = any(rb.get('id') == runbook_id for rb in runbooks)
+            self.log_result("Verify Runbook Deletion", not still_exists, 
+                          f"Runbook {runbook_id} exists after deletion: {still_exists}")
+        else:
+            self.log_result("Verify Runbook Deletion", False, 
+                          f"Failed to verify deletion: {response.status_code if response else 'No response'}")
+
     def test_existing_features(self):
-        """Test 17: Existing Features (smoke test)"""
+        """Test 18: Existing Features (smoke test)"""
         print("\n=== Testing Existing Features (Smoke Test) ===")
         
         # Test get alerts
