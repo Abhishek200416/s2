@@ -1271,7 +1271,7 @@ frontend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -1282,6 +1282,25 @@ frontend:
           - Calculates noise_reduction_pct = (alerts_correlated / active_before) * 100
           - Returns accurate statistics showing real noise reduction
           - Frontend already displays percentage correctly
+      - working: true
+        agent: "testing"
+        comment: |
+          ✅ ALERT CORRELATION NOISE CALCULATION TESTING COMPLETE - ALL TESTS PASSED
+          
+          **Endpoint Testing:**
+          ✅ POST /api/auto-correlation/run?company_id=company-demo - Returns correct response structure
+          ✅ Response includes all required fields: alerts_before, alerts_after, noise_removed, noise_reduction_pct, incidents_created
+          ✅ Noise reduction percentage correctly calculated: (alerts_correlated / active_before) * 100
+          ✅ When no alerts to correlate: noise_reduction_pct = 0% (correct behavior)
+          ✅ When alerts are correlated: noise_reduction_pct reflects actual noise reduction (100% when all alerts correlated)
+          ✅ Incidents_created count is accurate and matches correlation results
+          
+          **Calculation Accuracy:**
+          ✅ Noise calculation formula working correctly: noise_removed = alerts_correlated
+          ✅ Percentage calculation handles edge cases (division by zero when no alerts)
+          ✅ Non-zero noise reduction properly reflected when alerts are actually correlated
+          
+          Alert Correlation Noise Calculation Fix is fully functional and production-ready!
 
   - task: "Implement Auto-Decide Logic for Incidents"
     implemented: true
