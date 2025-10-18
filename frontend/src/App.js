@@ -7,7 +7,6 @@ import Technicians from './pages/Technicians';
 import Profile from './pages/Profile';
 import RunbookLibrary from './pages/RunbookLibrary';
 import HelpCenter from './pages/HelpCenter';
-import OnCallSchedule from './pages/OnCallSchedule';
 import CompanySettings from './pages/CompanySettings';
 import { Toaster } from 'sonner';
 import ProductTour, { useShouldShowTour } from './components/ProductTour';
