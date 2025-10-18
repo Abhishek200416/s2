@@ -191,6 +191,13 @@ const HelpCenter = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Back</span>
+          </button>
           <h1 className="text-4xl font-bold text-white mb-3">Help Center</h1>
           <p className="text-lg text-slate-300">
             Everything you need to know about Alert Whisperer
