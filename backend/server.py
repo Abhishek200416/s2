@@ -4359,6 +4359,16 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️  SLA service failed to initialize: {e}")
     
+    # Initialize Client Tracking service
+    try:
+        from client_tracking_service import ClientTrackingService
+        logger.info("📊 Initializing Client Tracking service...")
+        global tracking_service
+        tracking_service = ClientTrackingService(db)
+        logger.info("✅ Client Tracking service initialized")
+    except Exception as e:
+        logger.warning(f"⚠️  Client Tracking service failed to initialize: {e}")
+    
     logger.info("✅ All services initialized successfully")
     logger.info(f"   Version: {os.getenv('GIT_SHA', 'dev')}")
     logger.info(f"   Agent Mode: {os.getenv('AGENT_MODE', 'local')}")
