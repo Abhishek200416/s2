@@ -130,7 +130,7 @@ const AlertCorrelation = ({ companyId, companyName }) => {
                     <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700">
+                    <SelectContent className="bg-slate-900 border-slate-700 text-white">
                       <SelectItem value="1">Every 1 minute</SelectItem>
                       <SelectItem value="2">Every 2 minutes</SelectItem>
                       <SelectItem value="5">Every 5 minutes</SelectItem>
