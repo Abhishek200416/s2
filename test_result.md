@@ -1826,7 +1826,7 @@ agent_communication:
          - POST /api/incidents/correlate?company_id=comp-acme - Alert correlation ✅
       
       All backend APIs are functioning correctly. No critical issues found.
-      Backend URL: https://incident-portal.preview.emergentagent.com/api
+      Backend URL: https://msptoolbox.preview.emergentagent.com/api
   - agent: "testing"
     message: |
       REAL-TIME FEATURES TESTING COMPLETE - ALL TESTS PASSED (27/27 - 100% Success Rate)
@@ -1880,7 +1880,7 @@ agent_communication:
          - Real-time metrics calculated correctly ✅
       
       All real-time Alert Whisperer features are functioning perfectly!
-      Backend URL: https://incident-portal.preview.emergentagent.com/api
+      Backend URL: https://msptoolbox.preview.emergentagent.com/api
   - agent: "main"
     message: |
       INITIATING FRONTEND TESTING
@@ -1917,7 +1917,7 @@ agent_communication:
          - Fake alert generator button
          - Emergent badge
       
-      Testing frontend with backend URL: https://incident-portal.preview.emergentagent.com/api
+      Testing frontend with backend URL: https://msptoolbox.preview.emergentagent.com/api
   - agent: "main"
     message: |
       ADDITIONAL UI/UX IMPROVEMENTS COMPLETED:
@@ -2411,7 +2411,7 @@ agent_communication:
       - ✅ Rate limiting configured with proper headers
       - ✅ Seed endpoint returns patch_plans: 0 (no demo data)
       - ✅ All endpoints respond correctly
-      - ✅ Backend URL accessible: https://incident-portal.preview.emergentagent.com/api
+      - ✅ Backend URL accessible: https://msptoolbox.preview.emergentagent.com/api
       
       🚀 **PRODUCTION READINESS CONFIRMED:**
       - All critical MSP platform features functional
