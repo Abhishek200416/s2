@@ -192,9 +192,9 @@ class DemoAutoCorrelationTester:
             # Check response structure
             script_content = script_data.get('script')
             filename = script_data.get('filename')
-            description = script_data.get('description')
+            instructions = script_data.get('instructions')  # Backend returns 'instructions' not 'description'
             
-            if script_content and filename and description:
+            if script_content and filename and instructions:
                 # Verify script contains key elements
                 script_checks = [
                     'import requests' in script_content,
