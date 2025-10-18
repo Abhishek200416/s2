@@ -396,6 +396,59 @@ class SystemAuditLog(BaseModel):
     error_message: Optional[str] = None
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+class OnCallSchedule(BaseModel):
+    """On-call schedule for MSP technicians"""
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # e.g., "Weekend On-Call", "Business Hours"
+    technician_id: str  # User ID of technician
+    schedule_type: str  # one_time, daily, weekly
+    start_time: str  # ISO 8601 datetime
+    end_time: str  # ISO 8601 datetime
+    days_of_week: Optional[List[int]] = []  # For weekly: [0=Mon, 1=Tue, ..., 6=Sun]
+    priority: int = 0  # Higher priority schedules take precedence
+    enabled: bool = True
+    company_id: Optional[str] = None  # Optional: company-specific on-call
+    description: Optional[str] = None
+    created_by: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class OnCallScheduleCreate(BaseModel):
+    """Create on-call schedule request"""
+    name: str
+    technician_id: str
+    schedule_type: str  # one_time, daily, weekly
+    start_time: str  # ISO 8601 datetime
+    end_time: str  # ISO 8601 datetime
+    days_of_week: Optional[List[int]] = []
+    priority: int = 0
+    company_id: Optional[str] = None
+    description: Optional[str] = None
+
+class OnCallScheduleUpdate(BaseModel):
+    """Update on-call schedule request"""
+    name: Optional[str] = None
+    technician_id: Optional[str] = None
+    schedule_type: Optional[str] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    days_of_week: Optional[List[int]] = None
+    priority: Optional[int] = None
+    enabled: Optional[bool] = None
+    company_id: Optional[str] = None
+    description: Optional[str] = None
+
+class CompanyAWSCredentials(BaseModel):
+    """AWS credentials update request (encrypted before storage)"""
+    access_key_id: str
+    secret_access_key: str
+    region: str = "us-east-1"
+
+class SSMInstallationRequest(BaseModel):
+    """Request to install SSM agents on instances"""
+    instance_ids: List[str]
+
 
 # ============= Auth Functions =============
 def verify_password(plain_password, hashed_password):
