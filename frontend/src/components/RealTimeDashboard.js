@@ -349,7 +349,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
                 <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent className="bg-slate-900 border-slate-700 text-white">
                   <SelectItem value="all">All Categories</SelectItem>
                   <SelectItem value="Network">Network</SelectItem>
                   <SelectItem value="Database">Database</SelectItem>
