@@ -1325,7 +1325,8 @@ async def get_asset_types():
             "Virtual Machine",
             "Container",
             "Load Balancer",
-            "Firewall"
+            "Firewall",
+            "Custom"
         ],
         "description": "MSP standard asset types for inventory management"
     }
