@@ -428,29 +428,6 @@ const Dashboard = ({ user, onLogout }) => {
                   Incidents
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="patches" 
-                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
-                  data-testid="tab-patches"
-                >
-                  <Database className="w-4 h-4 mr-2" />
-                  Patches
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="compliance" 
-                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
-                  data-testid="tab-compliance"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Compliance
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="agent-health" 
-                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
-                >
-                  <Activity className="w-4 h-4 mr-2" />
-                  Agent Health
-                </TabsTrigger>
-                <TabsTrigger 
                   value="asset-inventory" 
                   className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
                 >
