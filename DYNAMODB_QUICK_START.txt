@@ -1,0 +1,274 @@
+================================================================================
+    🚀 ALERT WHISPERER - DYNAMODB MIGRATION SUMMARY
+================================================================================
+
+WHAT HAS BEEN CREATED:
+----------------------
+
+✅ 1. DYNAMODB_MIGRATION_GUIDE.txt
+   - Complete step-by-step AWS setup guide
+   - DynamoDB table creation instructions
+   - IAM user and access key setup
+   - Environment variable configuration
+   - Cost optimization tips
+   - Troubleshooting guide
+
+✅ 2. backend/dynamodb_client.py
+   - DynamoDB connection setup
+   - Helper functions for CRUD operations
+   - Data format conversion utilities
+   - Table references (DynamoDBTables class)
+
+✅ 3. backend/seed_dynamodb.py
+   - Seed script to populate initial data
+   - Creates users, companies, configurations
+   - Creates sample runbooks and schedules
+   - Generates API keys automatically
+
+✅ 4. backend/migrate_to_dynamodb.sh
+   - Quick start script for migration
+   - Tests DynamoDB connection
+   - Runs seed script automatically
+   - Provides next steps
+
+================================================================================
+QUICK START GUIDE (3 STEPS):
+================================================================================
+
+STEP 1: CREATE DYNAMODB TABLES IN AWS CONSOLE
+----------------------------------------------
+
+Open the guide and follow Section 2:
+  cat /app/DYNAMODB_MIGRATION_GUIDE.txt
+
+You need to create 11 tables:
+  1. AlertWhisperer_Users (with email-index GSI)
+  2. AlertWhisperer_Companies (with api_key-index GSI)
+  3. AlertWhisperer_Alerts (with company_id-timestamp-index GSI)
+  4. AlertWhisperer_Incidents (with company_id-status-index GSI)
+  5. AlertWhisperer_AuditLogs
+  6. AlertWhisperer_Notifications
+  7. AlertWhisperer_ChatMessages
+  8. AlertWhisperer_OnCallSchedules
+  9. AlertWhisperer_Runbooks
+  10. AlertWhisperer_ApprovalRequests
+  11. AlertWhisperer_CompanyConfigs
+
+💡 TIP: Use "On-demand" capacity mode for auto-scaling
+
+STEP 2: UPDATE .ENV FILE WITH AWS CREDENTIALS
+----------------------------------------------
+
+Edit /app/backend/.env and add:
+
+# DynamoDB Configuration
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+DYNAMODB_TABLE_PREFIX=AlertWhisperer_
+
+# Keep all other existing variables (JWT_SECRET, AWS_SES, etc.)
+
+IMPORTANT:
+- Replace with YOUR actual AWS credentials from IAM user
+- Use the same region where you created the tables
+- Keep existing JWT_SECRET, AI keys, etc.
+
+STEP 3: RUN THE MIGRATION SCRIPT
+---------------------------------
+
+cd /app/backend
+bash migrate_to_dynamodb.sh
+
+This will:
+  ✅ Install boto3 (AWS SDK)
+  ✅ Test DynamoDB connection
+  ✅ Seed initial data (admin user + 3 companies)
+  ✅ Show you the login credentials and API keys
+
+================================================================================
+WHAT THE SCRIPT CREATES:
+================================================================================
+
+USERS:
+------
+1. Admin User
+   Email: admin@alertwhisperer.com
+   Password: admin123
+   Role: MSP Admin (full access)
+
+2. John Doe (Company Admin for Acme Corp)
+   Email: john@acmecorp.com
+   Password: password123
+   Role: Company Admin
+
+3. Sarah Tech (Technician for Acme Corp)
+   Email: sarah@acmecorp.com
+   Password: password123
+   Role: Technician
+
+COMPANIES:
+----------
+1. Acme Corporation (comp-acme)
+   - API Key: Generated automatically
+   - Webhook Security: Disabled by default
+   - Correlation: 15-min window, auto-correlate enabled
+   - SLA: Standard MSP SLAs configured
+
+2. TechStart Inc (comp-techstart)
+   - API Key: Generated automatically
+   - Same configuration as above
+
+3. Global Systems (comp-global)
+   - API Key: Generated automatically
+   - Same configuration as above
+
+RUNBOOKS:
+---------
+1. Clear Disk Space (low risk)
+   - Cleans /tmp, apt cache, old logs
+   - Auto-executes without approval
+
+2. Restart Nginx (medium risk)
+   - Restarts web server
+   - Requires Company Admin approval
+
+================================================================================
+AFTER MIGRATION - TESTING:
+================================================================================
+
+1. START BACKEND SERVER:
+   sudo supervisorctl restart backend
+
+2. CHECK BACKEND LOGS:
+   tail -f /var/log/supervisor/backend.out.log
+
+3. TEST LOGIN:
+   curl -X POST http://localhost:8001/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"email":"admin@alertwhisperer.com","password":"admin123"}'
+
+   Expected: JWT token + user data
+
+4. TEST COMPANIES ENDPOINT:
+   curl -X GET http://localhost:8001/api/companies \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+   Expected: List of 3 companies
+
+5. TEST WEBHOOK (get API key from seed output):
+   curl -X POST "http://localhost:8001/api/webhooks/alerts?api_key=YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "asset_name": "prod-server-01",
+       "signature": "high_cpu_usage",
+       "severity": "critical",
+       "message": "CPU usage at 95%",
+       "tool_source": "Datadog"
+     }'
+
+   Expected: Alert created with alert_id
+
+6. VERIFY IN AWS CONSOLE:
+   - Go to DynamoDB → Tables → AlertWhisperer_Alerts
+   - Click "Explore table items"
+   - You should see the alert you just created
+
+================================================================================
+IMPORTANT NOTES:
+================================================================================
+
+⚠️  BACKEND CODE UPDATE REQUIRED:
+   The migration guide and scripts are ready, but you still need to update
+   server.py to use DynamoDB instead of MongoDB. This involves:
+   
+   1. Replace MongoDB imports with DynamoDB imports
+   2. Update all database queries to use DynamoDB syntax
+   3. Update models to work with DynamoDB format
+   4. Test all endpoints thoroughly
+
+   I can help you with this next step once you've:
+   ✅ Created the DynamoDB tables in AWS
+   ✅ Updated the .env file with credentials
+   ✅ Run the migration script successfully
+
+💡 BACKEND UPDATE STRATEGY:
+   I recommend updating endpoints incrementally:
+   1. Start with auth endpoints (login, profile)
+   2. Then companies endpoints
+   3. Then alerts and incidents
+   4. Test each section before moving to next
+
+🔍 MONITORING:
+   - Set up CloudWatch alarms for DynamoDB throttling
+   - Enable Point-in-Time Recovery for backups
+   - Monitor costs in AWS Cost Explorer
+   - Set up billing alerts ($5, $10, $50 thresholds)
+
+💰 ESTIMATED COSTS:
+   Free tier (first 12 months): 25 GB storage, 25 WCU, 25 RCU
+   After free tier: ~$5-20/month for low traffic
+   
+   On-demand pricing:
+   - Write: $1.25 per million requests
+   - Read: $0.25 per million requests
+   - Storage: $0.25 per GB/month
+
+================================================================================
+TROUBLESHOOTING:
+================================================================================
+
+❌ "Unable to locate credentials"
+   → Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env
+   → Make sure no extra spaces or quotes
+
+❌ "ResourceNotFoundException: Requested resource not found"
+   → Verify table names match exactly (case-sensitive)
+   → Check AWS_REGION is correct
+   → Ensure tables are "Active" in AWS Console
+
+❌ "AccessDeniedException"
+   → IAM user needs AmazonDynamoDBFullAccess policy
+   → Check IAM permissions in AWS Console
+
+❌ "ValidationException: One or more parameter values were invalid"
+   → Check partition key and sort key are provided
+   → Verify data types match table schema
+
+================================================================================
+NEXT STEPS:
+================================================================================
+
+1. ✅ Read the full migration guide:
+   cat /app/DYNAMODB_MIGRATION_GUIDE.txt
+
+2. ✅ Create DynamoDB tables in AWS Console (follow Section 2)
+
+3. ✅ Create IAM user and access keys (follow Section 4-5)
+
+4. ✅ Update /app/backend/.env with AWS credentials
+
+5. ✅ Run migration script:
+   cd /app/backend && bash migrate_to_dynamodb.sh
+
+6. ✅ Test the connection and seed data
+
+7. ✅ Ask me to update backend server.py code for DynamoDB
+
+8. ✅ Test all endpoints thoroughly
+
+9. ✅ Monitor costs and performance in AWS Console
+
+================================================================================
+NEED HELP?
+================================================================================
+
+If you encounter any issues:
+1. Check the troubleshooting section in the guide
+2. Review AWS DynamoDB documentation
+3. Check backend logs: tail -f /var/log/supervisor/backend.err.log
+4. Ask me for help with specific errors
+
+I'm here to help you complete the migration! 🚀
+
+================================================================================
