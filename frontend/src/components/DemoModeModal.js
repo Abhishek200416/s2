@@ -239,6 +239,25 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                     </ul>
                   </div>
 
+                  {/* Progress Bar */}
+                  {generating && (
+                    <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-300 font-medium">Progress</span>
+                        <span className="text-sm text-cyan-400 font-semibold">
+                          {progress.current} / {progress.total} ({progress.percentage}%)
+                        </span>
+                      </div>
+                      <Progress value={progress.percentage} className="h-2" />
+                      {status && (
+                        <div className="flex items-center gap-2 text-sm text-slate-400">
+                          <Loader className="w-4 h-4 animate-spin text-cyan-400" />
+                          {status}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <Button
                     onClick={handleGenerateData}
                     disabled={generating || !demoCompany}
@@ -247,7 +266,7 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                     {generating ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                        Generating {dataCount} Alerts...
+                        Generating Alerts...
                       </>
                     ) : (
                       <>
