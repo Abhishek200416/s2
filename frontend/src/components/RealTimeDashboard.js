@@ -155,6 +155,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
   const filteredAlerts = alerts.filter(alert => {
     if (priorityFilter !== 'all' && alert.severity !== priorityFilter) return false;
     if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
+    if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
     if (searchTerm && !alert.message.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !alert.signature.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
@@ -166,6 +167,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
   // Filter incidents by priority
   const filteredIncidents = incidents.filter(incident => {
     if (statusFilter !== 'all' && incident.status !== statusFilter) return false;
+    if (categoryFilter !== 'all' && incident.category !== categoryFilter) return false;
     if (searchTerm && !incident.signature.toLowerCase().includes(searchTerm.toLowerCase()) &&
         !incident.asset_name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     return true;
