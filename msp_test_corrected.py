@@ -382,7 +382,7 @@ class MSPTester:
         # Authenticate first
         if not self.authenticate():
             print("❌ Authentication failed - stopping tests")
-            return
+            return self.print_summary()
         
         # Run MSP tests
         self.test_aws_credentials_management()
@@ -390,7 +390,7 @@ class MSPTester:
         self.test_bulk_ssm_installer()
         
         # Print summary
-        self.print_summary()
+        return self.print_summary()
     
     def print_summary(self):
         """Print test summary"""
