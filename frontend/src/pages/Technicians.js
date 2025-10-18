@@ -279,7 +279,7 @@ const Technicians = () => {
 
         {/* Technicians List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {technicians.map((tech) => (
+          {filteredTechnicians.map((tech) => (
             <Card key={tech.id} className="bg-slate-900/50 border-slate-800 hover:border-slate-700 transition-colors">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -326,6 +326,15 @@ const Technicians = () => {
                       Technician
                     </Badge>
                   </div>
+                  {tech.category && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-400">Category</span>
+                      <Badge variant="outline" className={getCategoryColor(tech.category)}>
+                        <Tag className="w-3 h-3 mr-1" />
+                        {tech.category}
+                      </Badge>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-400">Created</span>
                     <span className="text-sm text-slate-300">
@@ -337,6 +346,18 @@ const Technicians = () => {
             </Card>
           ))}
         </div>
+
+        {filteredTechnicians.length === 0 && technicians.length > 0 && (
+          <Card className="bg-slate-900/50 border-slate-800">
+            <CardContent className="py-12">
+              <div className="text-center">
+                <Filter className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                <p className="text-slate-400 text-lg">No technicians match this filter</p>
+                <p className="text-slate-500 text-sm mt-2">Try selecting a different category</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {technicians.length === 0 && (
           <Card className="bg-slate-900/50 border-slate-800">
