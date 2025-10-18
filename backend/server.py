@@ -5509,8 +5509,13 @@ async def update_auto_correlation_config(config: AutoCorrelationConfig):
 async def run_auto_correlation(company_id: str):
     """Manually trigger correlation and return statistics"""
     try:
-        # Get uncorrelated alerts
+        # Get total alerts before correlation
         alerts_before = await db.alerts.count_documents({
+            "company_id": company_id
+        })
+        
+        # Get active alerts before
+        active_before = await db.alerts.count_documents({
             "company_id": company_id,
             "status": "active"
         })
@@ -5519,15 +5524,22 @@ async def run_auto_correlation(company_id: str):
         result = await correlate_alerts(company_id)
         
         # Get alerts after correlation
-        alerts_after = await db.alerts.count_documents({
+        active_after = await db.alerts.count_documents({
             "company_id": company_id,
             "status": "active"
+        })
+        
+        # Get acknowledged alerts (correlated)
+        acknowledged_alerts = await db.alerts.count_documents({
+            "company_id": company_id,
+            "status": "acknowledged"
         })
         
         incidents_created = result.get("incidents_created", 0)
         
         # Calculate statistics
-        alerts_correlated = alerts_before - alerts_after
+        # Noise removed = alerts that were correlated (active -> acknowledged)
+        alerts_correlated = active_before - active_after
         noise_removed = alerts_correlated
         
         # Check for duplicates (alerts with same signature)
