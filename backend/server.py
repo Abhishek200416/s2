@@ -5551,12 +5551,18 @@ async def run_auto_correlation(company_id: str):
         duplicates = await db.alerts.aggregate(pipeline).to_list(100)
         duplicate_count = sum([d["count"] - 1 for d in duplicates])
         
+        # Calculate noise reduction percentage
+        noise_reduction_pct = 0
+        if active_before > 0:
+            noise_reduction_pct = round((alerts_correlated / active_before) * 100, 1)
+        
         stats = {
-            "alerts_before": alerts_before,
-            "alerts_after": alerts_after,
+            "alerts_before": active_before,
+            "alerts_after": active_after,
             "incidents_created": incidents_created,
             "alerts_correlated": alerts_correlated,
-            "noise_removed": noise_removed,
+            "noise_removed": alerts_correlated,
+            "noise_reduction_pct": noise_reduction_pct,
             "duplicates_found": duplicate_count,
             "duplicate_groups": len(duplicates),
             "timestamp": datetime.now(timezone.utc).isoformat()
