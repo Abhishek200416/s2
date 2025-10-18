@@ -5198,7 +5198,7 @@ class DemoDataRequest(BaseModel):
 
 @api_router.post("/demo/generate-data")
 async def generate_demo_data(request: DemoDataRequest):
-    """Generate demo alerts and incidents for testing"""
+    """Generate demo alerts one-by-one for better monitoring"""
     company = await db.companies.find_one({"id": request.company_id}, {"_id": 0})
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
@@ -5224,7 +5224,7 @@ async def generate_demo_data(request: DemoDataRequest):
     created_alerts = []
     created_count = 0
     
-    # Generate alerts
+    # Generate alerts one-by-one with small delay for better monitoring
     for i in range(request.count):
         template = random.choice(alert_templates)
         asset = random.choice(assets)
@@ -5235,6 +5235,7 @@ async def generate_demo_data(request: DemoDataRequest):
             asset_name=asset["name"],
             signature=template["signature"],
             severity=template["severity"],
+            category=template.get("category", "Custom"),
             message=f"{template['message']} on {asset['name']}",
             tool_source="Demo System",
             status="active",
@@ -5242,21 +5243,40 @@ async def generate_demo_data(request: DemoDataRequest):
         )
         
         await db.alerts.insert_one(alert.model_dump())
-        created_alerts.append(alert.model_dump())
         created_count += 1
         
-        # Broadcast via WebSocket
+        # Broadcast via WebSocket with progress
         await manager.broadcast({
-            "type": "alert_received",
-            "data": alert.model_dump()
+            "type": "demo_progress",
+            "data": {
+                "current": created_count,
+                "total": request.count,
+                "percentage": round((created_count / request.count) * 100, 1),
+                "alert": alert.model_dump()
+            }
         })
+        
+        # Small delay to allow monitoring (1ms per alert)
+        await asyncio.sleep(0.001)
+        
+        # Save sample alerts
+        if created_count <= 10:
+            created_alerts.append(alert.model_dump())
     
     # Auto-correlate if enabled
     correlation_config = await db.correlation_config.find_one({"company_id": request.company_id})
     if correlation_config and correlation_config.get("auto_correlate", True):
         # Run correlation
         try:
+            await manager.broadcast({
+                "type": "demo_status",
+                "data": {"status": "correlating", "message": "Running correlation..."}
+            })
             await correlate_alerts(request.company_id)
+            await manager.broadcast({
+                "type": "demo_status",
+                "data": {"status": "complete", "message": "Correlation complete!"}
+            })
         except Exception as e:
             logger.error(f"Auto-correlation error: {e}")
     
@@ -5264,7 +5284,7 @@ async def generate_demo_data(request: DemoDataRequest):
         "message": f"Generated {created_count} demo alerts",
         "count": created_count,
         "company_id": request.company_id,
-        "alerts_sample": created_alerts[:10]  # Return first 10 as sample
+        "alerts_sample": created_alerts
     }
 
 @api_router.get("/demo/script")
