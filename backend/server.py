@@ -1294,6 +1294,23 @@ async def get_technician_categories():
         "description": "MSP standard technician specialization categories"
     }
 
+@api_router.get("/incident-categories")
+async def get_incident_categories():
+    """Get available incident/alert categories for MSP"""
+    return {
+        "categories": [
+            "Network",
+            "Database", 
+            "Security",
+            "Server",
+            "Application",
+            "Storage",
+            "Cloud",
+            "Custom"
+        ],
+        "description": "MSP standard incident and alert categories"
+    }
+
 @api_router.get("/asset-types")
 async def get_asset_types():
     """Get MSP standard asset types"""
