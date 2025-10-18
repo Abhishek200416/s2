@@ -196,76 +196,93 @@ const IncidentList = ({ companyId, limit }) => {
           </DialogHeader>
 
           {decision && (
-            <div className="space-y-3 mt-3">
+            <div className="space-y-4 mt-4">
               {/* AI Explanation */}
               {decision.ai_explanation && (
-                <div className="p-3 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
-                  <p className="text-sm text-cyan-100 leading-relaxed">{decision.ai_explanation}</p>
+                <div className="p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-lg border border-cyan-500/30">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Zap className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                    <h4 className="text-sm font-semibold text-cyan-300">AI Recommendation</h4>
+                  </div>
+                  <p className="text-sm text-slate-200 leading-relaxed">{decision.ai_explanation}</p>
                 </div>
               )}
 
-              {/* Key Decision Info - Compact Cards */}
+              {/* Decision Summary */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                  <p className="text-xs text-slate-400 mb-1">Action</p>
-                  <p className="text-sm font-semibold text-white">{decision.action}</p>
+                  <p className="text-xs text-slate-400 mb-1">Recommended Action</p>
+                  <div className="flex items-center gap-2">
+                    {decision.recommended_action === 'execute' ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        <p className="text-sm font-semibold text-green-400">Execute Runbook</p>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-amber-400" />
+                        <p className="text-sm font-semibold text-amber-400">Escalate to Technician</p>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
                   <p className="text-xs text-slate-400 mb-1">Priority Score</p>
-                  <p className="text-sm font-semibold text-white">{decision.priority_score || 'N/A'}</p>
+                  <p className="text-sm font-semibold text-white">{Math.round(decision.priority_score || 0)}</p>
                 </div>
               </div>
+
+              {/* Runbook Information */}
+              {decision.runbook_name && (
+                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                  <p className="text-xs text-slate-400 mb-1">Available Runbook</p>
+                  <p className="text-sm font-medium text-white">{decision.runbook_name}</p>
+                </div>
+              )}
+
+              {/* Technician Category */}
+              {decision.recommended_technician_category && (
+                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                  <p className="text-xs text-slate-400 mb-1">Recommended Technician Category</p>
+                  <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/50">
+                    {decision.recommended_technician_category}
+                  </Badge>
+                </div>
+              )}
 
               {/* Reason */}
               <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                <p className="text-xs text-slate-400 mb-1">Reason</p>
-                <p className="text-sm text-white">{decision.reason}</p>
+                <p className="text-xs text-slate-400 mb-1">Decision Reasoning</p>
+                <p className="text-sm text-slate-300">{decision.reason}</p>
               </div>
-
-              {/* Collapsible Full JSON */}
-              <details className="group">
-                <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-300 py-2 px-3 bg-slate-800/30 rounded border border-slate-700">
-                  <span className="group-open:hidden">▶ Show Full Details</span>
-                  <span className="hidden group-open:inline">▼ Hide Full Details</span>
-                </summary>
-                <div className="mt-2 bg-slate-950 rounded-lg p-3 border border-slate-800 font-mono text-xs overflow-x-auto max-h-64 overflow-y-auto">
-                  <pre className="text-slate-300">{JSON.stringify(decision, null, 2)}</pre>
-                </div>
-              </details>
 
               {/* Actions */}
               <div className="flex gap-3 pt-2">
-                {decision.approval_required && (
-                  <>
-                    <Button
-                      onClick={approveIncident}
-                      disabled={loading}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
-                      data-testid="approve-button"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Execute
-                    </Button>
-                    <Button
-                      onClick={escalateIncident}
-                      disabled={loading}
-                      variant="outline"
-                      className="border-slate-700 text-slate-300 hover:bg-slate-800 flex-1"
-                      data-testid="escalate-button"
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Assign to Technician
-                    </Button>
-                  </>
-                )}
-                {!decision.approval_required && (
+                {decision.can_auto_execute && (
                   <Button
-                    onClick={() => setShowDecisionDialog(false)}
-                    className="bg-slate-700 hover:bg-slate-600 text-white w-full"
+                    onClick={approveIncident}
+                    disabled={loading}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1"
+                    data-testid="approve-button"
                   >
-                    Close
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Execute Runbook
                   </Button>
                 )}
+                <Button
+                  onClick={escalateIncident}
+                  disabled={loading}
+                  variant="outline"
+                  className={`border-slate-700 hover:bg-slate-800 flex-1 ${
+                    decision.can_auto_execute 
+                      ? 'text-slate-300' 
+                      : 'text-amber-300 border-amber-500/30 hover:bg-amber-500/10'
+                  }`}
+                  data-testid="escalate-button"
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Escalate to Technician
+                </Button>
               </div>
             </div>
           )}
