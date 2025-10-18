@@ -406,6 +406,21 @@ const Technicians = () => {
               </div>
 
               <div>
+                <Label className="text-white">Category (Specialization)</Label>
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1">
+                    <SelectValue placeholder="Select category..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-slate-700">
+                    <SelectItem value="">No Category</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label className="text-white">New Password (Optional)</Label>
                 <Input
                   type="password"
