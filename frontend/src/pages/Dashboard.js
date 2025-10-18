@@ -229,24 +229,45 @@ const Dashboard = ({ user, onLogout }) => {
                           key={notification.id}
                           onClick={() => !notification.read && markAsRead(notification.id)}
                           className={`p-4 cursor-pointer focus:bg-slate-800 ${
-                            !notification.read ? 'bg-cyan-500/5 border-l-2 border-l-cyan-500' : ''
+                            !notification.read 
+                              ? notification.type === 'critical' 
+                                ? 'bg-red-500/10 border-l-4 border-l-red-500' 
+                                : notification.type === 'high'
+                                ? 'bg-orange-500/10 border-l-4 border-l-orange-500'
+                                : 'bg-cyan-500/5 border-l-2 border-l-cyan-500'
+                              : ''
                           }`}
                         >
                           <div className="flex gap-3 w-full">
                             <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
                               notification.type === 'critical' ? 'bg-red-500 animate-pulse' :
+                              notification.type === 'high' ? 'bg-orange-500 animate-pulse' :
                               notification.type === 'warning' ? 'bg-amber-500' :
                               notification.type === 'info' ? 'bg-cyan-500' :
                               'bg-slate-500'
                             }`} />
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-slate-300'}`}>
+                              {notification.title && (
+                                <p className={`text-sm font-semibold mb-1 ${
+                                  notification.type === 'critical' ? 'text-red-400' :
+                                  notification.type === 'high' ? 'text-orange-400' :
+                                  'text-cyan-400'
+                                }`}>
+                                  {notification.title}
+                                </p>
+                              )}
+                              <p className={`text-sm ${!notification.read ? 'text-white' : 'text-slate-300'}`}>
                                 {notification.message}
                               </p>
                               {notification.metadata && (
-                                <p className="text-xs text-slate-500 mt-1">
-                                  {notification.metadata.alert_message || notification.metadata.incident_signature}
-                                </p>
+                                <div className="text-xs text-slate-500 mt-2 space-y-1">
+                                  {notification.metadata.signature && (
+                                    <p>Signature: {notification.metadata.signature}</p>
+                                  )}
+                                  {notification.metadata.tool_source && (
+                                    <p>Source: {notification.metadata.tool_source}</p>
+                                  )}
+                                </div>
                               )}
                               <p className="text-xs text-slate-600 mt-1">
                                 {new Date(notification.created_at).toLocaleString()}
