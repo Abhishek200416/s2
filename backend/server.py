@@ -5741,6 +5741,14 @@ async def startup_event():
             logger.info("✅ SLA monitor started")
         except Exception as e:
             logger.warning(f"⚠️  SLA monitor failed to start: {e}")
+    
+    # Start auto-correlation background task
+    try:
+        logger.info("🔄 Starting auto-correlation background task...")
+        asyncio.create_task(auto_correlation_background_task())
+        logger.info("✅ Auto-correlation background task started (runs every 1 minute)")
+    except Exception as e:
+        logger.warning(f"⚠️  Auto-correlation background task failed to start: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_event():
