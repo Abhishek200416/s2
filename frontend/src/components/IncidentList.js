@@ -37,19 +37,33 @@ const IncidentList = ({ companyId, limit }) => {
     setSelectedIncident(incident);
     
     if (incident.decision) {
+      // Already has decision, show it
       setDecision(incident.decision);
       setShowDecisionDialog(true);
     } else {
-      // Generate decision
+      // Auto-decide without opening dialog first
       setLoading(true);
       try {
         const response = await api.post(`/incidents/${incident.id}/decide`);
         setDecision(response.data);
-        setShowDecisionDialog(true);
+        
+        // Show immediate feedback based on decision
+        if (response.data.auto_executed) {
+          toast.success('Incident auto-resolved using runbook!');
+        } else if (response.data.auto_assigned) {
+          toast.success(`Incident assigned to ${response.data.assigned_to_name}`);
+        } else {
+          toast.success('Decision generated successfully');
+        }
+        
+        // Reload incidents to show updated status
         await loadIncidents();
+        
+        // Show decision dialog
+        setShowDecisionDialog(true);
       } catch (error) {
         console.error('Failed to generate decision:', error);
-        toast.error('Failed to generate decision');
+        toast.error('Failed to auto-decide incident');
       } finally {
         setLoading(false);
       }
