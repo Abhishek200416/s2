@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL
-BACKEND_URL = "https://babel-fix-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://fetch-fixer-1.preview.emergentagent.com/api"
 
 class CriticalTester:
     def __init__(self):
