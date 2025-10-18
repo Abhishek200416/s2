@@ -132,7 +132,8 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  const userCompanies = companies.filter(c => user.company_ids.includes(c.id));
+  const userCompanyIds = user.company_ids || [];
+  const userCompanies = companies.filter(c => userCompanyIds.includes(c.id));
   const currentCompany = companies.find(c => c.id === selectedCompany);
 
   return (
