@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Users, Plus, Trash2, Mail, Shield, UserCircle, Edit, ArrowLeft } from 'lucide-react';
+import { Users, Plus, Trash2, Mail, Shield, UserCircle, Edit, ArrowLeft, Filter, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Technicians = () => {
@@ -16,11 +17,14 @@ const Technicians = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'technician'
+    role: 'technician',
+    category: ''
   });
 
   useEffect(() => {
