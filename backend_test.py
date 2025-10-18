@@ -1593,13 +1593,26 @@ class AlertWhispererTester:
         # Test 15: CRITICAL TESTS from Review Request
         self.test_critical_requirements()
         
-        # Test 16: NEW SLA Management Endpoints (CRITICAL TEST)
+        # NEW MSP-FOCUSED IMPROVEMENT TESTS (from Review Request)
+        # Test 15: AWS Credentials Management
+        self.test_aws_credentials_management()
+        
+        # Test 16: On-Call Scheduling
+        self.test_on_call_scheduling()
+        
+        # Test 17: Bulk SSM Installer
+        self.test_bulk_ssm_installer()
+        
+        # Test 18: CRITICAL TESTS from Review Request
+        self.test_critical_requirements()
+        
+        # Test 19: NEW SLA Management Endpoints (CRITICAL TEST)
         self.test_sla_management_endpoints()
         
-        # Test 17: Runbook Management System (CRITICAL TEST from Review Request)
+        # Test 20: Runbook Management System (CRITICAL TEST from Review Request)
         self.test_runbook_management_system()
         
-        # Test 18: Existing Features (Smoke Test)
+        # Test 21: Existing Features (Smoke Test)
         self.test_existing_features()
         
         return self.generate_summary()
