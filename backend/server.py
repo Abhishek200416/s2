@@ -4647,6 +4647,34 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"⚠️  Client Tracking service failed to initialize: {e}")
     
+    # Initialize On-Call Scheduling service
+    try:
+        from oncall_service import init_oncall_service
+        logger.info("📅 Initializing On-Call Scheduling service...")
+        global oncall_service
+        oncall_service = init_oncall_service(db)
+        logger.info("✅ On-Call Scheduling service initialized")
+    except Exception as e:
+        logger.warning(f"⚠️  On-Call Scheduling service failed to initialize: {e}")
+    
+    # Initialize Encryption service
+    try:
+        from encryption_service import encryption_service as enc_service
+        logger.info("🔐 Encryption service available for AWS credentials")
+        global encryption_service
+        encryption_service = enc_service
+    except Exception as e:
+        logger.warning(f"⚠️  Encryption service failed to initialize: {e}")
+    
+    # Initialize SSM Installer service
+    try:
+        from ssm_installer_service import ssm_installer_service as installer_service
+        logger.info("🚀 SSM Installer service available")
+        global ssm_installer_service
+        ssm_installer_service = installer_service
+    except Exception as e:
+        logger.warning(f"⚠️  SSM Installer service failed to initialize: {e}")
+    
     logger.info("✅ All services initialized successfully")
     logger.info(f"   Version: {os.getenv('GIT_SHA', 'dev')}")
     logger.info(f"   Agent Mode: {os.getenv('AGENT_MODE', 'local')}")
