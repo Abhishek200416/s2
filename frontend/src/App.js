@@ -59,7 +59,8 @@ function App() {
     setLoading(false);
   };
 
-  const handleLogin = (userData) => {
+  const handleLogin = (token, userData) => {
+    localStorage.setItem('token', token);
     setUser(userData);
     setIsAuthenticated(true);
   };
