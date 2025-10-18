@@ -3469,7 +3469,7 @@ async def receive_webhook_alert(
         raw_body=raw_body.decode('utf-8')
     )
     
-    # Find asset by name
+    # Find asset by name, or create if not exists (auto-discovery)
     asset = None
     for a in company.get("assets", []):
         if a["name"] == alert_data.asset_name:
@@ -3477,7 +3477,21 @@ async def receive_webhook_alert(
             break
     
     if not asset:
-        raise HTTPException(status_code=404, detail=f"Asset {alert_data.asset_name} not found")
+        # Auto-create asset from alert (asset discovery)
+        asset = {
+            "id": f"asset-{uuid.uuid4().hex[:8]}",
+            "name": alert_data.asset_name,
+            "type": "server",  # Default type
+            "is_critical": False,  # Can be updated later
+            "tags": [alert_data.tool_source] if alert_data.tool_source else []
+        }
+        
+        # Add asset to company
+        await db.companies.update_one(
+            {"id": company_id},
+            {"$push": {"assets": asset}}
+        )
+        print(f"✅ Auto-created asset: {alert_data.asset_name} for company {company_id}")
     
     # Generate delivery_id if not provided
     if not x_delivery_id:
