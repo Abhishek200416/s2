@@ -42,7 +42,7 @@ model = genai.GenerativeModel('gemini-2.5-pro')
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
-SECRET_KEY = "alert-whisperer-secret-key-change-in-production"
+SECRET_KEY = os.environ.get('SECRET_KEY', "alert-whisperer-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
