@@ -22,6 +22,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
   // Filters
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   
   // WebSocket
