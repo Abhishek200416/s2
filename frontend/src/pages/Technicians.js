@@ -29,6 +29,7 @@ const Technicians = () => {
 
   useEffect(() => {
     loadTechnicians();
+    loadCategories();
   }, []);
 
   const loadTechnicians = async () => {
@@ -40,6 +41,15 @@ const Technicians = () => {
     } catch (error) {
       console.error('Failed to load technicians:', error);
       toast.error('Failed to load technicians');
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const response = await api.get('/technician-categories');
+      setCategories(response.data.categories || []);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
     }
   };
 
