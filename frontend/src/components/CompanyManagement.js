@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Building2, Plus, Edit, Trash2, Server, Key, Copy, Check, Send, Code, TrendingUp, TrendingDown, Settings } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +24,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [newlyCreatedCompany, setNewlyCreatedCompany] = useState(null);
   const [copiedItem, setCopiedItem] = useState(null);
+  const [assetTypes, setAssetTypes] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     policy: { auto_approve_low_risk: true, maintenance_window: 'Sat 22:00-02:00' },
