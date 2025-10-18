@@ -1168,7 +1168,7 @@ class AlertWhispererTester:
             "company_id": test_company_id
         }
         
-        response = self.make_request('POST', '/runbooks', json=runbook_data, headers={"Authorization": f"Bearer {self.token}"})
+        response = self.make_request('POST', '/runbooks', json=runbook_data, headers={"Authorization": f"Bearer {self.auth_token}"})
         if response and response.status_code == 200:
             created_runbook = response.json()
             runbook_id = created_runbook.get('id')
