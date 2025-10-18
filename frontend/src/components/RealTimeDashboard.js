@@ -50,8 +50,11 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
 
   // WebSocket connection for real-time updates
   useEffect(() => {
+    // WebSocket is at root /ws, not /api/ws
     const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-    const wsUrl = backendUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
+    // Remove /api from the end if it exists
+    const baseUrl = backendUrl.replace('/api', '');
+    const wsUrl = baseUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws';
     
     const connectWebSocket = () => {
       ws.current = new WebSocket(wsUrl);
