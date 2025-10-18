@@ -2261,6 +2261,9 @@ async def correlate_alerts(company_id: str):
             continue
         
         # Create new incident
+        # Auto-determine category from signature
+        category = determine_category_from_signature(first_alert["signature"], first_alert.get("asset_name", ""))
+        
         incident = Incident(
             company_id=company_id,
             alert_ids=[a["id"] for a in alert_group],
@@ -2269,7 +2272,8 @@ async def correlate_alerts(company_id: str):
             signature=first_alert["signature"],
             asset_id=first_alert["asset_id"],
             asset_name=first_alert["asset_name"],
-            severity=first_alert["severity"]
+            severity=first_alert["severity"],
+            category=category
         )
         
         # Calculate priority score
