@@ -137,27 +137,27 @@ const RunbookLibrary = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Button
-              onClick={() => navigate('/dashboard')}
-              variant="ghost"
-              size="sm"
-              className="text-slate-400 hover:text-white hover:bg-slate-800"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
+    <div className="min-h-screen bg-slate-900">
+      {/* Header with Navigation */}
+      <div className="bg-slate-800 border-b border-slate-700 p-4">
+        <div className="max-w-7xl mx-auto">
+          <Button
+            onClick={() => navigate('/dashboard')}
+            variant="ghost"
+            size="sm"
+            className="text-slate-400 hover:text-white hover:bg-slate-800 mb-3"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
           <h1 className="text-3xl font-bold text-white mb-2">📚 Runbook Library</h1>
           <p className="text-slate-400">
             Pre-built automation scripts for common MSP tasks. {library.total_count} runbooks available.
           </p>
         </div>
       </div>
+
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
 
       {/* Search and Filter */}
       <div className="flex items-center gap-4">
