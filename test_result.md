@@ -1041,6 +1041,47 @@ backend:
           
           **Bulk SSM Installer system properly implemented with security validation!**
 
+  - task: "Test webhook endpoint with asset auto-creation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: |
+          ✅ WEBHOOK ENDPOINT WITH ASSET AUTO-CREATION TESTING COMPLETE - ALL TESTS PASSED (5/5 - 100% Success Rate)
+          
+          **Test 1: Get API Key for Testing**
+          ✅ GET /api/companies - Retrieved 3 companies successfully
+          ✅ Found company comp-acme with API key: aw_XceHSvCuJLACTrD_O...
+          
+          **Test 2: Test Webhook with Asset Auto-Creation**
+          ✅ POST /api/webhooks/alerts?api_key={API_KEY} - Alert created successfully
+          ✅ Request body: {"asset_name": "server-01", "signature": "high_cpu_usage", "severity": "high", "message": "CPU usage above 90%", "tool_source": "Monitoring System"}
+          ✅ Response: Alert ID 96b78131-cd40-4c40-bbff-c5d39a72d634 created
+          
+          **Test 3: Verify Asset Was Created**
+          ✅ GET /api/companies/{company_id} - Asset "server-01" was auto-created successfully
+          ✅ Asset details: {'id': 'asset-66a909c8', 'name': 'server-01', 'type': 'server', 'is_critical': False, 'tags': ['Monitoring System']}
+          
+          **Test 4: Test Before-After Metrics Endpoint**
+          ✅ GET /api/metrics/before-after?company_id={company_id} - Metrics endpoint working perfectly
+          ✅ Response structure verified: baseline, current, improvements, summary sections all present
+          ✅ Baseline: incidents=1, noise_reduction=0%, self_healed=0%, mttr=60min
+          ✅ Current: incidents=0, noise_reduction=100.0%, self_healed=0%, mttr=60min
+          ✅ Improvements: noise_reduction=100.0% (excellent), self_healed=0% (improving), mttr=0% (improving)
+          ✅ Summary: incidents_prevented=1, auto_resolved=0, time_saved=0min, noise_reduced=100%
+          
+          **Test 5: Send Another Alert for Same Asset (Idempotency Test)**
+          ✅ POST /api/webhooks/alerts?api_key={API_KEY} - Idempotency working correctly
+          ✅ Same payload as Test 2 - duplicate detected: True, returned same alert_id
+          ✅ No duplicate asset creation needed (asset already exists)
+          
+          **Webhook and Before-After Metrics system fully functional and production-ready!**
+
 frontend:
   - task: "Remove fake alert generator button"
     implemented: true
