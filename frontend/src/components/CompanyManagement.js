@@ -556,19 +556,26 @@ const CompanyManagement = ({ onCompanyChange }) => {
               <Label>Assets</Label>
               <div className="grid grid-cols-4 gap-2">
                 <Input
-                  placeholder="Name"
+                  placeholder="Asset Name"
                   value={assetForm.name}
                   onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white"
                 />
-                <Input
-                  placeholder="Type"
+                <Select
                   value={assetForm.type}
-                  onChange={(e) => setAssetForm({ ...assetForm, type: e.target.value })}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                  onValueChange={(value) => setAssetForm({ ...assetForm, type: value })}
+                >
+                  <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                    <SelectValue placeholder="Asset Type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-slate-700">
+                    {assetTypes.map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
-                  placeholder="OS"
+                  placeholder="OS (Optional)"
                   value={assetForm.os}
                   onChange={(e) => setAssetForm({ ...assetForm, os: e.target.value })}
                   className="bg-slate-800 border-slate-700 text-white"
