@@ -148,7 +148,7 @@ class DemoAutoCorrelationTester:
             result = response.json()
             
             # Check response structure
-            alerts_created = result.get('alerts_created')
+            alerts_created = result.get('count')  # Backend returns 'count' not 'alerts_created'
             company_id = result.get('company_id')
             message = result.get('message', '')
             
