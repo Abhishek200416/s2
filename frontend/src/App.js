@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import axios from 'axios';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import ClientPortal from './pages/ClientPortal';
 import Technicians from './pages/Technicians';
 import Profile from './pages/Profile';
 import RunbookLibrary from './pages/RunbookLibrary';
@@ -84,7 +83,7 @@ function App() {
     <Router>
       <div className="App">
         <Toaster position="top-right" />
-        {showTour && isAuthenticated && user?.role !== 'client' && (
+        {showTour && isAuthenticated && (
           <ProductTour onComplete={() => setShowTour(false)} />
         )}
         <Routes>
@@ -93,8 +92,6 @@ function App() {
             element={
               !isAuthenticated ? (
                 <Login onLogin={handleLogin} />
-              ) : user?.role === 'client' ? (
-                <Navigate to="/client-portal" replace />
               ) : (
                 <Navigate to="/dashboard" replace />
               )
@@ -104,25 +101,7 @@ function App() {
             path="/dashboard"
             element={
               isAuthenticated ? (
-                user?.role === 'client' ? (
-                  <Navigate to="/client-portal" replace />
-                ) : (
-                  <Dashboard user={user} onLogout={handleLogout} />
-                )
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          <Route
-            path="/client-portal"
-            element={
-              isAuthenticated ? (
-                user?.role === 'client' ? (
-                  <ClientPortal user={user} onLogout={handleLogout} />
-                ) : (
-                  <Navigate to="/dashboard" replace />
-                )
+                <Dashboard user={user} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -172,11 +151,7 @@ function App() {
             path="/" 
             element={
               isAuthenticated ? (
-                user?.role === 'client' ? (
-                  <Navigate to="/client-portal" replace />
-                ) : (
-                  <Navigate to="/dashboard" replace />
-                )
+                <Navigate to="/dashboard" replace />
               ) : (
                 <Navigate to="/login" replace />
               )
