@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Plus, Edit2, Trash2, Loader, CheckCircle } from 'lucide-react';
-import API from '../utils/api';
+import { api as API } from '../App';
 
 const OnCallScheduling = () => {
   const [schedules, setSchedules] = useState([]);
