@@ -219,7 +219,7 @@ class DemoAutoCorrelationTester:
                 missing = []
                 if not script_content: missing.append("script_content")
                 if not filename: missing.append("filename")
-                if not description: missing.append("description")
+                if not instructions: missing.append("instructions")
                 self.log_result("Demo Script Generation", False, f"Script response missing: {missing}")
         else:
             self.log_result("Demo Script Generation", False, 
