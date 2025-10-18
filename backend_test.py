@@ -1208,7 +1208,10 @@ class AlertWhispererTester:
         # Test 16: NEW SLA Management Endpoints (CRITICAL TEST)
         self.test_sla_management_endpoints()
         
-        # Test 17: Existing Features (Smoke Test)
+        # Test 17: Runbook Management System (CRITICAL TEST from Review Request)
+        self.test_runbook_management_system()
+        
+        # Test 18: Existing Features (Smoke Test)
         self.test_existing_features()
         
         return self.generate_summary()
