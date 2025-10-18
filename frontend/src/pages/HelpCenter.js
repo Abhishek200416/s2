@@ -195,8 +195,15 @@ const HelpCenter = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="faq" className="space-y-6">
+        <Tabs defaultValue="integration" className="space-y-6">
           <TabsList className="bg-slate-900/50 border border-slate-800">
+            <TabsTrigger
+              value="integration"
+              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              MSP Integration
+            </TabsTrigger>
             <TabsTrigger
               value="faq"
               className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
@@ -212,6 +219,11 @@ const HelpCenter = () => {
               Workflows
             </TabsTrigger>
           </TabsList>
+
+          {/* MSP Integration Tab */}
+          <TabsContent value="integration">
+            <MSPIntegrationGuide />
+          </TabsContent>
 
           {/* FAQs Tab */}
           <TabsContent value="faq">
