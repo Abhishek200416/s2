@@ -180,14 +180,10 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
           )}
 
           <Tabs defaultValue="internal" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsList className="grid w-full grid-cols-1 mb-6">
               <TabsTrigger value="internal">
                 <Play className="w-4 h-4 mr-2" />
-                Internal Testing
-              </TabsTrigger>
-              <TabsTrigger value="external" onClick={loadTestScript}>
-                <Code className="w-4 h-4 mr-2" />
-                External Testing
+                Generate Test Data
               </TabsTrigger>
             </TabsList>
 
