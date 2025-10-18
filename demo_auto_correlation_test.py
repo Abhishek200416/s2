@@ -291,11 +291,8 @@ class DemoAutoCorrelationTester:
         # Use demo company ID if available, otherwise use a default
         company_id = self.demo_company_id or "company-demo"
         
-        run_data = {
-            "company_id": company_id
-        }
-        
-        response = self.make_request('POST', '/auto-correlation/run', json=run_data)
+        # Use company_id as query parameter
+        response = self.make_request('POST', f'/auto-correlation/run?company_id={company_id}')
         if response and response.status_code == 200:
             run_result = response.json()
             
