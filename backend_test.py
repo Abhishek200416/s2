@@ -1624,6 +1624,10 @@ class AlertWhispererTester:
         
         return self.generate_summary()
     
+    def print_summary(self):
+        """Print test summary (alias for generate_summary)"""
+        return self.generate_summary()
+    
     def generate_summary(self):
         """Generate test summary"""
         total_tests = len(self.test_results)
