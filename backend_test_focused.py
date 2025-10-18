@@ -252,21 +252,13 @@ class FocusedTester:
         
         decision_result = response.json()
         
-        # Verify response includes required fields
-        required_fields = ['decision', 'action', 'reason', 'recommended_technician_category', 'priority_score']
+        # Verify response includes required fields (fields are at root level)
+        required_fields = ['action', 'reason', 'recommended_technician_category', 'priority_score']
         missing_fields = []
         
-        # Check if decision is a nested object or if fields are at root level
-        if 'decision' in decision_result:
-            decision_obj = decision_result['decision']
-            for field in ['action', 'reason', 'recommended_technician_category']:
-                if field not in decision_obj:
-                    missing_fields.append(f"decision.{field}")
-        else:
-            # Fields might be at root level
-            for field in required_fields:
-                if field not in decision_result:
-                    missing_fields.append(field)
+        for field in required_fields:
+            if field not in decision_result:
+                missing_fields.append(field)
         
         if missing_fields:
             self.log_result("Auto-Decide Response Structure", False, 
