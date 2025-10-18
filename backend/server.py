@@ -2741,11 +2741,78 @@ async def execute_runbook_with_ssm(
     else:
         approval_status = "auto_approved"
     
+    # CHECK SSM AGENT STATUS BEFORE EXECUTING (Phase 4: Smart Auto-Execution)
+    # Determine instance IDs (use from request or get from incident's asset)
+    instance_ids = request.instance_ids or []
+    
+    if not instance_ids:
+        # Try to get instance ID from incident's asset
+        asset_name = incident.get("asset_name")
+        if asset_name and asset_name.startswith("i-"):
+            instance_ids = [asset_name]
+        else:
+            # Mock instance ID for demo
+            instance_ids = [f"i-{str(uuid.uuid4())[:8]}"]
+    
+    # Check if company has AWS credentials configured
+    company = await db.companies.find_one({"id": incident["company_id"]}, {"_id": 0})
+    aws_creds = company.get("aws_credentials", {}) if company else {}
+    
+    has_aws_creds = aws_creds and aws_creds.get("enabled")
+    ssm_agent_available = False
+    
+    if has_aws_creds and instance_ids and not instance_ids[0].startswith("i-mock"):
+        # Check if SSM agent is online for real instances
+        try:
+            from ssm_health_service import SSMHealthService
+            access_key_id = encryption_service.decrypt(aws_creds.get("access_key_id", ""))
+            secret_access_key = encryption_service.decrypt(aws_creds.get("secret_access_key", ""))
+            region = aws_creds.get("region", "us-east-1")
+            
+            # Create temporary SSM health service
+            ssm_health = SSMHealthService()
+            ssm_health.ssm_client = boto3.client(
+                'ssm',
+                region_name=region,
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key
+            )
+            
+            # Check agent health
+            agent_health = await ssm_health.get_agent_health()
+            online_instances = {inst['instance_id'] for inst in agent_health if inst.get('is_online')}
+            
+            # Check if target instance has SSM agent online
+            ssm_agent_available = any(inst_id in online_instances for inst_id in instance_ids)
+            
+        except Exception as e:
+            print(f"⚠️ Error checking SSM agent status: {e}")
+    
+    # If no SSM agent available, notify technician instead of auto-executing
+    if not ssm_agent_available and risk_level == "low":
+        # Create notification for technician
+        notification_id = str(uuid.uuid4())
+        await db.notifications.insert_one({
+            "id": notification_id,
+            "user_id": incident.get("assigned_to"),
+            "type": "warning",
+            "title": "Manual Intervention Required",
+            "message": f"Incident {incident_id}: SSM agent not available on target instance. Please investigate manually.",
+            "incident_id": incident_id,
+            "read": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {
+            "message": "SSM agent not available - manual intervention required",
+            "incident_id": incident_id,
+            "ssm_available": False,
+            "notification_sent": True,
+            "action_required": "Technician notified to investigate manually"
+        }
+    
     # Mock SSM Command ID (in production, this would come from boto3)
     command_id = f"cmd-{str(uuid.uuid4())[:8]}"
-    
-    # Determine instance IDs (use from request or mock from incident)
-    instance_ids = request.instance_ids or [f"i-{str(uuid.uuid4())[:8]}"]
     
     # Create SSM execution record
     ssm_execution = SSMExecution(
