@@ -84,7 +84,7 @@ function App() {
     <Router>
       <div className="App">
         <Toaster position="top-right" />
-        {showTour && isAuthenticated && (
+        {showTour && isAuthenticated && user?.role !== 'client' && (
           <ProductTour onComplete={() => setShowTour(false)} />
         )}
         <Routes>
@@ -93,6 +93,8 @@ function App() {
             element={
               !isAuthenticated ? (
                 <Login onLogin={handleLogin} />
+              ) : user?.role === 'client' ? (
+                <Navigate to="/client-portal" replace />
               ) : (
                 <Navigate to="/dashboard" replace />
               )
@@ -102,7 +104,25 @@ function App() {
             path="/dashboard"
             element={
               isAuthenticated ? (
-                <Dashboard user={user} onLogout={handleLogout} />
+                user?.role === 'client' ? (
+                  <Navigate to="/client-portal" replace />
+                ) : (
+                  <Dashboard user={user} onLogout={handleLogout} />
+                )
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/client-portal"
+            element={
+              isAuthenticated ? (
+                user?.role === 'client' ? (
+                  <ClientPortal user={user} onLogout={handleLogout} />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -148,7 +168,20 @@ function App() {
               )
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route 
+            path="/" 
+            element={
+              isAuthenticated ? (
+                user?.role === 'client' ? (
+                  <Navigate to="/client-portal" replace />
+                ) : (
+                  <Navigate to="/dashboard" replace />
+                )
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } 
+          />
         </Routes>
       </div>
     </Router>
