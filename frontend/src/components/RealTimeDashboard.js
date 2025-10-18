@@ -310,7 +310,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
       {/* Filters */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="text-sm text-slate-400 mb-2 block">Priority Filter</label>
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -339,6 +339,26 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
                   <SelectItem value="new">New</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-400 mb-2 block">Category Filter</label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-700">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="Network">Network</SelectItem>
+                  <SelectItem value="Database">Database</SelectItem>
+                  <SelectItem value="Security">Security</SelectItem>
+                  <SelectItem value="Server">Server</SelectItem>
+                  <SelectItem value="Application">Application</SelectItem>
+                  <SelectItem value="Storage">Storage</SelectItem>
+                  <SelectItem value="Cloud">Cloud</SelectItem>
+                  <SelectItem value="Custom">Custom</SelectItem>
                 </SelectContent>
               </Select>
             </div>
