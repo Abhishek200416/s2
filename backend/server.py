@@ -4341,6 +4341,453 @@ async def get_audit_log_summary(
     }
 
 
+# ============= AWS Credentials Management (Per-Company) =============
+@api_router.post("/companies/{company_id}/aws-credentials")
+async def save_company_aws_credentials(
+    company_id: str,
+    credentials: CompanyAWSCredentials,
+    current_user: User = Depends(get_current_user)
+):
+    """Save encrypted AWS credentials for a company"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # Get company
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Encrypt credentials before storing
+    encrypted_credentials = {
+        "access_key_id": encryption_service.encrypt(credentials.access_key_id),
+        "secret_access_key": encryption_service.encrypt(credentials.secret_access_key),
+        "region": credentials.region,
+        "enabled": True
+    }
+    
+    # Update company with encrypted credentials
+    await db.companies.update_one(
+        {"id": company_id},
+        {
+            "$set": {
+                "aws_credentials": encrypted_credentials,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Log audit
+    await db.audit_logs.insert_one(SystemAuditLog(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        company_id=company_id,
+        action="aws_credentials_updated",
+        resource_type="company",
+        resource_id=company_id,
+        details={"region": credentials.region}
+    ).model_dump())
+    
+    return {
+        "message": "AWS credentials saved successfully",
+        "region": credentials.region,
+        "encrypted": True
+    }
+
+@api_router.get("/companies/{company_id}/aws-credentials")
+async def get_company_aws_credentials(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get AWS credentials status for a company (without exposing secret)"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    
+    if not aws_creds or not aws_creds.get("enabled"):
+        return {
+            "configured": False,
+            "region": None
+        }
+    
+    return {
+        "configured": True,
+        "region": aws_creds.get("region", "us-east-1"),
+        "access_key_id_preview": encryption_service.decrypt(aws_creds.get("access_key_id", ""))[:8] + "..." if aws_creds.get("access_key_id") else None
+    }
+
+@api_router.delete("/companies/{company_id}/aws-credentials")
+async def delete_company_aws_credentials(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete AWS credentials for a company"""
+    if current_user.role not in ["msp_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Only MSP admins can delete credentials")
+    
+    await db.companies.update_one(
+        {"id": company_id},
+        {
+            "$set": {
+                "aws_credentials": {"enabled": False},
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+        }
+    )
+    
+    # Log audit
+    await db.audit_logs.insert_one(SystemAuditLog(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        company_id=company_id,
+        action="aws_credentials_deleted",
+        resource_type="company",
+        resource_id=company_id
+    ).model_dump())
+    
+    return {"message": "AWS credentials deleted successfully"}
+
+@api_router.post("/companies/{company_id}/aws-credentials/test")
+async def test_company_aws_credentials(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Test AWS credentials by attempting to list EC2 instances"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled"):
+        raise HTTPException(status_code=400, detail="AWS credentials not configured")
+    
+    # Decrypt credentials
+    access_key_id = encryption_service.decrypt(aws_creds.get("access_key_id", ""))
+    secret_access_key = encryption_service.decrypt(aws_creds.get("secret_access_key", ""))
+    region = aws_creds.get("region", "us-east-1")
+    
+    try:
+        # Test by creating EC2 client and describing instances
+        ec2 = boto3.client(
+            'ec2',
+            region_name=region,
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key
+        )
+        
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: ec2.describe_instances(MaxResults=5)
+        )
+        
+        instance_count = sum(
+            len(reservation['Instances']) 
+            for reservation in response.get('Reservations', [])
+        )
+        
+        return {
+            "success": True,
+            "message": "AWS credentials are valid",
+            "region": region,
+            "instance_count": instance_count
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"AWS credential test failed: {str(e)}",
+            "error": str(e)
+        }
+
+
+# ============= On-Call Scheduling =============
+@api_router.post("/on-call-schedules", response_model=OnCallSchedule)
+async def create_on_call_schedule(
+    schedule: OnCallScheduleCreate,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new on-call schedule"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # Verify technician exists
+    technician = await db.users.find_one({"id": schedule.technician_id}, {"_id": 0})
+    if not technician:
+        raise HTTPException(status_code=404, detail="Technician not found")
+    
+    # Create schedule
+    new_schedule = OnCallSchedule(
+        **schedule.model_dump(),
+        created_by=current_user.id
+    )
+    
+    await db.on_call_schedules.insert_one(new_schedule.model_dump())
+    
+    # Log audit
+    await db.audit_logs.insert_one(SystemAuditLog(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        action="on_call_schedule_created",
+        resource_type="schedule",
+        resource_id=new_schedule.id,
+        details={"technician_id": schedule.technician_id, "name": schedule.name}
+    ).model_dump())
+    
+    return new_schedule
+
+@api_router.get("/on-call-schedules")
+async def list_on_call_schedules(
+    current_user: User = Depends(get_current_user),
+    company_id: Optional[str] = None,
+    enabled_only: bool = True
+):
+    """List all on-call schedules"""
+    query = {}
+    if enabled_only:
+        query["enabled"] = True
+    if company_id:
+        query["company_id"] = company_id
+    
+    schedules = await db.on_call_schedules.find(query, {"_id": 0}).to_list(1000)
+    
+    # Enrich with technician info
+    for schedule in schedules:
+        technician = await db.users.find_one(
+            {"id": schedule["technician_id"]},
+            {"_id": 0, "password_hash": 0}
+        )
+        if technician:
+            schedule["technician_name"] = technician.get("name")
+            schedule["technician_email"] = technician.get("email")
+    
+    return schedules
+
+@api_router.get("/on-call-schedules/current")
+async def get_current_on_call(
+    company_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get the technician who is currently on-call"""
+    if not oncall_service:
+        raise HTTPException(status_code=503, detail="On-call service not available")
+    
+    on_call_tech = await oncall_service.get_current_on_call_technician(company_id)
+    
+    if not on_call_tech:
+        return {
+            "on_call": False,
+            "message": "No technician is currently on-call"
+        }
+    
+    return {
+        "on_call": True,
+        "technician": on_call_tech
+    }
+
+@api_router.get("/on-call-schedules/{schedule_id}")
+async def get_on_call_schedule(
+    schedule_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific on-call schedule"""
+    schedule = await db.on_call_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    
+    # Enrich with technician info
+    technician = await db.users.find_one(
+        {"id": schedule["technician_id"]},
+        {"_id": 0, "password_hash": 0}
+    )
+    if technician:
+        schedule["technician_name"] = technician.get("name")
+        schedule["technician_email"] = technician.get("email")
+    
+    return schedule
+
+@api_router.put("/on-call-schedules/{schedule_id}", response_model=OnCallSchedule)
+async def update_on_call_schedule(
+    schedule_id: str,
+    update: OnCallScheduleUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update an on-call schedule"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    schedule = await db.on_call_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    
+    # Build update dict (only non-None fields)
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.on_call_schedules.update_one(
+        {"id": schedule_id},
+        {"$set": update_data}
+    )
+    
+    # Get updated schedule
+    updated_schedule = await db.on_call_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    
+    # Log audit
+    await db.audit_logs.insert_one(SystemAuditLog(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        action="on_call_schedule_updated",
+        resource_type="schedule",
+        resource_id=schedule_id,
+        details=update_data
+    ).model_dump())
+    
+    return OnCallSchedule(**updated_schedule)
+
+@api_router.delete("/on-call-schedules/{schedule_id}")
+async def delete_on_call_schedule(
+    schedule_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete an on-call schedule"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    result = await db.on_call_schedules.delete_one({"id": schedule_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    
+    # Log audit
+    await db.audit_logs.insert_one(SystemAuditLog(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        action="on_call_schedule_deleted",
+        resource_type="schedule",
+        resource_id=schedule_id
+    ).model_dump())
+    
+    return {"message": "On-call schedule deleted successfully"}
+
+
+# ============= SSM Agent Bulk Installation =============
+@api_router.get("/companies/{company_id}/instances-without-ssm")
+async def get_instances_without_ssm(
+    company_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get list of EC2 instances without SSM agent"""
+    if current_user.role not in ["msp_admin", "admin", "company_admin"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    # Get company and AWS credentials
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled"):
+        raise HTTPException(status_code=400, detail="AWS credentials not configured for this company")
+    
+    # Decrypt credentials
+    access_key_id = encryption_service.decrypt(aws_creds.get("access_key_id", ""))
+    secret_access_key = encryption_service.decrypt(aws_creds.get("secret_access_key", ""))
+    region = aws_creds.get("region", "us-east-1")
+    
+    # Get instances without SSM
+    instances = await ssm_installer_service.get_instances_without_ssm(
+        access_key_id, secret_access_key, region
+    )
+    
+    return {
+        "company_id": company_id,
+        "company_name": company.get("name"),
+        "region": region,
+        "instances_without_ssm": instances,
+        "count": len(instances)
+    }
+
+@api_router.post("/companies/{company_id}/ssm/bulk-install")
+async def bulk_install_ssm_agents(
+    company_id: str,
+    request: SSMInstallationRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Install SSM agents on multiple instances"""
+    if current_user.role not in ["msp_admin", "admin"]:
+        raise HTTPException(status_code=403, detail="Only MSP admins can install SSM agents")
+    
+    # Get company and AWS credentials
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled"):
+        raise HTTPException(status_code=400, detail="AWS credentials not configured")
+    
+    # Decrypt credentials
+    access_key_id = encryption_service.decrypt(aws_creds.get("access_key_id", ""))
+    secret_access_key = encryption_service.decrypt(aws_creds.get("secret_access_key", ""))
+    region = aws_creds.get("region", "us-east-1")
+    
+    # Install SSM agents
+    result = await ssm_installer_service.bulk_install_ssm_agent(
+        access_key_id, secret_access_key, region, request.instance_ids
+    )
+    
+    # Log audit
+    await db.audit_logs.insert_one(SystemAuditLog(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        user_role=current_user.role,
+        company_id=company_id,
+        action="ssm_bulk_install",
+        resource_type="company",
+        resource_id=company_id,
+        details={"instance_count": len(request.instance_ids), "command_id": result.get("command_id")}
+    ).model_dump())
+    
+    return result
+
+@api_router.get("/companies/{company_id}/ssm/installation-status/{command_id}")
+async def get_ssm_installation_status(
+    company_id: str,
+    command_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get status of SSM agent installation"""
+    # Get company and AWS credentials
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    aws_creds = company.get("aws_credentials", {})
+    if not aws_creds or not aws_creds.get("enabled"):
+        raise HTTPException(status_code=400, detail="AWS credentials not configured")
+    
+    # Decrypt credentials
+    access_key_id = encryption_service.decrypt(aws_creds.get("access_key_id", ""))
+    secret_access_key = encryption_service.decrypt(aws_creds.get("secret_access_key", ""))
+    region = aws_creds.get("region", "us-east-1")
+    
+    # Get installation status
+    status = await ssm_installer_service.get_installation_status(
+        access_key_id, secret_access_key, region, command_id
+    )
+    
+    return status
+
+
 # ============= WebSocket Endpoint for Real-Time Updates =============
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
