@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://backend-verified.preview.emergentagent.com/api"
+BACKEND_URL = "https://babel-fix-5.preview.emergentagent.com/api"
 
 class SLATester:
     def __init__(self):
