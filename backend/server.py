@@ -5304,11 +5304,69 @@ async def generate_demo_data(request: DemoDataRequest):
         except Exception as e:
             logger.error(f"Auto-correlation error: {e}")
     
+    # Generate sample runbooks for common issues
+    runbook_templates = [
+        {
+            "name": "High CPU Usage Remediation",
+            "description": "Restart services and investigate high CPU processes",
+            "signature": "high_cpu_usage",
+            "risk_level": "medium",
+            "actions": ["Check top CPU processes", "Restart high-usage services", "Verify CPU usage returned to normal"],
+            "auto_approve": False
+        },
+        {
+            "name": "Disk Space Low Recovery",
+            "description": "Clean up logs and temporary files to free disk space",
+            "signature": "disk_space_low",
+            "risk_level": "low",
+            "actions": ["Clean /tmp directory", "Rotate logs", "Check disk usage"],
+            "auto_approve": True
+        },
+        {
+            "name": "Database Connection Recovery",
+            "description": "Restart database connection pool",
+            "signature": "database_connection_timeout",
+            "risk_level": "high",
+            "actions": ["Check database status", "Restart connection pool", "Verify connectivity"],
+            "auto_approve": False
+        },
+        {
+            "name": "Network Latency Investigation",
+            "description": "Check network connectivity and routing",
+            "signature": "network_latency_high",
+            "risk_level": "medium",
+            "actions": ["Run network diagnostics", "Check routing tables", "Verify latency improved"],
+            "auto_approve": False
+        },
+        {
+            "name": "Backup Failure Recovery",
+            "description": "Retry failed backup job",
+            "signature": "backup_failed",
+            "risk_level": "medium",
+            "actions": ["Check backup logs", "Verify disk space", "Retry backup job"],
+            "auto_approve": False
+        }
+    ]
+    
+    # Create runbooks (if they don't exist)
+    for rb_template in runbook_templates:
+        existing = await db.runbooks.find_one({
+            "company_id": request.company_id,
+            "signature": rb_template["signature"]
+        })
+        if not existing:
+            runbook = Runbook(
+                company_id=request.company_id,
+                **rb_template
+            )
+            await db.runbooks.insert_one(runbook.model_dump())
+    
     return {
-        "message": f"Generated {created_count} demo alerts",
+        "message": f"Generated {created_count} demo alerts and {len(runbook_templates)} runbooks",
         "count": created_count,
         "company_id": request.company_id,
-        "alerts_sample": created_alerts
+        "alerts_sample": created_alerts,
+        "runbooks_created": len(runbook_templates)
     }
 
 @api_router.get("/demo/script")
