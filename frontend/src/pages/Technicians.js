@@ -60,7 +60,11 @@ const Technicians = () => {
     }
 
     try {
-      await api.post('/users', formData);
+      const data = {
+        ...formData,
+        category: formData.category === 'none' ? null : formData.category
+      };
+      await api.post('/users', data);
       toast.success('Technician created successfully');
       setShowCreateDialog(false);
       resetForm();
