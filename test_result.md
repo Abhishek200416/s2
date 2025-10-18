@@ -1219,13 +1219,101 @@ backend:
           **MSP Asset Types system fully functional and production-ready!**
 
 frontend:
+  - task: "Fix Technician Page Category Filter"
+    implemented: true
+    working: true
+    file: "pages/Technicians.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Fixed category filter to properly handle technicians without categories
+          - Added logic to filter technicians with no category when "No Category" is selected
+          - Added "No Category" option to filter dropdown
+          - Filter now works correctly for all categories and edge cases
+
+  - task: "Remove External Testing Tab from Demo Mode"
+    implemented: true
+    working: true
+    file: "components/DemoModeModal.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Removed External Testing tab from Demo Mode Modal
+          - Changed tab layout from 2 columns to 1 column (only Internal Testing)
+          - Removed all external script generation functionality
+          - Added informative note about webhook integration for production use
+          - Simplified demo mode to only generate internal test data
+
+  - task: "Fix Alert Correlation Noise Calculation"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Fixed alert correlation noise reduction calculation
+          - Now correctly tracks active alerts before and after correlation
+          - Counts acknowledged alerts (those correlated into incidents)
+          - Calculates noise_reduction_pct = (alerts_correlated / active_before) * 100
+          - Returns accurate statistics showing real noise reduction
+          - Frontend already displays percentage correctly
+
+  - task: "Implement Auto-Decide Logic for Incidents"
+    implemented: true
+    working: true
+    file: "server.py, IncidentList.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Implemented intelligent auto-decide logic for incidents:
+          
+          Backend Changes (server.py):
+          1. If runbook exists and is low-risk with auto-approve:
+             - Auto-execute runbook immediately
+             - Set status to "resolved"
+             - Mark as auto_executed
+          
+          2. If no runbook or high-risk runbook:
+             - Auto-assign to technician based on recommended category
+             - Search for technicians in the incident's category
+             - If no technicians in that category, assign to Custom/no-category technicians
+             - Track assignment with assigned_to, assigned_at, assigned_technician_name
+          
+          3. WebSocket broadcast for real-time updates
+          
+          Frontend Changes (IncidentList.js):
+          - Clicking "Decide" now auto-decides without opening dialog first
+          - Shows immediate toast notification:
+             * "Incident auto-resolved using runbook!" (if auto-executed)
+             * "Incident assigned to [name]" (if auto-assigned)
+             * "Decision generated successfully" (fallback)
+          - Reloads incidents to show updated status
+          - Then opens decision dialog for review
+          - No system lag - non-blocking operation
+
   - task: "Add Demo Mode Modal component"
     implemented: true
     working: true
     file: "components/DemoModeModal.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
