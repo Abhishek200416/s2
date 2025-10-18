@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Server, Download, Loader, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import API from '../utils/api';
+import { api as API } from '../App';
 
 const BulkSSMInstaller = ({ companyId }) => {
   const [instances, setInstances] = useState([]);
