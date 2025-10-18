@@ -88,6 +88,9 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
     }
 
     setGenerating(true);
+    setProgress({ current: 0, total: parseInt(dataCount), percentage: 0 });
+    setStatus('Starting generation...');
+    
     try {
       const response = await api.post('/demo/generate-data', {
         count: parseInt(dataCount),
@@ -95,17 +98,25 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
       });
       
       toast.success(`Generated ${response.data.count} test alerts!`);
+      setStatus('Complete!');
       
-      // Select demo company and close modal
-      if (onDemoCompanySelected) {
-        onDemoCompanySelected(demoCompany);
-      }
-      onClose();
+      // Wait a moment before closing to show completion
+      setTimeout(() => {
+        // Select demo company and close modal
+        if (onDemoCompanySelected) {
+          onDemoCompanySelected(demoCompany);
+        }
+        onClose();
+        setGenerating(false);
+        setProgress({ current: 0, total: 0, percentage: 0 });
+        setStatus('');
+      }, 1500);
     } catch (error) {
       console.error('Failed to generate data:', error);
       toast.error('Failed to generate test data');
-    } finally {
       setGenerating(false);
+      setProgress({ current: 0, total: 0, percentage: 0 });
+      setStatus('');
     }
   };
 
