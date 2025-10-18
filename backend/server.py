@@ -99,6 +99,7 @@ class UserCreate(BaseModel):
     name: str
     role: str = "technician"
     company_ids: List[str] = []
+    category: Optional[str] = None  # For technicians: Network, Database, Security, Server, Application, Storage, Cloud, Custom
 
 class UserLogin(BaseModel):
     email: str
