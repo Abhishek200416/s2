@@ -2280,6 +2280,23 @@ agent_communication:
 agent_communication:
   - agent: "main"
     message: |
+      🚀 STARTING NEW IMPLEMENTATION: MSP-FOCUSED IMPROVEMENTS
+      
+      User clarified the system purpose:
+      - This is a TOOL FOR ONE MSP to manage MULTIPLE client companies
+      - Clients DON'T log in - only MSP staff (admin, technicians)
+      - Companies in system = MSP's clients (Acme Corp, TechStart, etc.)
+      
+      IMPLEMENTATION PHASES:
+      1. ✅ Remove client portal and client role (cleanup)
+      2. 🔄 Add per-client AWS credentials management (CRITICAL)
+      3. 🔄 Build MSP-wide on-call scheduling system
+      4. 🔄 Add automated SSM agent bulk installer
+      5. 🔄 Enhance smart runbook auto-execution with SSM checks
+      
+      Starting implementation now...
+  - agent: "main"
+    message: |
       🎯 CUSTOM RUNBOOK MANAGEMENT & IMPROVED MSP INTEGRATION COMPLETE!
       
       ✅ **Phase 1: Fixed Runbook Navigation (User Request):**
