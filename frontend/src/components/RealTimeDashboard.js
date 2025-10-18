@@ -457,6 +457,11 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
                         <Badge className={getStatusColor(incident.status)}>
                           {incident.status}
                         </Badge>
+                        {incident.category && (
+                          <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
+                            {incident.category}
+                          </Badge>
+                        )}
                         {incident.priority_score && (
                           <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
                             Priority: {incident.priority_score.toFixed(1)}
