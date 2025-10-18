@@ -277,6 +277,16 @@ const Dashboard = ({ user, onLogout }) => {
               </Button>
 
               <Button
+                onClick={() => navigate('/on-call')}
+                variant="outline"
+                size="sm"
+                className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                On-Call
+              </Button>
+
+              <Button
                 onClick={() => navigate('/technicians')}
                 variant="outline"
                 size="sm"
