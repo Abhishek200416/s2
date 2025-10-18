@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../App';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Progress } from '@/components/ui/progress';
 import { 
-  X, Code, Play, Zap, AlertCircle, Check, Copy, Download
+  X, Code, Play, Zap, AlertCircle, Check, Copy, Download, Loader
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,6 +16,9 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
   const [testScript, setTestScript] = useState(null);
   const [dataCount, setDataCount] = useState('100');
   const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
+  const [status, setStatus] = useState('');
+  const wsRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
