@@ -1292,6 +1292,25 @@ async def get_technician_categories():
         "description": "MSP standard technician specialization categories"
     }
 
+@api_router.get("/asset-types")
+async def get_asset_types():
+    """Get MSP standard asset types"""
+    return {
+        "asset_types": [
+            "Server",
+            "Network Device",
+            "Database",
+            "Application",
+            "Storage",
+            "Cloud Resource",
+            "Virtual Machine",
+            "Container",
+            "Load Balancer",
+            "Firewall"
+        ],
+        "description": "MSP standard asset types for inventory management"
+    }
+
 class UserCreateRequest(BaseModel):
     name: str
     email: str
