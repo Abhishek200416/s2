@@ -22,8 +22,16 @@ const AssetInventory = ({ companyId }) => {
   const loadAssets = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/companies/${companyId}/assets`);
-      setAssets(response.data);
+      // Load company data which includes the assets array
+      const response = await api.get(`/companies/${companyId}`);
+      const companyData = response.data;
+      
+      // Set assets from company data
+      setAssets({
+        company_name: companyData.name,
+        assets: companyData.assets || [],
+        total_assets: (companyData.assets || []).length
+      });
     } catch (error) {
       console.error('Failed to load assets:', error);
       toast.error('Failed to load asset inventory');
