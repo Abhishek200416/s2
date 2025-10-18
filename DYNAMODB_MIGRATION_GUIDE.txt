@@ -1,0 +1,643 @@
+================================================================================
+    AWS DYNAMODB SETUP & MIGRATION GUIDE FOR ALERT WHISPERER
+================================================================================
+
+TABLE OF CONTENTS:
+1. What is DynamoDB and Why Use It?
+2. AWS DynamoDB Setup (Step-by-Step)
+3. DynamoDB Table Design for Alert Whisperer
+4. Backend Code Changes Required
+5. Environment Variables Configuration
+6. Testing the Migration
+7. Cost Optimization Tips
+
+================================================================================
+SECTION 1: WHAT IS DYNAMODB AND WHY USE IT?
+================================================================================
+
+DynamoDB is AWS's fully managed NoSQL database service with the following benefits:
+
+✅ ADVANTAGES:
+- Serverless: No server management required
+- Auto-scaling: Handles any workload automatically
+- Low latency: Single-digit millisecond response times
+- High availability: Built-in replication across 3 AZs
+- Pay-per-use: No upfront costs, pay only for what you use
+- Fully managed: AWS handles backups, patching, maintenance
+- Global tables: Multi-region replication support
+- IAM integration: Native AWS security integration
+
+🔄 DIFFERENCES FROM MONGODB:
+- No collections → Tables with Primary Keys
+- No complex queries → Single-table design with GSIs
+- No aggregation pipelines → Application-level aggregation
+- No transactions (by default) → Use DynamoDB Transactions API
+- Schema-less but requires partition key + optional sort key
+
+================================================================================
+SECTION 2: AWS DYNAMODB SETUP (STEP-BY-STEP)
+================================================================================
+
+STEP 1: LOGIN TO AWS CONSOLE
+-----------------------------
+1. Go to https://console.aws.amazon.com/
+2. Login with your AWS account credentials
+3. Select your preferred region (e.g., us-east-1, us-west-2)
+   - IMPORTANT: Remember this region for your backend configuration
+
+STEP 2: NAVIGATE TO DYNAMODB SERVICE
+-------------------------------------
+1. In the AWS Console search bar, type "DynamoDB"
+2. Click on "DynamoDB" service
+3. You'll see the DynamoDB dashboard
+
+STEP 3: CREATE TABLES FOR ALERT WHISPERER
+------------------------------------------
+
+We need to create 11 tables for Alert Whisperer:
+
+TABLE 1: Users
+--------------
+1. Click "Create table" button
+2. Table name: AlertWhisperer_Users
+3. Partition key: id (String)
+4. Table settings: 
+   - Choose "On-demand" capacity mode (auto-scaling)
+   - OR "Provisioned" with 5 RCU / 5 WCU (cheaper for low traffic)
+5. Encryption: AWS owned key (default, free)
+6. Click "Create table"
+7. Wait 30-60 seconds for table to become "Active"
+
+CREATE GLOBAL SECONDARY INDEX (GSI) FOR USERS:
+1. Click on "AlertWhisperer_Users" table
+2. Go to "Indexes" tab
+3. Click "Create index"
+4. Partition key: email (String)
+5. Index name: email-index
+6. Click "Create index"
+
+TABLE 2: Companies
+-------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_Companies
+3. Partition key: id (String)
+4. Capacity mode: On-demand (recommended)
+5. Click "Create table"
+
+CREATE GSI FOR COMPANIES:
+1. Click on "AlertWhisperer_Companies" table
+2. Go to "Indexes" tab
+3. Click "Create index"
+4. Partition key: api_key (String)
+5. Index name: api_key-index
+6. Click "Create index"
+
+TABLE 3: Alerts
+---------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_Alerts
+3. Partition key: company_id (String)
+4. Sort key: id (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+CREATE GSI FOR ALERTS BY TIMESTAMP:
+1. Click on "AlertWhisperer_Alerts" table
+2. Go to "Indexes" tab
+3. Click "Create index"
+4. Partition key: company_id (String)
+5. Sort key: timestamp (String)
+6. Index name: company_id-timestamp-index
+7. Click "Create index"
+
+TABLE 4: Incidents
+------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_Incidents
+3. Partition key: company_id (String)
+4. Sort key: id (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+CREATE GSI FOR INCIDENTS BY STATUS:
+1. Click on "AlertWhisperer_Incidents" table
+2. Go to "Indexes" tab
+3. Click "Create index"
+4. Partition key: company_id (String)
+5. Sort key: status (String)
+6. Index name: company_id-status-index
+7. Click "Create index"
+
+TABLE 5: Audit Logs
+-------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_AuditLogs
+3. Partition key: company_id (String)
+4. Sort key: timestamp (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+TABLE 6: Notifications
+----------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_Notifications
+3. Partition key: user_id (String)
+4. Sort key: id (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+TABLE 7: Chat Messages
+----------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_ChatMessages
+3. Partition key: company_id (String)
+4. Sort key: timestamp (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+TABLE 8: On-Call Schedules
+--------------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_OnCallSchedules
+3. Partition key: company_id (String)
+4. Sort key: id (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+TABLE 9: Runbooks
+-----------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_Runbooks
+3. Partition key: company_id (String)
+4. Sort key: id (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+TABLE 10: Approval Requests
+---------------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_ApprovalRequests
+3. Partition key: company_id (String)
+4. Sort key: id (String)
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+TABLE 11: Company Configurations
+--------------------------------
+1. Click "Create table"
+2. Table name: AlertWhisperer_CompanyConfigs
+3. Partition key: company_id (String)
+4. Sort key: config_type (String)
+   - config_type values: "webhook_security", "correlation", "rate_limit", "sla"
+5. Capacity mode: On-demand
+6. Click "Create table"
+
+STEP 4: CREATE IAM USER WITH DYNAMODB ACCESS
+---------------------------------------------
+1. Go to IAM service in AWS Console
+2. Click "Users" → "Create user"
+3. User name: alertwhisperer-dynamodb-user
+4. Click "Next"
+5. Permissions: "Attach policies directly"
+6. Search and select: "AmazonDynamoDBFullAccess"
+7. Click "Next" → "Create user"
+
+STEP 5: CREATE ACCESS KEYS
+---------------------------
+1. Click on the created user "alertwhisperer-dynamodb-user"
+2. Go to "Security credentials" tab
+3. Scroll to "Access keys" section
+4. Click "Create access key"
+5. Use case: "Application running outside AWS"
+6. Click "Next" → "Create access key"
+7. IMPORTANT: Copy and save both:
+   - Access key ID (e.g., AKIAIOSFODNN7EXAMPLE)
+   - Secret access key (e.g., wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY)
+   
+   ⚠️ WARNING: The secret key is shown only once! Save it securely.
+
+8. Click "Done"
+
+STEP 6: VERIFY TABLE CREATION
+------------------------------
+1. Go back to DynamoDB service
+2. Click "Tables" in left menu
+3. You should see all 11 tables with status "Active":
+   - AlertWhisperer_Users
+   - AlertWhisperer_Companies
+   - AlertWhisperer_Alerts
+   - AlertWhisperer_Incidents
+   - AlertWhisperer_AuditLogs
+   - AlertWhisperer_Notifications
+   - AlertWhisperer_ChatMessages
+   - AlertWhisperer_OnCallSchedules
+   - AlertWhisperer_Runbooks
+   - AlertWhisperer_ApprovalRequests
+   - AlertWhisperer_CompanyConfigs
+
+================================================================================
+SECTION 3: DYNAMODB TABLE DESIGN FOR ALERT WHISPERER
+================================================================================
+
+DESIGN PRINCIPLES:
+- Single-table design where possible
+- Use composite keys (partition + sort key)
+- GSIs for alternate access patterns
+- Denormalize data for performance
+- Store JSON as strings for complex objects
+
+TABLE STRUCTURE:
+
+1. USERS TABLE
+   Primary Key: id (String)
+   GSI: email-index (email)
+   Attributes: id, email, name, hashed_password, role, permissions, company_id, created_at
+
+2. COMPANIES TABLE
+   Primary Key: id (String)
+   GSI: api_key-index (api_key)
+   Attributes: id, name, api_key, created_at, maintenance_window, contact_email
+
+3. ALERTS TABLE
+   Primary Key: company_id (String) + id (String)
+   GSI: company_id-timestamp-index (company_id + timestamp)
+   Attributes: id, company_id, asset_name, signature, severity, message, tool_source, 
+               timestamp, status, priority_score, correlated_incident_id, 
+               delivery_id, delivery_attempts, metadata (JSON string)
+
+4. INCIDENTS TABLE
+   Primary Key: company_id (String) + id (String)
+   GSI: company_id-status-index (company_id + status)
+   Attributes: id, company_id, title, description, status, priority_score, 
+               severity, alert_ids (JSON string array), tool_sources (JSON string array),
+               assigned_to, assigned_at, resolved_at, resolved_by, resolution_notes,
+               escalated, escalation_level, sla (JSON string), metadata (JSON string),
+               created_at, updated_at
+
+5. AUDIT_LOGS TABLE
+   Primary Key: company_id (String) + timestamp (String)
+   Attributes: id, company_id, action, user_id, user_name, timestamp, 
+               details (JSON string), ip_address
+
+6. NOTIFICATIONS TABLE
+   Primary Key: user_id (String) + id (String)
+   Attributes: id, user_id, company_id, type, title, message, 
+               related_id, is_read, created_at
+
+7. CHAT_MESSAGES TABLE
+   Primary Key: company_id (String) + timestamp (String)
+   Attributes: id, company_id, user_id, user_name, message, 
+               timestamp, is_read
+
+8. ONCALL_SCHEDULES TABLE
+   Primary Key: company_id (String) + id (String)
+   Attributes: id, company_id, user_id, user_name, 
+               day_of_week, start_time, end_time, created_at
+
+9. RUNBOOKS TABLE
+   Primary Key: company_id (String) + id (String)
+   Attributes: id, company_id, name, description, risk_level,
+               ssm_document_name, parameters (JSON string), 
+               target_tag_key, target_tag_value, created_at
+
+10. APPROVAL_REQUESTS TABLE
+    Primary Key: company_id (String) + id (String)
+    Attributes: id, company_id, runbook_id, runbook_name, 
+                requested_by, requested_at, expires_at, status,
+                approved_by, approved_at, rejection_reason, 
+                risk_level, incident_id
+
+11. COMPANY_CONFIGS TABLE
+    Primary Key: company_id (String) + config_type (String)
+    Attributes: company_id, config_type, config_data (JSON string), updated_at
+    
+    config_type values:
+    - "webhook_security": HMAC settings
+    - "correlation": Correlation settings
+    - "rate_limit": Rate limiting config
+    - "sla": SLA configuration
+    - "aws_credentials": AWS credentials
+
+================================================================================
+SECTION 4: BACKEND CODE CHANGES REQUIRED
+================================================================================
+
+FILES TO UPDATE:
+1. backend/.env - Add DynamoDB credentials
+2. backend/requirements.txt - Add boto3 library
+3. backend/dynamodb_client.py - NEW FILE (DynamoDB connection)
+4. backend/server.py - Update all database operations
+5. backend/sla_service.py - Update database calls
+6. backend/escalation_service.py - Update database calls
+7. backend/ai_service.py - No changes needed (no DB calls)
+
+KEY CHANGES:
+- Replace pymongo with boto3 (AWS SDK)
+- Replace MongoDB queries with DynamoDB queries
+- Update all CRUD operations
+- Handle different query patterns
+- Update seed data script
+
+PYTHON LIBRARIES NEEDED:
+- boto3 (AWS SDK for Python)
+- botocore (comes with boto3)
+
+================================================================================
+SECTION 5: ENVIRONMENT VARIABLES CONFIGURATION
+================================================================================
+
+UPDATE backend/.env FILE:
+
+# Replace MongoDB URL with DynamoDB settings
+# MONGO_URL=mongodb://localhost:27017/alertwhisperer  # DELETE THIS LINE
+
+# Add DynamoDB Configuration
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+DYNAMODB_TABLE_PREFIX=AlertWhisperer_
+
+# Keep existing settings
+JWT_SECRET=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+
+# AWS SES for emails (if using)
+AWS_SES_REGION=us-east-1
+AWS_SES_FROM_EMAIL=noreply@alertwhisperer.com
+
+# AI Services
+AWS_BEDROCK_REGION=us-east-2
+GEMINI_API_KEY=your-gemini-key
+
+IMPORTANT NOTES:
+- Replace AWS_ACCESS_KEY_ID with your actual access key from Step 5
+- Replace AWS_SECRET_ACCESS_KEY with your actual secret key from Step 5
+- Use the same AWS_REGION where you created the DynamoDB tables
+- DYNAMODB_TABLE_PREFIX helps identify your app's tables
+
+================================================================================
+SECTION 6: TESTING THE MIGRATION
+================================================================================
+
+STEP 1: INSTALL DEPENDENCIES
+-----------------------------
+cd /app/backend
+pip install boto3 botocore
+pip freeze > requirements.txt
+
+STEP 2: TEST DYNAMODB CONNECTION
+---------------------------------
+Create a test script: test_dynamodb.py
+
+import boto3
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Initialize DynamoDB
+dynamodb = boto3.resource(
+    'dynamodb',
+    region_name=os.environ.get('AWS_REGION'),
+    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY')
+)
+
+# Test connection
+try:
+    table = dynamodb.Table('AlertWhisperer_Users')
+    response = table.scan(Limit=1)
+    print("✅ DynamoDB connection successful!")
+    print(f"Table: {table.name}")
+    print(f"Item count: {table.item_count}")
+except Exception as e:
+    print(f"❌ DynamoDB connection failed: {e}")
+
+Run: python test_dynamodb.py
+
+STEP 3: SEED INITIAL DATA
+--------------------------
+Run the seed script to populate initial data:
+python seed_dynamodb.py
+
+This will create:
+- Admin user
+- 3 sample companies (Acme Corp, TechStart, Global Systems)
+- Sample assets
+- Sample on-call schedules
+
+STEP 4: START BACKEND SERVER
+-----------------------------
+cd /app/backend
+uvicorn server:app --host 0.0.0.0 --port 8001 --reload
+
+STEP 5: TEST API ENDPOINTS
+---------------------------
+Test login:
+curl -X POST http://localhost:8001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@alertwhisperer.com","password":"admin123"}'
+
+Expected response: JWT token + user data
+
+Test companies:
+curl -X GET http://localhost:8001/api/companies \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+Expected response: List of 3 companies
+
+Test webhook (replace API_KEY):
+curl -X POST "http://localhost:8001/api/webhooks/alerts?api_key=YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "asset_name": "prod-server-01",
+    "signature": "high_cpu_usage",
+    "severity": "critical",
+    "message": "CPU usage at 95%",
+    "tool_source": "Datadog"
+  }'
+
+Expected response: Alert created with alert_id
+
+STEP 6: VERIFY DATA IN DYNAMODB CONSOLE
+----------------------------------------
+1. Go to AWS DynamoDB Console
+2. Click on "AlertWhisperer_Alerts" table
+3. Click "Explore table items"
+4. You should see the alert you just created
+5. Verify all fields are populated correctly
+
+================================================================================
+SECTION 7: COST OPTIMIZATION TIPS
+================================================================================
+
+PRICING OVERVIEW:
+- On-demand mode: $1.25 per million write requests, $0.25 per million read requests
+- Provisioned mode: $0.00065 per WCU per hour, $0.00013 per RCU per hour
+- Storage: $0.25 per GB-month
+- Free tier: 25 GB storage, 25 WCU, 25 RCU (first 12 months)
+
+COST OPTIMIZATION STRATEGIES:
+
+1. USE PROVISIONED CAPACITY FOR PREDICTABLE WORKLOADS
+   - If you know your traffic patterns, use provisioned mode
+   - Set Auto Scaling to handle spikes
+   - Much cheaper than on-demand for steady traffic
+
+2. ENABLE TIME-TO-LIVE (TTL) FOR OLD DATA
+   - Auto-delete old alerts after 90 days
+   - Auto-delete old audit logs after 1 year
+   - No charge for TTL deletions
+   
+   To enable:
+   - Go to table → "Additional settings" → "Time to Live"
+   - Attribute name: ttl (add this field with Unix timestamp)
+
+3. USE BATCH OPERATIONS
+   - BatchGetItem instead of multiple GetItem calls
+   - BatchWriteItem instead of multiple PutItem calls
+   - Reduces API calls = lower costs
+
+4. OPTIMIZE GSIs
+   - Only create GSIs you actually use
+   - Each GSI costs same as base table
+   - Remove unused GSIs to save money
+
+5. MONITOR WITH CLOUDWATCH
+   - Set up billing alerts
+   - Monitor consumed capacity
+   - Identify expensive queries
+
+6. USE DYNAMODB STREAMS SPARINGLY
+   - Only enable if you need real-time change capture
+   - $0.02 per 100,000 stream reads
+
+ESTIMATED MONTHLY COSTS (On-Demand Mode):
+- Low traffic (< 1M requests/month): $5-20/month
+- Medium traffic (1-10M requests/month): $20-100/month
+- High traffic (10M+ requests/month): $100-500/month
+
+FREE TIER (First 12 months):
+- 25 WCU and 25 RCU of provisioned capacity
+- 25 GB of storage
+- 2.5M stream reads from DynamoDB Streams
+- 1 GB of data transfer out
+
+================================================================================
+SECTION 8: MIGRATION CHECKLIST
+================================================================================
+
+PRE-MIGRATION:
+☐ Create AWS account
+☐ Create all 11 DynamoDB tables
+☐ Create IAM user with DynamoDB permissions
+☐ Generate and save Access Keys
+☐ Update backend/.env with AWS credentials
+☐ Install boto3: pip install boto3
+
+MIGRATION:
+☐ Update requirements.txt with boto3
+☐ Create dynamodb_client.py
+☐ Update server.py with DynamoDB queries
+☐ Update sla_service.py with DynamoDB queries
+☐ Update escalation_service.py with DynamoDB queries
+☐ Create seed_dynamodb.py script
+☐ Test DynamoDB connection
+☐ Run seed script
+
+POST-MIGRATION:
+☐ Test all API endpoints
+☐ Test webhook alert ingestion
+☐ Test alert correlation
+☐ Test incident creation
+☐ Test SLA tracking
+☐ Test real-time WebSocket updates
+☐ Verify data in DynamoDB console
+☐ Monitor CloudWatch for errors
+☐ Set up billing alerts
+
+PRODUCTION READINESS:
+☐ Enable Point-in-Time Recovery (backups)
+☐ Set up TTL for old data cleanup
+☐ Configure Auto Scaling (if using provisioned mode)
+☐ Set up CloudWatch alarms for throttling
+☐ Enable AWS CloudTrail for audit logging
+☐ Review IAM permissions (least privilege)
+☐ Test disaster recovery procedures
+
+================================================================================
+SECTION 9: TROUBLESHOOTING COMMON ISSUES
+================================================================================
+
+ISSUE 1: "Unable to locate credentials"
+SOLUTION:
+- Verify AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in .env file
+- Check for typos or extra spaces
+- Ensure .env file is loaded: load_dotenv()
+
+ISSUE 2: "ResourceNotFoundException: Requested resource not found"
+SOLUTION:
+- Verify table names match exactly (case-sensitive)
+- Check AWS_REGION is correct
+- Ensure tables are in "Active" status in AWS Console
+
+ISSUE 3: "ProvisionedThroughputExceededException"
+SOLUTION:
+- Switch to on-demand mode for unpredictable traffic
+- OR increase provisioned capacity (RCU/WCU)
+- OR enable Auto Scaling
+
+ISSUE 4: "ValidationException: One or more parameter values were invalid"
+SOLUTION:
+- Check partition key and sort key are provided
+- Verify data types match table schema
+- Ensure required attributes are not null
+
+ISSUE 5: Slow queries
+SOLUTION:
+- Create GSI for your access pattern
+- Use Query instead of Scan when possible
+- Add filters to reduce returned data
+- Consider caching frequently accessed data
+
+ISSUE 6: High costs
+SOLUTION:
+- Switch to provisioned mode if traffic is predictable
+- Enable TTL to auto-delete old data
+- Remove unused GSIs
+- Use batch operations
+- Set up billing alerts
+
+================================================================================
+SECTION 10: SUPPORT & RESOURCES
+================================================================================
+
+AWS DOCUMENTATION:
+- DynamoDB Developer Guide: https://docs.aws.amazon.com/dynamodb/
+- Boto3 Documentation: https://boto3.amazonaws.com/v1/documentation/api/latest/index.html
+- DynamoDB Best Practices: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html
+
+AWS SUPPORT:
+- AWS Support Center: https://console.aws.amazon.com/support/
+- AWS Forums: https://forums.aws.amazon.com/forum.jspa?forumID=131
+- Stack Overflow: Tag [amazon-dynamodb]
+
+COST CALCULATOR:
+- AWS Pricing Calculator: https://calculator.aws/
+
+MONITORING:
+- CloudWatch Console: https://console.aws.amazon.com/cloudwatch/
+- DynamoDB Metrics: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/metrics-dimensions.html
+
+================================================================================
+END OF GUIDE
+================================================================================
+
+✅ You are now ready to migrate Alert Whisperer to AWS DynamoDB!
+
+Follow the steps carefully, test each component, and monitor your costs.
+
+If you encounter any issues, refer to the Troubleshooting section or AWS documentation.
+
+Good luck with your migration! 🚀
