@@ -212,6 +212,10 @@ class ComprehensiveTester:
             self.log_result("Alert Webhook Setup", False, "No API key available for webhook testing")
             return
         
+        # Disable HMAC for webhook testing
+        response = self.make_request('POST', '/companies/comp-acme/webhook-security/disable')
+        # Don't check response as it might already be disabled
+        
         # POST /api/webhooks/alerts?api_key={valid_key} (send test alert)
         webhook_payload = {
             "asset_name": "srv-app-01",
