@@ -3908,6 +3908,99 @@ async def get_realtime_metrics(company_id: Optional[str] = None):
     }
 
 
+@api_router.get("/metrics/before-after")
+async def get_before_after_metrics(company_id: str):
+    """Get before/after KPI comparison for LiveKPIProof component"""
+    query = {"company_id": company_id}
+    
+    # Get all alerts and incidents for this company
+    all_alerts = await db.alerts.find(query, {"_id": 0}).to_list(10000)
+    incidents = await db.incidents.find(query, {"_id": 0}).to_list(5000)
+    
+    total_alerts = len(all_alerts)
+    total_incidents = len(incidents)
+    
+    # Baseline (before AI correlation - assuming each alert becomes an incident)
+    baseline_incidents_count = total_alerts
+    baseline_noise_reduction_pct = 0
+    baseline_self_healed_pct = 0
+    baseline_mttr_minutes = 60  # Assume 60 min baseline MTTR without automation
+    
+    # Current (with AI correlation and automation)
+    current_incidents_count = total_incidents
+    
+    # Noise Reduction % = (1 - incidents/alerts) * 100
+    current_noise_reduction_pct = round((1 - (total_incidents / max(total_alerts, 1))) * 100, 2) if total_alerts > 0 else 0
+    
+    # Self-Healed Count & Percentage
+    auto_remediated_incidents = [i for i in incidents if i.get("auto_remediated", False)]
+    current_self_healed_count = len(auto_remediated_incidents)
+    current_self_healed_pct = round((current_self_healed_count / max(total_incidents, 1)) * 100, 2) if total_incidents > 0 else 0
+    
+    # MTTR (Mean Time To Resolution)
+    resolved_incidents = [i for i in incidents if i["status"] == "resolved"]
+    
+    def calculate_mttr(incident_list):
+        if not incident_list:
+            return 0
+        total_seconds = 0
+        for inc in incident_list:
+            created = datetime.fromisoformat(inc["created_at"].replace("Z", "+00:00"))
+            updated = datetime.fromisoformat(inc["updated_at"].replace("Z", "+00:00"))
+            duration = (updated - created).total_seconds()
+            total_seconds += duration
+        return round(total_seconds / len(incident_list) / 60, 2)  # Convert to minutes
+    
+    current_mttr_minutes = calculate_mttr(resolved_incidents) if resolved_incidents else baseline_mttr_minutes
+    
+    # Calculate improvements
+    noise_reduction_improvement = current_noise_reduction_pct - baseline_noise_reduction_pct
+    self_healed_improvement = current_self_healed_pct - baseline_self_healed_pct
+    mttr_improvement = baseline_mttr_minutes - current_mttr_minutes  # Positive = better (lower MTTR)
+    
+    # Calculate summary metrics
+    incidents_prevented = total_alerts - total_incidents if total_alerts > total_incidents else 0
+    time_saved_per_incident = f"{abs(mttr_improvement):.0f}m"
+    noise_reduced = f"{current_noise_reduction_pct:.0f}%"
+    
+    return {
+        "baseline": {
+            "incidents_count": baseline_incidents_count,
+            "noise_reduction_pct": baseline_noise_reduction_pct,
+            "self_healed_pct": baseline_self_healed_pct,
+            "mttr_minutes": baseline_mttr_minutes
+        },
+        "current": {
+            "incidents_count": current_incidents_count,
+            "noise_reduction_pct": current_noise_reduction_pct,
+            "self_healed_pct": current_self_healed_pct,
+            "self_healed_count": current_self_healed_count,
+            "mttr_minutes": current_mttr_minutes
+        },
+        "improvements": {
+            "noise_reduction": {
+                "improvement": noise_reduction_improvement,
+                "status": "excellent" if noise_reduction_improvement >= 40 else "good" if noise_reduction_improvement >= 20 else "improving"
+            },
+            "self_healed": {
+                "improvement": self_healed_improvement,
+                "status": "excellent" if self_healed_improvement >= 20 else "good" if self_healed_improvement >= 10 else "improving"
+            },
+            "mttr": {
+                "improvement": mttr_improvement,
+                "status": "excellent" if mttr_improvement >= 30 else "good" if mttr_improvement >= 15 else "improving"
+            }
+        },
+        "summary": {
+            "incidents_prevented": incidents_prevented,
+            "auto_resolved_count": current_self_healed_count,
+            "time_saved_per_incident": time_saved_per_incident,
+            "noise_reduced": noise_reduced
+        }
+    }
+
+
+
 @api_router.get("/companies/{company_id}/kpis")
 async def get_company_kpis(company_id: str):
     """Get detailed KPI metrics for a specific company"""
