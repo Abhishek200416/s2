@@ -915,6 +915,46 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 
 # ============= Decision Engine =============
+def determine_category_from_signature(signature: str, asset_name: str = "") -> str:
+    """
+    Auto-determine category based on signature and asset name keywords
+    Returns: Network, Database, Security, Server, Application, Storage, Cloud, or Custom
+    """
+    signature_lower = signature.lower()
+    asset_lower = asset_name.lower()
+    combined = f"{signature_lower} {asset_lower}"
+    
+    # Network indicators
+    if any(word in combined for word in ['network', 'bandwidth', 'latency', 'connection', 'dns', 'firewall', 'switch', 'router', 'vpn', 'port']):
+        return "Network"
+    
+    # Database indicators
+    if any(word in combined for word in ['database', 'sql', 'mysql', 'postgres', 'mongodb', 'db', 'query', 'table', 'replica']):
+        return "Database"
+    
+    # Security indicators
+    if any(word in combined for word in ['security', 'unauthorized', 'breach', 'intrusion', 'vulnerability', 'malware', 'virus', 'attack', 'authentication', 'ssl', 'certificate']):
+        return "Security"
+    
+    # Server indicators  
+    if any(word in combined for word in ['server', 'cpu', 'memory', 'disk', 'ram', 'load', 'process', 'kernel', 'uptime']):
+        return "Server"
+    
+    # Application indicators
+    if any(word in combined for word in ['application', 'app', 'service', 'api', 'http', 'web', 'frontend', 'backend', 'microservice']):
+        return "Application"
+    
+    # Storage indicators
+    if any(word in combined for word in ['storage', 'volume', 'filesystem', 'iops', 's3', 'ebs', 'backup', 'snapshot']):
+        return "Storage"
+    
+    # Cloud indicators
+    if any(word in combined for word in ['cloud', 'aws', 'azure', 'gcp', 'ec2', 'lambda', 'kubernetes', 'container', 'docker']):
+        return "Cloud"
+    
+    # Default
+    return "Server"
+
 def calculate_priority_score(incident: Incident, company: Company, alerts: List[Dict[str, Any]]) -> float:
     """
     Calculate priority score using the formula:
