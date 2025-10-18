@@ -139,11 +139,24 @@ const RunbookLibrary = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">📚 Runbook Library</h1>
-        <p className="text-slate-400">
-          Pre-built automation scripts for common MSP tasks. {library.total_count} runbooks available.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <Button
+              onClick={() => navigate('/dashboard')}
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">📚 Runbook Library</h1>
+          <p className="text-slate-400">
+            Pre-built automation scripts for common MSP tasks. {library.total_count} runbooks available.
+          </p>
+        </div>
       </div>
 
       {/* Search and Filter */}
