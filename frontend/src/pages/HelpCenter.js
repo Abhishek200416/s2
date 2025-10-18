@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Book, HelpCircle, FileText, Video, ArrowRight, CheckCircle,
   Server, Cloud, Terminal, Users, Settings, Activity, AlertCircle,
-  Play, ExternalLink, Download, Building2
+  Play, ExternalLink, Download, Building2, ArrowLeft
 } from 'lucide-react';
 import MSPIntegrationGuide from '../components/MSPIntegrationGuide';
 
 const HelpCenter = () => {
+  const navigate = useNavigate();
   const [expandedFaq, setExpandedFaq] = useState(null);
 
   const faqs = [
