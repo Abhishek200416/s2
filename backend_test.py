@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """
-Alert Whisperer Backend API Test Suite - Enhanced SSM Connection Validation Testing
-Tests enhanced SSM connection validation system with comprehensive validation steps:
-- SSM Setup Guide Enhancement (prerequisites, security_notes, troubleshooting_commands)
-- SSM Connection with Enhanced Validation (validation_steps, troubleshooting arrays)
-- All existing real-time features and production-grade AWS MSP capabilities
+Alert Whisperer MSP Platform Backend Test Suite
+Tests all core MSP features as requested in the review:
+1. Authentication & User Management
+2. Company Management
+3. Alert Webhook System
+4. Alert Correlation
+5. Real-Time Metrics
+6. AWS Credentials Management
+7. SLA Configuration
+8. Webhook Security (HMAC)
+9. Correlation Configuration
 """
 
 import requests
@@ -15,7 +21,16 @@ from datetime import datetime
 import time
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://ops-runbook.preview.emergentagent.com/api"
+try:
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                BACKEND_URL = line.split('=', 1)[1].strip()
+                break
+    else:
+        BACKEND_URL = "http://localhost:8001/api"
+except:
+    BACKEND_URL = "http://localhost:8001/api"
 
 class AlertWhispererTester:
     def __init__(self):
