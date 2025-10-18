@@ -4307,6 +4307,192 @@ app.add_middleware(
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
+
+
+# ============= CLIENT PORTAL & TRACKING ENDPOINTS =============
+
+@api_router.get("/companies/{company_id}/activities")
+async def get_client_activities(
+    company_id: str,
+    activity_type: Optional[str] = None,
+    user_id: Optional[str] = None,
+    days: int = 30,
+    limit: int = 100,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get client activities for tracking and reporting"""
+    user = await get_current_user(credentials)
+    
+    # Check permission: User must be MSP admin or belong to this company
+    if user["role"] not in ["msp_admin"] and company_id not in user.get("company_ids", []):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not tracking_service:
+        return []
+    
+    activities = await tracking_service.get_activities(
+        company_id=company_id,
+        activity_type=activity_type,
+        user_id=user_id,
+        days=days,
+        limit=limit
+    )
+    
+    return activities
+
+
+@api_router.get("/companies/{company_id}/sessions")
+async def get_client_sessions(
+    company_id: str,
+    active_only: bool = False,
+    days: int = 30,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get client login sessions"""
+    user = await get_current_user(credentials)
+    
+    # Check permission
+    if user["role"] not in ["msp_admin"] and company_id not in user.get("company_ids", []):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not tracking_service:
+        return []
+    
+    sessions = await tracking_service.get_sessions(
+        company_id=company_id,
+        active_only=active_only,
+        days=days
+    )
+    
+    return sessions
+
+
+@api_router.get("/companies/{company_id}/client-metrics")
+async def get_client_metrics(
+    company_id: str,
+    days: int = 30,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get client activity metrics for reporting"""
+    user = await get_current_user(credentials)
+    
+    # Check permission
+    if user["role"] not in ["msp_admin"] and company_id not in user.get("company_ids", []):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    if not tracking_service:
+        return {
+            "company_id": company_id,
+            "total_logins": 0,
+            "unique_users": 0,
+            "active_sessions": 0,
+            "incidents_viewed": 0,
+            "incidents_updated": 0,
+            "alerts_viewed": 0,
+            "runbooks_approved": 0,
+            "runbooks_rejected": 0,
+            "reports_downloaded": 0,
+            "average_session_duration_minutes": 0,
+            "last_activity": None,
+            "period_start": datetime.now(timezone.utc).isoformat(),
+            "period_end": datetime.now(timezone.utc).isoformat()
+        }
+    
+    metrics = await tracking_service.get_metrics(company_id, days)
+    return metrics.model_dump()
+
+
+@api_router.post("/client-activities/log")
+async def log_client_activity(
+    activity_data: Dict[str, Any],
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Log a client activity (called from frontend)"""
+    user = await get_current_user(credentials)
+    
+    # Get company_id from user
+    company_id = user.get("company_ids", [None])[0]
+    if not company_id:
+        raise HTTPException(status_code=400, detail="User not associated with a company")
+    
+    if not tracking_service:
+        return {"message": "Activity logging not available"}
+    
+    # Get IP and User-Agent
+    ip_address = request.client.host if hasattr(request, 'client') else None
+    user_agent = request.headers.get("user-agent", None)
+    
+    activity = await tracking_service.log_activity(
+        company_id=company_id,
+        activity_type=activity_data.get("activity_type"),
+        description=activity_data.get("description"),
+        user_id=user["id"],
+        user_email=user["email"],
+        user_name=user.get("name"),
+        resource_type=activity_data.get("resource_type"),
+        resource_id=activity_data.get("resource_id"),
+        metadata=activity_data.get("metadata", {}),
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
+    
+    return {"message": "Activity logged", "activity_id": activity.id}
+
+
+@api_router.get("/client-portal/dashboard")
+async def get_client_dashboard_data(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get all data needed for client portal dashboard"""
+    user = await get_current_user(credentials)
+    
+    # Client should have exactly one company
+    company_id = user.get("company_ids", [None])[0]
+    if not company_id:
+        raise HTTPException(status_code=400, detail="User not associated with a company")
+    
+    # Fetch all relevant data
+    company = await db.companies.find_one({"id": company_id})
+    incidents = await db.incidents.find({"company_id": company_id}).to_list(1000)
+    alerts = await db.alerts.find({"company_id": company_id}).to_list(1000)
+    
+    # SLA Report
+    try:
+        if sla_service_instance:
+            sla_report = await sla_service_instance.get_sla_compliance_report(company_id, days=30)
+        else:
+            sla_report = None
+    except:
+        sla_report = None
+    
+    # Assets
+    try:
+        from ssm_health_service import ssm_health_service
+        if ssm_health_service:
+            assets = await ssm_health_service.get_asset_inventory(company_id)
+        else:
+            assets = []
+    except:
+        assets = []
+    
+    # Activities
+    if tracking_service:
+        activities = await tracking_service.get_activities(company_id, days=30, limit=100)
+    else:
+        activities = []
+    
+    return {
+        "company": company,
+        "incidents": incidents,
+        "alerts": alerts,
+        "sla_report": sla_report,
+        "assets": assets,
+        "activities": activities
+    }
+
+
+
 )
 
 # Configure logging
