@@ -1056,7 +1056,7 @@ async def register(user_data: UserCreate):
     return user
 
 @api_router.post("/auth/login")
-async def login(credentials: UserLogin):
+async def login(credentials: UserLogin, request: Request):
     user_doc = await db.users.find_one({"email": credentials.email})
     if not user_doc:
         raise HTTPException(status_code=401, detail="Invalid credentials")
@@ -1067,6 +1067,23 @@ async def login(credentials: UserLogin):
     # Remove sensitive data
     user_doc.pop("password_hash", None)
     user_doc.pop("_id", None)
+    
+    # Track client session if client role
+    if user_doc.get("role") == "client" and tracking_service and user_doc.get("company_ids"):
+        try:
+            company_id = user_doc["company_ids"][0]  # Clients have one company
+            ip_address = request.client.host if hasattr(request, 'client') else None
+            user_agent = request.headers.get("user-agent", None)
+            
+            await tracking_service.start_session(
+                company_id=company_id,
+                user_id=user_doc["id"],
+                user_email=user_doc["email"],
+                ip_address=ip_address,
+                user_agent=user_agent
+            )
+        except Exception as e:
+            logger.error(f"Failed to track client session: {e}")
     
     # Create tokens using new auth service (OWASP-compliant)
     if auth_service:
