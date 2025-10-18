@@ -105,11 +105,15 @@ const Dashboard = ({ user, onLogout }) => {
       
       // Auto-select first company the user has access to
       if (response.data.length > 0) {
+        const userCompanyIds = user.company_ids || [];
         const userCompanies = response.data.filter(c => 
-          user.company_ids.includes(c.id)
+          userCompanyIds.includes(c.id)
         );
         if (userCompanies.length > 0) {
           setSelectedCompany(userCompanies[0].id);
+        } else if (response.data.length > 0) {
+          // If user has no specific companies, select first available
+          setSelectedCompany(response.data[0].id);
         }
       }
     } catch (error) {
