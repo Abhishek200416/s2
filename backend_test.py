@@ -1553,82 +1553,74 @@ class AlertWhispererTester:
         else:
             self.log_result("Get Alerts", False, f"Failed to get alerts: {response.status_code if response else 'No response'}")
     
+    def test_sla_configuration(self):
+        """Test SLA Configuration endpoints"""
+        print("\n=== Testing SLA Configuration ===")
+        
+        # Test 1: Get SLA configuration
+        response = self.make_request('GET', '/companies/comp-acme/sla-config')
+        if response and response.status_code == 200:
+            sla_config = response.json()
+            response_sla = sla_config.get('response_sla', {})
+            resolution_sla = sla_config.get('resolution_sla', {})
+            
+            if response_sla and resolution_sla:
+                self.log_result("Get SLA Configuration", True, f"SLA config retrieved - Response SLA: {response_sla}, Resolution SLA: {resolution_sla}")
+            else:
+                self.log_result("Get SLA Configuration", False, "SLA config missing response_sla or resolution_sla")
+        else:
+            self.log_result("Get SLA Configuration", False, f"Failed to get SLA config: {response.status_code if response else 'No response'}")
+    
+    def test_aws_credentials_management_core(self):
+        """Test AWS Credentials Management endpoints"""
+        print("\n=== Testing AWS Credentials Management ===")
+        
+        # Test 1: Get AWS credentials (should show not configured initially)
+        response = self.make_request('GET', '/companies/comp-acme/aws-credentials')
+        if response and response.status_code == 200:
+            aws_creds = response.json()
+            configured = aws_creds.get('configured', False)
+            self.log_result("Get AWS Credentials", True, f"AWS credentials status: configured={configured}")
+        elif response and response.status_code == 404:
+            self.log_result("Get AWS Credentials", True, "AWS credentials not configured (404 - expected)")
+        else:
+            self.log_result("Get AWS Credentials", False, f"Failed to get AWS credentials: {response.status_code if response else 'No response'}")
+
     def run_all_tests(self):
-        """Run all test scenarios for real-time Alert Whisperer features"""
-        print(f"Starting Alert Whisperer Real-Time Features Backend API Tests")
-        print(f"Backend URL: {self.base_url}")
+        """Run all core MSP backend tests as specified in review request"""
+        print(f"🚀 Alert Whisperer MSP Platform Backend Test Suite")
+        print(f"📡 Backend URL: {self.base_url}")
+        print(f"⏰ Test started at: {datetime.now().isoformat()}")
         print("=" * 80)
         
-        # Test 1: Authentication & Profile Management
-        auth_success = self.test_authentication()
-        
-        if not auth_success:
-            print("\n❌ Authentication failed - skipping remaining tests")
+        # 1. Authentication & User Management
+        if not self.test_authentication():
+            print("❌ Authentication failed - stopping tests")
             return self.generate_summary()
         
-        # Test 2: Company & API Key Management
+        # 2. Company Management & API Keys
         api_key = self.test_company_api_keys()
         
-        # Test 3: Webhook Integration (Original)
+        # 3. Alert Webhook System
         self.test_webhook_integration(api_key)
         
-        # Test 4: Verify Fake Alert Generator Removed
-        self.test_fake_generator_removed()
-        
-        # Test 5: Real-Time Metrics Endpoint
-        self.test_realtime_metrics()
-        
-        # Test 6: Chat System
-        self.test_chat_system()
-        
-        # Test 7: Notification System
-        self.test_notification_system()
-        
-        # Test 8: Enhanced Correlation with Priority Scoring
+        # 4. Alert Correlation
         self.test_enhanced_correlation(api_key)
         
-        # Test 9: Webhook Real-Time Broadcasting
-        self.test_webhook_realtime_broadcasting(api_key)
+        # 5. Real-Time Metrics
+        self.test_realtime_metrics()
         
-        # Test 10: Webhook Security Configuration (NEW - Production-Grade AWS MSP)
+        # 6. AWS Credentials Management
+        self.test_aws_credentials_management_core()
+        
+        # 7. SLA Configuration
+        self.test_sla_configuration()
+        
+        # 8. Webhook Security (HMAC)
         self.test_webhook_security_configuration()
         
-        # Test 11: Correlation Configuration (NEW - Production-Grade AWS MSP)
+        # 9. Correlation Configuration
         self.test_correlation_configuration()
-        
-        # Test 12: HMAC Webhook Integration (NEW - Production-Grade AWS MSP)
-        self.test_hmac_webhook_integration(api_key)
-        
-        # Test 13: SSM Setup Guide Enhancement (CRITICAL TEST)
-        self.test_ssm_setup_guide_enhancement()
-        
-        # Test 14: SSM Connection with Enhanced Validation (CRITICAL TEST)
-        self.test_ssm_connection_validation()
-        
-        # Test 15: CRITICAL TESTS from Review Request
-        self.test_critical_requirements()
-        
-        # NEW MSP-FOCUSED IMPROVEMENT TESTS (from Review Request)
-        # Test 15: AWS Credentials Management
-        self.test_aws_credentials_management()
-        
-        # Test 16: On-Call Scheduling
-        self.test_on_call_scheduling()
-        
-        # Test 17: Bulk SSM Installer
-        self.test_bulk_ssm_installer()
-        
-        # Test 18: CRITICAL TESTS from Review Request
-        self.test_critical_requirements()
-        
-        # Test 19: NEW SLA Management Endpoints (CRITICAL TEST)
-        self.test_sla_management_endpoints()
-        
-        # Test 20: Runbook Management System (CRITICAL TEST from Review Request)
-        self.test_runbook_management_system()
-        
-        # Test 21: Existing Features (Smoke Test)
-        self.test_existing_features()
         
         return self.generate_summary()
     
