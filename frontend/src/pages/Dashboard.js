@@ -484,18 +484,6 @@ const Dashboard = ({ user, onLogout }) => {
                 <IncidentList companyId={selectedCompany} />
               </TabsContent>
 
-              <TabsContent value="patches">
-                <PatchManagement companyId={selectedCompany} />
-              </TabsContent>
-
-              <TabsContent value="compliance">
-                <PatchCompliance companyId={selectedCompany} />
-              </TabsContent>
-
-              <TabsContent value="agent-health">
-                <AgentHealthDashboard companyId={selectedCompany} />
-              </TabsContent>
-
               <TabsContent value="asset-inventory">
                 <AssetInventory companyId={selectedCompany} />
               </TabsContent>
