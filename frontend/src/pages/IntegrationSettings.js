@@ -58,8 +58,8 @@ const IntegrationSettings = ({ companyId }) => {
     }
   };
 
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
-  const webhookUrl = `${backendUrl}/api/webhooks/alerts`;
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin + '/api';
+  const webhookUrl = `${backendUrl}/webhooks/alerts`;
 
   if (loading) {
     return (
