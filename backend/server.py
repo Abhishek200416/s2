@@ -991,24 +991,28 @@ async def generate_decision(incident: Incident, company: Company, runbook: Optio
     # Calculate priority score using enhanced formula
     priority_score = calculate_priority_score(incident, company, alerts)
     
-    # Determine action based on risk and policy
-    action = "ESCALATE"
+    # Determine action based on risk and policy - Enhanced with clearer Execute vs Escalate
+    action = "ESCALATE_TO_TECHNICIAN"
     approval_required = True
-    reason = "No runbook available for this incident type"
+    reason = "No automated runbook available - requires technician review"
+    can_auto_execute = False
+    recommended_technician_category = determine_category_from_signature(incident.signature, incident.asset_name)
     
     if runbook:
+        can_auto_execute = True
         if runbook.risk_level == "low" and runbook.auto_approve:
-            action = "EXECUTE"
+            action = "EXECUTE_RUNBOOK"
             approval_required = False
-            reason = f"Correlated {incident.alert_count} alerts; low-risk runbook auto-approved"
-        elif runbook.risk_level == "medium" or not runbook.auto_approve:
-            action = "REQUEST_APPROVAL"
+            reason = f"Low-risk automated runbook available: {runbook.name}. Can execute immediately without approval."
+        elif runbook.risk_level == "medium":
+            action = "EXECUTE_RUNBOOK"
             approval_required = True
-            reason = f"Medium risk or policy requires approval for {runbook.name}"
+            reason = f"Medium-risk runbook available: {runbook.name}. Requires approval before execution."
         else:
-            action = "REQUEST_APPROVAL"
+            action = "ESCALATE_TO_TECHNICIAN"
             approval_required = True
-            reason = "High risk runbook requires manual approval"
+            reason = f"High-risk runbook requires manual technician review: {runbook.name}"
+            can_auto_execute = False
     
     # Build decision JSON
     decision = {
@@ -1017,17 +1021,22 @@ async def generate_decision(incident: Incident, company: Company, runbook: Optio
         "incident_id": incident.id,
         "priority_score": priority_score,
         "runbook_id": runbook.id if runbook else None,
+        "runbook_name": runbook.name if runbook else None,
+        "can_auto_execute": can_auto_execute,
+        "recommended_action": "execute" if can_auto_execute else "escalate",
+        "recommended_technician_category": recommended_technician_category,
         "params": {},
         "approval_required": approval_required,
         "health_check": runbook.health_checks if runbook else {},
         "escalation": {
             "skill_tag": "linux" if "linux" in incident.signature.lower() else "windows",
-            "urgency": incident.severity
+            "urgency": incident.severity,
+            "category": recommended_technician_category
         },
         "kpi_update": {
             "alerts_after": 1,
             "mttr_after_min": 8,
-            "self_healed_incidents": 1 if action == "EXECUTE" else 0
+            "self_healed_incidents": 1 if action == "EXECUTE_RUNBOOK" and not approval_required else 0
         },
         "audit": {
             "event": action.lower().replace("_", " "),
@@ -1037,19 +1046,33 @@ async def generate_decision(incident: Incident, company: Company, runbook: Optio
     
     # Get AI explanation using Gemini
     try:
-        prompt = f"""You are an MSP operations AI agent. Explain the following decision in 2-3 sentences:
-        
-Incident: {incident.alert_count} alerts for {incident.signature} on {incident.asset_name}
-Severity: {incident.severity}
-Action: {action}
+        prompt = f"""You are an MSP operations AI agent. Analyze this incident and provide a clear recommendation:
+
+Incident Details:
+- {incident.alert_count} alerts for {incident.signature} on {incident.asset_name}
+- Severity: {incident.severity}
+- Priority Score: {priority_score}
+- Runbook Available: {'Yes - ' + runbook.name if runbook else 'No'}
+- Runbook Risk Level: {runbook.risk_level if runbook else 'N/A'}
+
+Current Decision: {action}
 Reason: {reason}
 
-Provide a brief technical explanation suitable for an operations dashboard."""
+Provide a 2-3 sentence explanation that clearly states:
+1. Whether this can be automatically resolved with a runbook OR needs technician intervention
+2. The reasoning behind this recommendation
+3. Any risks or considerations
+
+Keep it technical but concise."""
         
         response = model.generate_content(prompt)
         decision["ai_explanation"] = response.text
     except Exception as e:
-        decision["ai_explanation"] = f"AI explanation unavailable: {str(e)}"
+        # Fallback explanation
+        if can_auto_execute:
+            decision["ai_explanation"] = f"This incident can be automatically resolved using the '{runbook.name}' runbook. The risk level is {runbook.risk_level}, making it suitable for automated execution. This will reduce MTTR and free up technician time."
+        else:
+            decision["ai_explanation"] = f"This incident requires technician intervention. {'A high-risk runbook exists but needs manual review.' if runbook else 'No automated runbook is available for this issue type.'} Recommended category: {recommended_technician_category}."
     
     return decision
 
