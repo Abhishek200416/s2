@@ -416,6 +416,13 @@ const Dashboard = ({ user, onLogout }) => {
                   <Server className="w-4 h-4 mr-2" />
                   Assets
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="runbooks" 
+                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Runbooks
+                </TabsTrigger>
                 {user.role === 'admin' && (
                   <TabsTrigger 
                     value="companies" 
