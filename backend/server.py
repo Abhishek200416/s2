@@ -90,6 +90,7 @@ class User(BaseModel):
     role: str  # msp_admin, company_admin, technician (client role removed - clients don't log in)
     company_ids: List[str] = []
     permissions: List[str] = []  # RBAC permissions
+    category: Optional[str] = None  # For technicians: Network, Database, Security, Server, Application, Storage, Cloud, Custom
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class UserCreate(BaseModel):
