@@ -2613,3 +2613,24 @@ agent_communication:
       - Execute custom runbooks on connected servers
       - Verify entire workflow from alert to resolution
 
+agent_communication:
+  - agent: "main"
+    message: |
+      🎯 COMPREHENSIVE SYSTEM TESTING INITIATED - ALL COMPONENTS
+      
+      User requested: "do all" - Running complete system verification:
+      
+      **Testing Plan:**
+      1. ✅ Backend API Testing (Already 92.3% complete - will verify)
+      2. 🔄 Frontend UI Testing (WebSocket, navigation, workflows)
+      3. 🔄 AWS Integration Testing (SSM, EC2, credentials)
+      4. 🔄 Full System Demo (End-to-end MSP workflow)
+      
+      **Current System Status:**
+      - Backend: RUNNING on port 8001
+      - Frontend: RUNNING on port 3000
+      - MongoDB: RUNNING
+      - AWS Credentials: Configured (superops profile, us-east-2)
+      
+      Starting comprehensive testing now...
+
