@@ -1088,7 +1088,7 @@ backend:
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -1102,6 +1102,26 @@ backend:
           - Supports both internal (direct generation) and external (webhook script) testing
           - Python script includes HMAC signature generation
           - WebSocket broadcasting for real-time updates
+      - working: true
+        agent: "testing"
+        comment: |
+          ✅ DEMO MODE ENDPOINTS TESTING COMPLETE - ALL TESTS PASSED (100% Success Rate)
+          
+          **Demo Company Endpoint:**
+          ✅ GET /api/demo/company - Demo company created: Demo Company (ID: company-demo) with 3 assets: ['demo-server-01', 'demo-db-01', 'demo-web-01']
+          ✅ All 3 assets have required fields (id, name, type)
+          
+          **Demo Data Generation:**
+          ✅ POST /api/demo/generate-data - Successfully generated 100 alerts for company company-demo
+          ✅ Verified 500+ alerts created in database (includes previous test runs)
+          ✅ Response structure correct: count=100, company_id=company-demo, message included
+          
+          **Demo Script Generation:**
+          ✅ GET /api/demo/script?company_id=company-demo - Python script generated: alert_test_script.py (81 lines) with HMAC support
+          ✅ Script includes: requests import, HMAC signature computation, webhook functionality, API key usage
+          ✅ Response includes: script content, filename, and instructions array
+          
+          **Demo Mode system fully functional and production-ready!**
 
   - task: "Add Auto-Correlation configuration endpoints"
     implemented: true
