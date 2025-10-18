@@ -15,7 +15,7 @@ from datetime import datetime
 import time
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://aws-agent.preview.emergentagent.com/api"
+BACKEND_URL = "https://navbar-update.preview.emergentagent.com/api"
 
 class AlertWhispererTester:
     def __init__(self):
