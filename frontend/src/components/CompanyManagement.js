@@ -568,7 +568,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue placeholder="Asset Type" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-slate-700">
+                  <SelectContent className="bg-slate-900 border-slate-700 text-white">
                     {assetTypes.map(type => (
                       <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
