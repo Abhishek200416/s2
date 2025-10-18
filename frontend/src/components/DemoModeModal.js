@@ -235,6 +235,18 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                     </ul>
                   </div>
 
+                  {/* Note about webhook integration */}
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h4 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      Note: External Webhook Integration
+                    </h4>
+                    <p className="text-sm text-slate-300">
+                      For production use, configure your monitoring tools (Datadog, New Relic, etc.) to send alerts directly to your webhook endpoint. 
+                      Find your API key and webhook URL in the company settings.
+                    </p>
+                  </div>
+
                   {/* Progress Bar */}
                   {generating && (
                     <div className="bg-slate-900 border border-slate-700 rounded-lg p-4 space-y-3">
