@@ -77,7 +77,11 @@ const Technicians = () => {
     }
 
     try {
-      const updateData = { name: formData.name, email: formData.email };
+      const updateData = { 
+        name: formData.name, 
+        email: formData.email,
+        category: formData.category || null
+      };
       if (formData.password) {
         updateData.password = formData.password;
       }
