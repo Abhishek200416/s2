@@ -57,8 +57,21 @@
 ##   test_priority: "high_first"  # or "sequential" or "stuck_first"
 ##
 ## agent_communication:
-##     -agent: "main"  # or "testing" or "user"
-##     -message: "Communication message between agents"
+##     - agent: "main"
+##       message: |
+##         Fixed all 5 issues reported by user:
+##         
+##         1. ✅ Technician Page Filters - Fixed category filter to handle technicians without categories
+##         2. ✅ Alert Correlation Zero Noise - Fixed noise calculation to show correct reduction percentage
+##         3. ✅ Demo Mode Progress Bar - Already working (WebSocket updates from backend)
+##         4. ✅ External File Connection - Removed External Testing tab from Demo Mode
+##         5. ✅ Auto-Decide Logic - Implemented intelligent auto-decide with:
+##            - Auto-execute low-risk runbooks
+##            - Auto-assign to technicians based on category
+##            - Fallback to Custom/no-category technicians
+##            - Real-time feedback without system lag
+##         
+##         All services restarted successfully. Ready for testing.
 
 # Protocol Guidelines for Main agent
 #
