@@ -2533,7 +2533,12 @@ async def update_incident(incident_id: str, update: IncidentUpdate):
 
 @api_router.post("/incidents/{incident_id}/decide")
 async def decide_on_incident(incident_id: str):
-    """Generate decision for an incident using AI"""
+    """
+    Auto-decide on incident:
+    1. Check for runbook - if low risk, auto-execute
+    2. If no runbook or high risk - auto-assign to technician based on category
+    3. If no technician in category - assign to Custom category technicians
+    """
     incident_doc = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
     if not incident_doc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -2555,18 +2560,73 @@ async def decide_on_incident(incident_id: str):
     # Generate decision
     decision = await generate_decision(incident, company, runbook)
     
-    # Update incident with decision
+    # Determine status and assignment based on decision
+    new_status = "in_progress"
+    assigned_to = None
+    assigned_technician_name = None
+    
+    # If runbook exists and is low risk with auto-approve, execute it
+    if runbook and runbook.risk_level == "low" and runbook.auto_approve:
+        new_status = "resolved"
+        decision["auto_executed"] = True
+        decision["execution_result"] = "Runbook executed successfully"
+    else:
+        # Auto-assign to technician based on category
+        recommended_category = decision.get("recommended_technician_category", "Custom")
+        
+        # Find technicians with matching category
+        technicians = await db.users.find({
+            "role": "technician",
+            "category": recommended_category
+        }, {"_id": 0}).to_list(100)
+        
+        # If no technicians in that category, look for Custom or no category
+        if not technicians:
+            technicians = await db.users.find({
+                "role": "technician",
+                "$or": [
+                    {"category": "Custom"},
+                    {"category": None},
+                    {"category": {"$exists": False}}
+                ]
+            }, {"_id": 0}).to_list(100)
+        
+        # Assign to first available technician (can be enhanced with workload balancing)
+        if technicians:
+            assigned_tech = technicians[0]
+            assigned_to = assigned_tech["id"]
+            assigned_technician_name = assigned_tech["name"]
+            decision["auto_assigned"] = True
+            decision["assigned_to_name"] = assigned_technician_name
+            decision["assigned_category"] = assigned_tech.get("category", "Custom")
+    
+    # Update incident with decision and assignment
+    update_data = {
+        "decision": decision,
+        "priority_score": decision["priority_score"],
+        "status": new_status,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if assigned_to:
+        update_data["assigned_to"] = assigned_to
+        update_data["assigned_at"] = datetime.now(timezone.utc).isoformat()
+    
     await db.incidents.update_one(
         {"id": incident_id},
-        {
-            "$set": {
-                "decision": decision,
-                "priority_score": decision["priority_score"],
-                "status": "in_progress",
-                "updated_at": datetime.now(timezone.utc).isoformat()
-            }
-        }
+        {"$set": update_data}
     )
+    
+    # Broadcast via WebSocket
+    await manager.broadcast({
+        "type": "incident_decided",
+        "data": {
+            "incident_id": incident_id,
+            "status": new_status,
+            "assigned_to": assigned_technician_name,
+            "auto_executed": decision.get("auto_executed", False)
+        }
+    })
     
     # Log audit
     audit = AuditLog(
