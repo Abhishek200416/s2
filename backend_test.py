@@ -806,8 +806,293 @@ class AlertWhispererTester:
             self.log_result("SSM Connection Error Handling", False, 
                           f"Failed to test error handling: {response.status_code if response else 'No response'}")
     
+    def test_aws_credentials_management(self):
+        """Test 15: AWS Credentials Management (NEW MSP FEATURE)"""
+        print("\n=== Testing AWS Credentials Management ===")
+        
+        # Test 1: GET /api/companies/comp-acme/aws-credentials (should return 404 if not configured)
+        response = self.make_request('GET', '/companies/comp-acme/aws-credentials')
+        if response and response.status_code == 404:
+            self.log_result("AWS Credentials - Initial GET (404)", True, "GET /api/companies/comp-acme/aws-credentials correctly returns 404 when not configured")
+        elif response and response.status_code == 200:
+            # If credentials already exist, delete them first for clean testing
+            delete_response = self.make_request('DELETE', '/companies/comp-acme/aws-credentials')
+            if delete_response and delete_response.status_code == 200:
+                self.log_result("AWS Credentials - Cleanup", True, "Existing AWS credentials deleted for clean testing")
+                # Now test the 404 case
+                response = self.make_request('GET', '/companies/comp-acme/aws-credentials')
+                if response and response.status_code == 404:
+                    self.log_result("AWS Credentials - Initial GET (404)", True, "GET /api/companies/comp-acme/aws-credentials correctly returns 404 after cleanup")
+                else:
+                    self.log_result("AWS Credentials - Initial GET (404)", False, f"Expected 404 after cleanup, got: {response.status_code if response else 'No response'}")
+            else:
+                self.log_result("AWS Credentials - Initial GET (404)", False, f"Credentials exist but cleanup failed: {delete_response.status_code if delete_response else 'No response'}")
+        else:
+            self.log_result("AWS Credentials - Initial GET (404)", False, f"Expected 404 for unconfigured credentials, got: {response.status_code if response else 'No response'}")
+        
+        # Test 2: POST /api/companies/comp-acme/aws-credentials with credentials
+        aws_credentials = {
+            "access_key_id": "AKIATEST123",
+            "secret_access_key": "test_secret_key_123",
+            "region": "us-east-1"
+        }
+        
+        response = self.make_request('POST', '/companies/comp-acme/aws-credentials', json=aws_credentials)
+        if response and response.status_code == 200:
+            created_creds = response.json()
+            if created_creds.get('access_key_id') == "AKIATEST123" and created_creds.get('region') == "us-east-1":
+                self.log_result("AWS Credentials - Create", True, f"AWS credentials created successfully: access_key_id={created_creds.get('access_key_id')}, region={created_creds.get('region')}")
+            else:
+                self.log_result("AWS Credentials - Create", False, "AWS credentials created but data doesn't match input")
+        else:
+            self.log_result("AWS Credentials - Create", False, f"Failed to create AWS credentials: {response.status_code if response else 'No response'}")
+        
+        # Test 3: GET /api/companies/comp-acme/aws-credentials (should now return credentials with encrypted secret)
+        response = self.make_request('GET', '/companies/comp-acme/aws-credentials')
+        if response and response.status_code == 200:
+            retrieved_creds = response.json()
+            access_key = retrieved_creds.get('access_key_id')
+            secret_key = retrieved_creds.get('secret_access_key')
+            region = retrieved_creds.get('region')
+            
+            if access_key == "AKIATEST123" and region == "us-east-1":
+                # Check if secret is encrypted (should not be the plain text we sent)
+                if secret_key and secret_key != "test_secret_key_123":
+                    self.log_result("AWS Credentials - Retrieve with Encryption", True, f"AWS credentials retrieved with encrypted secret: access_key={access_key}, secret_encrypted=True, region={region}")
+                else:
+                    self.log_result("AWS Credentials - Retrieve with Encryption", False, "Secret key appears to be stored in plain text (security issue)")
+            else:
+                self.log_result("AWS Credentials - Retrieve with Encryption", False, f"Retrieved credentials don't match: access_key={access_key}, region={region}")
+        else:
+            self.log_result("AWS Credentials - Retrieve with Encryption", False, f"Failed to retrieve AWS credentials: {response.status_code if response else 'No response'}")
+        
+        # Test 4: POST /api/companies/comp-acme/aws-credentials/test (should test AWS connection)
+        response = self.make_request('POST', '/companies/comp-acme/aws-credentials/test')
+        if response and response.status_code == 200:
+            test_result = response.json()
+            verified = test_result.get('verified')
+            services = test_result.get('services', {})
+            
+            # Since we're using test credentials, this should fail but return proper structure
+            if 'verified' in test_result and 'services' in test_result:
+                self.log_result("AWS Credentials - Test Connection", True, f"AWS connection test completed: verified={verified}, services_tested={len(services)}")
+            else:
+                self.log_result("AWS Credentials - Test Connection", False, "AWS connection test missing required fields")
+        else:
+            self.log_result("AWS Credentials - Test Connection", False, f"Failed to test AWS connection: {response.status_code if response else 'No response'}")
+        
+        # Test 5: DELETE /api/companies/comp-acme/aws-credentials (should remove credentials)
+        response = self.make_request('DELETE', '/companies/comp-acme/aws-credentials')
+        if response and response.status_code == 200:
+            delete_result = response.json()
+            self.log_result("AWS Credentials - Delete", True, f"AWS credentials deleted successfully: {delete_result.get('message', 'No message')}")
+            
+            # Verify deletion by trying to GET again (should return 404)
+            verify_response = self.make_request('GET', '/companies/comp-acme/aws-credentials')
+            if verify_response and verify_response.status_code == 404:
+                self.log_result("AWS Credentials - Verify Deletion", True, "AWS credentials successfully deleted (GET returns 404)")
+            else:
+                self.log_result("AWS Credentials - Verify Deletion", False, f"AWS credentials may not be deleted (GET returns {verify_response.status_code if verify_response else 'No response'})")
+        else:
+            self.log_result("AWS Credentials - Delete", False, f"Failed to delete AWS credentials: {response.status_code if response else 'No response'}")
+    
+    def test_on_call_scheduling(self):
+        """Test 16: On-Call Scheduling (NEW MSP FEATURE)"""
+        print("\n=== Testing On-Call Scheduling ===")
+        
+        # Test 1: GET /api/users (to get technician IDs)
+        response = self.make_request('GET', '/users')
+        if response and response.status_code == 200:
+            users = response.json()
+            technician_users = [user for user in users if user.get('role') in ['technician', 'admin']]
+            
+            if len(technician_users) > 0:
+                technician_id = technician_users[0].get('id')
+                technician_name = technician_users[0].get('name')
+                self.log_result("On-Call - Get Users", True, f"Retrieved {len(users)} users, found technician: {technician_name} (ID: {technician_id})")
+            else:
+                self.log_result("On-Call - Get Users", False, "No technicians found in users list")
+                return
+        else:
+            self.log_result("On-Call - Get Users", False, f"Failed to get users: {response.status_code if response else 'No response'}")
+            return
+        
+        # Test 2: POST /api/on-call-schedules with schedule data
+        schedule_data = {
+            "name": "Test Daily Schedule",
+            "technician_id": technician_id,
+            "schedule_type": "daily",
+            "start_time": "2025-01-15T09:00:00",
+            "end_time": "2025-01-15T17:00:00",
+            "priority": 1,
+            "description": "Test on-call schedule for backend testing"
+        }
+        
+        response = self.make_request('POST', '/on-call-schedules', json=schedule_data)
+        if response and response.status_code == 200:
+            created_schedule = response.json()
+            schedule_id = created_schedule.get('id')
+            schedule_name = created_schedule.get('name')
+            
+            if schedule_id and schedule_name == "Test Daily Schedule":
+                self.log_result("On-Call - Create Schedule", True, f"On-call schedule created: {schedule_name} (ID: {schedule_id})")
+            else:
+                self.log_result("On-Call - Create Schedule", False, "Schedule created but missing expected data")
+                return
+        else:
+            self.log_result("On-Call - Create Schedule", False, f"Failed to create on-call schedule: {response.status_code if response else 'No response'}")
+            return
+        
+        # Test 3: GET /api/on-call-schedules (should return all schedules)
+        response = self.make_request('GET', '/on-call-schedules')
+        if response and response.status_code == 200:
+            schedules = response.json()
+            found_schedule = any(schedule.get('id') == schedule_id for schedule in schedules)
+            
+            if found_schedule:
+                self.log_result("On-Call - Get All Schedules", True, f"Retrieved {len(schedules)} schedules, found our test schedule")
+            else:
+                self.log_result("On-Call - Get All Schedules", False, "Test schedule not found in schedules list")
+        else:
+            self.log_result("On-Call - Get All Schedules", False, f"Failed to get schedules: {response.status_code if response else 'No response'}")
+        
+        # Test 4: GET /api/on-call-schedules/current (should return current on-call technician)
+        response = self.make_request('GET', '/on-call-schedules/current')
+        if response and response.status_code == 200:
+            current_schedule = response.json()
+            if current_schedule:
+                current_tech_id = current_schedule.get('technician_id')
+                current_schedule_name = current_schedule.get('name')
+                self.log_result("On-Call - Get Current Schedule", True, f"Current on-call: {current_schedule_name} (Technician: {current_tech_id})")
+            else:
+                self.log_result("On-Call - Get Current Schedule", True, "No current on-call schedule (expected if outside schedule time)")
+        elif response and response.status_code == 404:
+            self.log_result("On-Call - Get Current Schedule", True, "No current on-call schedule (404 - expected if no active schedule)")
+        else:
+            self.log_result("On-Call - Get Current Schedule", False, f"Failed to get current schedule: {response.status_code if response else 'No response'}")
+        
+        # Test 5: PUT /api/on-call-schedules/{id} (update schedule)
+        update_data = {
+            "name": "Updated Test Schedule",
+            "priority": 2,
+            "description": "Updated description for testing"
+        }
+        
+        response = self.make_request('PUT', f'/on-call-schedules/{schedule_id}', json=update_data)
+        if response and response.status_code == 200:
+            updated_schedule = response.json()
+            updated_name = updated_schedule.get('name')
+            updated_priority = updated_schedule.get('priority')
+            
+            if updated_name == "Updated Test Schedule" and updated_priority == 2:
+                self.log_result("On-Call - Update Schedule", True, f"Schedule updated successfully: {updated_name}, priority={updated_priority}")
+            else:
+                self.log_result("On-Call - Update Schedule", False, f"Schedule update didn't apply correctly: name={updated_name}, priority={updated_priority}")
+        else:
+            self.log_result("On-Call - Update Schedule", False, f"Failed to update schedule: {response.status_code if response else 'No response'}")
+        
+        # Test 6: DELETE /api/on-call-schedules/{id} (delete schedule)
+        response = self.make_request('DELETE', f'/on-call-schedules/{schedule_id}')
+        if response and response.status_code == 200:
+            delete_result = response.json()
+            self.log_result("On-Call - Delete Schedule", True, f"Schedule deleted successfully: {delete_result.get('message', 'No message')}")
+            
+            # Verify deletion by trying to GET the specific schedule (should return 404)
+            verify_response = self.make_request('GET', f'/on-call-schedules/{schedule_id}')
+            if verify_response and verify_response.status_code == 404:
+                self.log_result("On-Call - Verify Deletion", True, "Schedule successfully deleted (GET returns 404)")
+            else:
+                self.log_result("On-Call - Verify Deletion", False, f"Schedule may not be deleted (GET returns {verify_response.status_code if verify_response else 'No response'})")
+        else:
+            self.log_result("On-Call - Delete Schedule", False, f"Failed to delete schedule: {response.status_code if response else 'No response'}")
+    
+    def test_bulk_ssm_installer(self):
+        """Test 17: Bulk SSM Installer (NEW MSP FEATURE)"""
+        print("\n=== Testing Bulk SSM Installer ===")
+        
+        # Test 1: GET /api/companies/comp-acme/instances-without-ssm (should scan EC2 instances)
+        response = self.make_request('GET', '/companies/comp-acme/instances-without-ssm')
+        if response and response.status_code == 200:
+            instances = response.json()
+            
+            # Check response structure
+            if 'instances' in instances and 'total_count' in instances:
+                instance_list = instances.get('instances', [])
+                total_count = instances.get('total_count', 0)
+                self.log_result("SSM Installer - Scan Instances", True, f"Instance scan completed: {total_count} instances without SSM found")
+                
+                # If no instances found, that's expected for test environment
+                if total_count == 0:
+                    self.log_result("SSM Installer - No Instances Note", True, "No instances without SSM found (expected in test environment)")
+            else:
+                self.log_result("SSM Installer - Scan Instances", False, "Instance scan response missing required fields (instances, total_count)")
+        elif response and response.status_code == 400:
+            # This might happen if AWS credentials are not configured
+            error_response = response.json()
+            error_detail = error_response.get('detail', '')
+            if 'AWS credentials' in error_detail or 'not configured' in error_detail:
+                self.log_result("SSM Installer - Scan Instances", True, f"Instance scan correctly requires AWS credentials: {error_detail}")
+            else:
+                self.log_result("SSM Installer - Scan Instances", False, f"Unexpected 400 error: {error_detail}")
+        else:
+            self.log_result("SSM Installer - Scan Instances", False, f"Failed to scan instances: {response.status_code if response else 'No response'}")
+        
+        # Test 2: POST /api/companies/comp-acme/ssm/bulk-install with instance IDs
+        install_data = {
+            "instance_ids": ["i-test123", "i-test456"]
+        }
+        
+        response = self.make_request('POST', '/companies/comp-acme/ssm/bulk-install', json=install_data)
+        if response and response.status_code == 200:
+            install_result = response.json()
+            
+            # Check response structure
+            if 'command_id' in install_result and 'status' in install_result:
+                command_id = install_result.get('command_id')
+                status = install_result.get('status')
+                instance_count = len(install_result.get('instance_ids', []))
+                
+                self.log_result("SSM Installer - Bulk Install", True, f"SSM bulk install initiated: command_id={command_id}, status={status}, instances={instance_count}")
+                
+                # Test 3: GET /api/companies/comp-acme/ssm/installation-status/{command_id} (check status)
+                if command_id:
+                    status_response = self.make_request('GET', f'/companies/comp-acme/ssm/installation-status/{command_id}')
+                    if status_response and status_response.status_code == 200:
+                        status_result = status_response.json()
+                        
+                        if 'command_id' in status_result and 'status' in status_result:
+                            cmd_status = status_result.get('status')
+                            cmd_id = status_result.get('command_id')
+                            
+                            self.log_result("SSM Installer - Check Status", True, f"Installation status retrieved: command_id={cmd_id}, status={cmd_status}")
+                        else:
+                            self.log_result("SSM Installer - Check Status", False, "Status response missing required fields")
+                    else:
+                        self.log_result("SSM Installer - Check Status", False, f"Failed to get installation status: {status_response.status_code if status_response else 'No response'}")
+                else:
+                    self.log_result("SSM Installer - Check Status", False, "No command_id available for status check")
+            else:
+                self.log_result("SSM Installer - Bulk Install", False, "Bulk install response missing required fields (command_id, status)")
+        elif response and response.status_code == 400:
+            # This might happen if AWS credentials are not configured or instances are invalid
+            error_response = response.json()
+            error_detail = error_response.get('detail', '')
+            if 'AWS credentials' in error_detail or 'not configured' in error_detail or 'Invalid instance' in error_detail:
+                self.log_result("SSM Installer - Bulk Install", True, f"Bulk install correctly validates prerequisites: {error_detail}")
+                # Still test the status endpoint with a dummy command ID
+                dummy_command_id = "test-command-123"
+                status_response = self.make_request('GET', f'/companies/comp-acme/ssm/installation-status/{dummy_command_id}')
+                if status_response and status_response.status_code in [200, 404]:
+                    self.log_result("SSM Installer - Check Status (Dummy)", True, f"Status endpoint accessible (returns {status_response.status_code})")
+                else:
+                    self.log_result("SSM Installer - Check Status (Dummy)", False, f"Status endpoint not accessible: {status_response.status_code if status_response else 'No response'}")
+            else:
+                self.log_result("SSM Installer - Bulk Install", False, f"Unexpected 400 error: {error_detail}")
+        else:
+            self.log_result("SSM Installer - Bulk Install", False, f"Failed to initiate bulk install: {response.status_code if response else 'No response'}")
+
     def test_critical_requirements(self):
-        """Test 15: CRITICAL TESTS from Review Request"""
+        """Test 18: CRITICAL TESTS from Review Request"""
         print("\n=== CRITICAL TESTS - Alert Whisperer MSP Platform ===")
         
         # CRITICAL TEST 1: Login test
