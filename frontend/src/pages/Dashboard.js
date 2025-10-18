@@ -135,6 +135,13 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleDemoCompanySelected = async (demoCompany) => {
+    // Reload companies to include demo company
+    await loadCompanies();
+    // Select demo company
+    setSelectedCompany(demoCompany.id);
+  };
+
   const userCompanyIds = user.company_ids || [];
   // Admin users can see all companies, other users only see their assigned companies
   const userCompanies = user.role === 'admin' || user.role === 'msp_admin' 
