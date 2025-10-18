@@ -114,7 +114,8 @@ const Technicians = () => {
       name: '',
       email: '',
       password: '',
-      role: 'technician'
+      role: 'technician',
+      category: ''
     });
     setSelectedTechnician(null);
   };
@@ -125,9 +126,29 @@ const Technicians = () => {
       name: technician.name,
       email: technician.email,
       password: '',
-      role: 'technician'
+      role: 'technician',
+      category: technician.category || ''
     });
     setShowEditDialog(true);
+  };
+
+  // Filter technicians by category
+  const filteredTechnicians = categoryFilter === 'all' 
+    ? technicians 
+    : technicians.filter(tech => tech.category === categoryFilter);
+
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Network': 'bg-blue-500/20 text-blue-300 border-blue-500/50',
+      'Database': 'bg-green-500/20 text-green-300 border-green-500/50',
+      'Security': 'bg-red-500/20 text-red-300 border-red-500/50',
+      'Server': 'bg-purple-500/20 text-purple-300 border-purple-500/50',
+      'Application': 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50',
+      'Storage': 'bg-orange-500/20 text-orange-300 border-orange-500/50',
+      'Cloud': 'bg-sky-500/20 text-sky-300 border-sky-500/50',
+      'Custom': 'bg-slate-500/20 text-slate-300 border-slate-500/50'
+    };
+    return colors[category] || 'bg-slate-500/20 text-slate-300 border-slate-500/50';
   };
 
   return (
