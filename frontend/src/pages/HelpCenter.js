@@ -210,13 +210,6 @@ const HelpCenter = () => {
               <Activity className="w-4 h-4 mr-2" />
               Workflows
             </TabsTrigger>
-            <TabsTrigger
-              value="resources"
-              className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
-            >
-              <Book className="w-4 h-4 mr-2" />
-              Resources
-            </TabsTrigger>
           </TabsList>
 
           {/* FAQs Tab */}
