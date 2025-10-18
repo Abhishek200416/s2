@@ -1799,11 +1799,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Add HMAC webhook authentication with replay protection"
-    - "Add webhook security configuration endpoints"
-    - "Add configurable correlation time window (5-15 min)"
-    - "Add correlation configuration endpoints"
-    - "Create Advanced Settings page for webhook security and correlation config"
+    - "Add Demo Mode Modal component"
+    - "Add Demo button to Dashboard"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
