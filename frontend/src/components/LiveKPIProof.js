@@ -18,7 +18,7 @@ const LiveKPIProof = ({ companyId }) => {
   const loadImpactData = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL || ''}/api/metrics/before-after?company_id=${companyId}`,
+        `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api'}/metrics/before-after?company_id=${companyId}`,
         {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
