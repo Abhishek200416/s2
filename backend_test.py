@@ -1196,7 +1196,7 @@ class AlertWhispererTester:
             "name": "Updated Test Runbook",
             "description": "Updated description for testing"
         }
-        response = self.make_request('PUT', f'/runbooks/{runbook_id}', json=updated_data, headers={"Authorization": f"Bearer {self.token}"})
+        response = self.make_request('PUT', f'/runbooks/{runbook_id}', json=updated_data, headers={"Authorization": f"Bearer {self.auth_token}"})
         if response and response.status_code == 200:
             updated_runbook = response.json()
             name_updated = updated_runbook.get('name') == "Updated Test Runbook"
