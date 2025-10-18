@@ -216,6 +216,15 @@ const CompanyManagement = ({ onCompanyChange }) => {
                 </div>
                 <div className="flex gap-2">
                   <Button
+                    onClick={() => navigate(`/company/${company.id}/settings`)}
+                    size="sm"
+                    variant="ghost"
+                    className="text-purple-400 hover:text-purple-300"
+                    title="Company Settings (AWS & SSM)"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                  <Button
                     onClick={() => viewIntegration(company)}
                     size="sm"
                     variant="ghost"
