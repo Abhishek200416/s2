@@ -1308,7 +1308,7 @@ frontend:
     file: "server.py, IncidentList.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
@@ -1338,6 +1338,35 @@ frontend:
           - Reloads incidents to show updated status
           - Then opens decision dialog for review
           - No system lag - non-blocking operation
+      - working: true
+        agent: "testing"
+        comment: |
+          ✅ AUTO-DECIDE LOGIC TESTING COMPLETE - ALL TESTS PASSED
+          
+          **Test Workflow Completed:**
+          ✅ Created 3 test alerts for company-demo with same signature for correlation
+          ✅ POST /api/incidents/correlate?company_id=company-demo - Successfully created incident from alerts
+          ✅ POST /api/incidents/{incident_id}/decide - Auto-decide logic working perfectly
+          
+          **Response Structure Verified:**
+          ✅ Response includes all required fields: action, reason, recommended_technician_category, priority_score
+          ✅ Auto-assignment logic working: auto_assigned=true with assigned_to_name="Acme Technician"
+          ✅ Priority score calculated correctly: 62 (based on severity + bonuses - decay)
+          ✅ Recommended technician category determined: "Server" (based on signature analysis)
+          
+          **Auto-Decision Logic Verified:**
+          ✅ Action: "ESCALATE_TO_TECHNICIAN" (correct when no runbook available)
+          ✅ Reason: "No automated runbook available - requires technician review" (accurate)
+          ✅ Auto-assignment to technician based on category working
+          ✅ Fallback to Custom/no-category technicians implemented
+          ✅ Incident status updated properly (in_progress with assigned_to)
+          
+          **Technician Category Assignment:**
+          ✅ Category-based assignment logic functional
+          ✅ Intelligent category detection from incident signature and asset name
+          ✅ Proper fallback mechanism when no technicians in specific category
+          
+          Auto-Decide Logic for Incidents is fully functional and production-ready!
 
   - task: "Add Demo Mode Modal component"
     implemented: true
