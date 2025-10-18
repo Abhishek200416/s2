@@ -572,6 +572,13 @@ const Dashboard = ({ user, onLogout }) => {
       {showMSPGuide && (
         <MSPWorkflowGuide onClose={() => setShowMSPGuide(false)} />
       )}
+
+      {/* Demo Mode Modal */}
+      <DemoModeModal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+        onDemoCompanySelected={handleDemoCompanySelected}
+      />
     </div>
   );
 };
