@@ -406,6 +406,11 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
                         <Badge className={getStatusColor(alert.status)}>
                           {alert.status}
                         </Badge>
+                        {alert.category && (
+                          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                            {alert.category}
+                          </Badge>
+                        )}
                         <span className="text-xs text-slate-500">{alert.tool_source}</span>
                       </div>
                       <p className="text-white font-medium">{alert.signature}</p>
