@@ -149,6 +149,26 @@ function App() {
               )
             }
           />
+          <Route
+            path="/on-call"
+            element={
+              isAuthenticated ? (
+                <OnCallSchedule user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/company/:companyId/settings"
+            element={
+              isAuthenticated ? (
+                <CompanySettings user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
           <Route 
             path="/" 
             element={
