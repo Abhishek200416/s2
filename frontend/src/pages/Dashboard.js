@@ -170,7 +170,7 @@ const Dashboard = ({ user, onLogout }) => {
               </div>
 
               {/* Company Selector */}
-              <div className="ml-8">
+              <div className="ml-8 flex items-center gap-3">
                 <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                   <SelectTrigger className="w-[250px] bg-slate-800/50 border-slate-700 text-white" data-testid="company-selector">
                     <SelectValue placeholder="Select company" />
@@ -183,6 +183,17 @@ const Dashboard = ({ user, onLogout }) => {
                     ))}
                   </SelectContent>
                 </Select>
+                
+                {/* Demo Button */}
+                <Button
+                  onClick={() => setShowDemoModal(true)}
+                  variant="outline"
+                  size="sm"
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white border-0"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Demo Mode
+                </Button>
               </div>
             </div>
 
