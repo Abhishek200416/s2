@@ -42,6 +42,7 @@ const CompanyManagement = ({ onCompanyChange }) => {
 
   useEffect(() => {
     loadCompanies();
+    loadAssetTypes();
   }, []);
 
   const loadCompanies = async () => {
