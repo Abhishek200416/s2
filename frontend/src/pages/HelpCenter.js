@@ -310,62 +310,6 @@ const HelpCenter = () => {
               })}
             </div>
           </TabsContent>
-
-          {/* Resources Tab */}
-          <TabsContent value="resources">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {quickLinks.map((section) => {
-                const Icon = section.icon;
-                return (
-                  <Card key={section.title} className="bg-slate-900/50 border-slate-800">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center">
-                        <Icon className="w-5 h-5 mr-2 text-cyan-400" />
-                        {section.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-3">
-                        {section.links.map((link, index) => (
-                          <li key={index}>
-                            <a
-                              href={link.url}
-                              className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 transition-colors"
-                            >
-                              {section.icon === Video && <Play className="w-4 h-4" />}
-                              {section.icon === FileText && <FileText className="w-4 h-4" />}
-                              {section.icon === Download && <Download className="w-4 h-4" />}
-                              <span className="flex-1">{link.name}</span>
-                              <ExternalLink className="w-4 h-4" />
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Contact Support */}
-            <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30 mt-6">
-              <CardContent className="p-8 text-center">
-                <HelpCircle className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-white mb-2">Need More Help?</h3>
-                <p className="text-slate-300 mb-6">
-                  Can't find what you're looking for? Our support team is here to help.
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <button className="px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg font-semibold transition-colors">
-                    Contact Support
-                  </button>
-                  <button className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition-colors">
-                    Schedule Demo
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
     </div>
