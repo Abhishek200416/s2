@@ -34,6 +34,7 @@ import ActivityFeed from '../components/ActivityFeed';
 import AgentHealthDashboard from '../components/AgentHealthDashboard';
 import AssetInventory from '../components/AssetInventory';
 import CustomRunbookManager from './CustomRunbookManager';
+import DemoModeModal from '../components/DemoModeModal';
 
 const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
