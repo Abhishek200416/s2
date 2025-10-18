@@ -5565,6 +5565,33 @@ async def run_auto_correlation(company_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============= Include All Routers =============
+# Include the api_router with all endpoints defined above
+app.include_router(api_router)
+
+# Include agent router (imported at startup)
+from agent_service import router as agent_router
+app.include_router(agent_router, prefix="/api")
+
+# Include MSP platform router with all new MSP features
+try:
+    from msp_endpoints import msp_router, set_database
+    set_database(db)  # Pass db to MSP endpoints
+    app.include_router(msp_router)
+    print("✅ MSP Platform endpoints loaded successfully")
+except Exception as e:
+    print(f"⚠️  MSP Platform endpoints failed to load: {e}")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # ============= Global Variables for Services =============
 # Initialize services (will be done in startup event)
 auth_service = None
