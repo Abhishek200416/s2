@@ -4316,6 +4316,7 @@ memory_service = None
 tools_registry = None
 agent_instance = None
 sla_service_instance = None
+tracking_service = None  # Client tracking service
 
 @app.on_event("startup")
 async def startup_event():
