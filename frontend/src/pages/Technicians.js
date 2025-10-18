@@ -139,7 +139,13 @@ const Technicians = () => {
   // Filter technicians by category
   const filteredTechnicians = categoryFilter === 'all' 
     ? technicians 
-    : technicians.filter(tech => tech.category === categoryFilter);
+    : technicians.filter(tech => {
+        // Handle technicians without category
+        if (categoryFilter === 'none') {
+          return !tech.category || tech.category === null || tech.category === '';
+        }
+        return tech.category === categoryFilter;
+      });
 
   const getCategoryColor = (category) => {
     const colors = {
