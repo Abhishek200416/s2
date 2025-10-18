@@ -183,7 +183,9 @@ class DemoAutoCorrelationTester:
         """Test 3: GET /api/demo/script - Get Python testing script"""
         print("\n=== Testing Demo Script Endpoint ===")
         
-        response = self.make_request('GET', '/demo/script')
+        # Use demo company ID as query parameter
+        company_id = self.demo_company_id or "company-demo"
+        response = self.make_request('GET', f'/demo/script?company_id={company_id}')
         if response and response.status_code == 200:
             script_data = response.json()
             
