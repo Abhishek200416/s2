@@ -5029,14 +5029,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
 # Router will be included after all endpoints are defined (see bottom of file)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 
 # ============= CLIENT PORTAL & TRACKING ENDPOINTS =============
 
