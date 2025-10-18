@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import API from '../utils/api';
+import { api as API } from '../App';
 import AWSCredentialsManager from '../components/AWSCredentialsManager';
 import BulkSSMInstaller from '../components/BulkSSMInstaller';
 
