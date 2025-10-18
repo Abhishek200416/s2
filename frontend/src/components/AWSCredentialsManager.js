@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Key, Check, X, AlertCircle, Loader } from 'lucide-react';
-import API from '../utils/api';
+import { api as API } from '../App';
 
 const AWSCredentialsManager = ({ companyId }) => {
   const [credentials, setCredentials] = useState(null);
