@@ -227,6 +227,22 @@ const Technicians = () => {
                       <p className="text-xs text-slate-500 mt-1">Minimum 6 characters</p>
                     </div>
 
+                    <div>
+                      <Label className="text-white">Category (Specialization)</Label>
+                      <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                        <SelectTrigger className="bg-slate-800 border-slate-700 text-white mt-1">
+                          <SelectValue placeholder="Select category..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-900 border-slate-700">
+                          <SelectItem value="">No Category</SelectItem>
+                          {categories.map(cat => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-slate-500 mt-1">Optional: Set technician's area of expertise</p>
+                    </div>
+
                     <Button onClick={createTechnician} className="w-full bg-purple-600 hover:bg-purple-700">
                       Create Technician
                     </Button>
@@ -235,6 +251,30 @@ const Technicians = () => {
               </Dialog>
             </div>
           </CardHeader>
+        </Card>
+
+        {/* Category Filter */}
+        <Card className="bg-slate-900/50 border-slate-800 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Filter className="w-5 h-5 text-cyan-400" />
+              <Label className="text-white">Filter by Category:</Label>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-700">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-slate-400">
+                Showing {filteredTechnicians.length} of {technicians.length} technicians
+              </span>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Technicians List */}
