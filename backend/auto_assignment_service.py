@@ -156,6 +156,11 @@ class AutoAssignmentEngine:
     ) -> List[Dict[str, Any]]:
         """Get available technicians matching criteria
         
+        Priority:
+        1. Check if anyone is on-call right now
+        2. Get available technicians with required skills
+        3. Filter by workload capacity
+        
         Args:
             company_id: Company ID
             required_skills: Required skills
@@ -164,6 +169,28 @@ class AutoAssignmentEngine:
         Returns:
             List of available technician records
         """
+        # PRIORITY 1: Check if anyone is on-call right now
+        try:
+            from oncall_service import oncall_service
+            if oncall_service:
+                on_call_tech = await oncall_service.get_current_on_call_technician(company_id)
+                if on_call_tech:
+                    # Check if on-call technician has capacity
+                    tech_skills = await self.db.technician_skills.find_one(
+                        {"user_id": on_call_tech["id"]},
+                        {"_id": 0}
+                    )
+                    if tech_skills:
+                        workload_current = tech_skills.get("workload_current", 0)
+                        workload_max = tech_skills.get("workload_max", 10)
+                        if workload_current < workload_max:
+                            # On-call tech has capacity - prioritize them
+                            print(f"✅ Assigning to on-call technician: {on_call_tech.get('name')}")
+                            return [tech_skills]
+        except Exception as e:
+            print(f"⚠️ Error checking on-call schedule: {e}")
+        
+        # PRIORITY 2: Get available technicians normally
         query = {"availability": "available"}
         
         # Filter by specific technicians if provided
