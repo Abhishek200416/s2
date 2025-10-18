@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
  * Runbook Library - Browse and execute pre-built MSP runbooks
  */
 const RunbookLibrary = () => {
+  const navigate = useNavigate();
   const [library, setLibrary] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
