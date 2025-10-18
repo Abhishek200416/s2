@@ -364,7 +364,7 @@ signature = hmac.new(
 
 # Send webhook with headers
 response = requests.post(
-    "${backendUrl}/api/webhooks/alerts?api_key=YOUR_API_KEY",
+    "${backendUrl}/webhooks/alerts?api_key=YOUR_API_KEY",
     headers={
         "Content-Type": "application/json",
         "${webhookSecurity.signature_header}": f"sha256={signature}",
