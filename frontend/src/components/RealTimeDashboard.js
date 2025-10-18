@@ -333,7 +333,7 @@ const RealTimeDashboard = ({ companyId, companyName }) => {
                 <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700">
+                <SelectContent className="bg-slate-900 border-slate-700 text-white">
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="new">New</SelectItem>
