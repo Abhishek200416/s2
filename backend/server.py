@@ -5221,7 +5221,7 @@ class DemoDataRequest(BaseModel):
 
 @api_router.post("/demo/generate-data")
 async def generate_demo_data(request: DemoDataRequest):
-    """Generate demo alerts one-by-one for better monitoring"""
+    """Generate demo alerts one-by-one for better monitoring with slow generation"""
     company = await db.companies.find_one({"id": request.company_id}, {"_id": 0})
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
@@ -5247,7 +5247,7 @@ async def generate_demo_data(request: DemoDataRequest):
     created_alerts = []
     created_count = 0
     
-    # Generate alerts one-by-one with small delay for better monitoring
+    # Generate alerts one-by-one with random delay between 0.5-1.5 seconds
     for i in range(request.count):
         template = random.choice(alert_templates)
         asset = random.choice(assets)
@@ -5279,8 +5279,9 @@ async def generate_demo_data(request: DemoDataRequest):
             }
         })
         
-        # Small delay to allow monitoring (1ms per alert)
-        await asyncio.sleep(0.001)
+        # Random delay between 0.5-1.5 seconds for slow visible generation
+        delay = random.uniform(0.5, 1.5)
+        await asyncio.sleep(delay)
         
         # Save sample alerts
         if created_count <= 10:
