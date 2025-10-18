@@ -209,7 +209,7 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                       <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-700">
+                      <SelectContent className="bg-slate-900 border-slate-700 text-white">
                         <SelectItem value="100">100 Alerts (Default)</SelectItem>
                         <SelectItem value="1000">1,000 Alerts</SelectItem>
                         <SelectItem value="10000">10,000 Alerts</SelectItem>
