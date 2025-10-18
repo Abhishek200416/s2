@@ -68,6 +68,15 @@ const CompanyManagement = ({ onCompanyChange }) => {
     }
   };
 
+  const loadAssetTypes = async () => {
+    try {
+      const response = await api.get('/asset-types');
+      setAssetTypes(response.data.asset_types || []);
+    } catch (error) {
+      console.error('Failed to load asset types:', error);
+    }
+  };
+
   const createCompany = async () => {
     try {
       const response = await api.post('/companies', formData);
