@@ -5599,6 +5599,46 @@ agent_instance = None
 sla_service_instance = None
 tracking_service = None  # Client tracking service
 
+# ============= Background Auto-Correlation Task =============
+async def auto_correlation_background_task():
+    """Background task that runs alert correlation every 1 minute for all companies"""
+    logger.info("🔄 Auto-correlation background task started")
+    
+    while True:
+        try:
+            # Wait 1 minute between runs
+            await asyncio.sleep(60)
+            
+            # Get all companies
+            companies = await db.companies.find({}, {"_id": 0, "id": 1}).to_list(None)
+            
+            for company in companies:
+                company_id = company["id"]
+                
+                # Check if auto-correlation is enabled for this company
+                config = await db.correlation_config.find_one({"company_id": company_id})
+                if config and config.get("auto_correlate", True):
+                    try:
+                        # Run correlation
+                        await correlate_alerts(company_id)
+                        logger.info(f"✅ Auto-correlation completed for company {company_id}")
+                        
+                        # Broadcast update via WebSocket
+                        await manager.broadcast({
+                            "type": "auto_correlation_complete",
+                            "data": {
+                                "company_id": company_id,
+                                "timestamp": datetime.now(timezone.utc).isoformat()
+                            }
+                        })
+                    except Exception as e:
+                        logger.error(f"❌ Auto-correlation failed for company {company_id}: {e}")
+        
+        except Exception as e:
+            logger.error(f"❌ Auto-correlation background task error: {e}")
+            # Continue running even if there's an error
+            await asyncio.sleep(60)
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize services and database indexes on startup"""
