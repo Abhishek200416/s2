@@ -5027,21 +5027,7 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 
-# Include the router in the main app
-app.include_router(api_router)
-
-# Include agent router (imported at startup)
-from agent_service import router as agent_router
-app.include_router(agent_router, prefix="/api")
-
-# Include MSP platform router with all new MSP features
-try:
-    from msp_endpoints import msp_router, set_database
-    set_database(db)  # Pass db to MSP endpoints
-    app.include_router(msp_router)
-    print("✅ MSP Platform endpoints loaded successfully")
-except Exception as e:
-    print(f"⚠️  MSP Platform endpoints failed to load: {e}")
+# Router will be included after all endpoints are defined (see bottom of file)
 
 app.add_middleware(
     CORSMiddleware,
