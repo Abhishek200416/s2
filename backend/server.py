@@ -5214,6 +5214,332 @@ from db_init import init_indexes, cleanup_expired_data
 import signal
 import sys
 
+# ============= Demo Mode & Auto-Correlation Endpoints =============
+
+# Auto-correlation configuration model
+class AutoCorrelationConfig(BaseModel):
+    """Auto-correlation configuration"""
+    company_id: str
+    enabled: bool = True
+    interval_minutes: int = 2  # 1, 2, or 5 minutes
+    last_run: Optional[str] = None
+
+@api_router.get("/demo/company")
+async def get_or_create_demo_company():
+    """Get or create demo company for testing"""
+    # Check if demo company exists
+    demo_company = await db.companies.find_one({"name": "Demo Company"}, {"_id": 0})
+    
+    if demo_company:
+        return demo_company
+    
+    # Create demo company
+    company = Company(
+        id="company-demo",
+        name="Demo Company",
+        policy={"auto_approve_low_risk": True, "maintenance_window": "Sat 22:00-02:00"},
+        assets=[
+            {"id": "asset-demo-1", "name": "demo-server-01", "type": "Server", "is_critical": True, "tags": ["demo", "testing"]},
+            {"id": "asset-demo-2", "name": "demo-db-01", "type": "Database", "is_critical": True, "tags": ["demo", "testing"]},
+            {"id": "asset-demo-3", "name": "demo-web-01", "type": "Application", "is_critical": False, "tags": ["demo", "testing"]}
+        ],
+        critical_assets=["asset-demo-1", "asset-demo-2"],
+        api_key=generate_api_key(),
+        api_key_created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(timezone.utc).isoformat()
+    )
+    
+    await db.companies.insert_one(company.model_dump())
+    
+    # Initialize configurations
+    webhook_security = WebhookSecurityConfig(
+        company_id="company-demo",
+        enabled=True,
+        hmac_secret=generate_hmac_secret()
+    )
+    await db.webhook_security.insert_one(webhook_security.model_dump())
+    
+    correlation_config = CorrelationConfig(
+        company_id="company-demo",
+        time_window_minutes=15,
+        aggregation_key="asset|signature",
+        auto_correlate=True
+    )
+    await db.correlation_config.insert_one(correlation_config.model_dump())
+    
+    return company.model_dump()
+
+class DemoDataRequest(BaseModel):
+    """Request to generate demo data"""
+    count: int = 100  # 100, 1000, or 10000
+    company_id: str = "company-demo"
+
+@api_router.post("/demo/generate-data")
+async def generate_demo_data(request: DemoDataRequest):
+    """Generate demo alerts and incidents for testing"""
+    company = await db.companies.find_one({"id": request.company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Alert templates with various severities and categories
+    alert_templates = [
+        {"signature": "high_cpu_usage", "severity": "high", "category": "Server", "message": "CPU usage above 90%"},
+        {"signature": "disk_space_low", "severity": "critical", "category": "Storage", "message": "Disk space below 10%"},
+        {"signature": "memory_leak", "severity": "high", "category": "Application", "message": "Memory usage increasing steadily"},
+        {"signature": "database_connection_timeout", "severity": "critical", "category": "Database", "message": "DB connection timeout"},
+        {"signature": "api_response_slow", "severity": "medium", "category": "Application", "message": "API response time > 5s"},
+        {"signature": "network_latency_high", "severity": "high", "category": "Network", "message": "Network latency > 100ms"},
+        {"signature": "ssl_certificate_expiring", "severity": "medium", "category": "Security", "message": "SSL cert expires in 7 days"},
+        {"signature": "backup_failed", "severity": "critical", "category": "Storage", "message": "Backup job failed"},
+        {"signature": "unauthorized_access_attempt", "severity": "critical", "category": "Security", "message": "Multiple failed login attempts"},
+        {"signature": "service_unavailable", "severity": "critical", "category": "Application", "message": "Service not responding"}
+    ]
+    
+    assets = company.get("assets", [])
+    if not assets:
+        assets = [{"id": "asset-1", "name": "server-01", "type": "Server"}]
+    
+    created_alerts = []
+    created_count = 0
+    
+    # Generate alerts
+    for i in range(request.count):
+        template = random.choice(alert_templates)
+        asset = random.choice(assets)
+        
+        alert = Alert(
+            company_id=request.company_id,
+            asset_id=asset["id"],
+            asset_name=asset["name"],
+            signature=template["signature"],
+            severity=template["severity"],
+            message=f"{template['message']} on {asset['name']}",
+            tool_source="Demo System",
+            status="active",
+            timestamp=datetime.now(timezone.utc).isoformat()
+        )
+        
+        await db.alerts.insert_one(alert.model_dump())
+        created_alerts.append(alert.model_dump())
+        created_count += 1
+        
+        # Broadcast via WebSocket
+        await manager.broadcast({
+            "type": "alert_received",
+            "data": alert.model_dump()
+        })
+    
+    # Auto-correlate if enabled
+    correlation_config = await db.correlation_config.find_one({"company_id": request.company_id})
+    if correlation_config and correlation_config.get("auto_correlate", True):
+        # Run correlation
+        try:
+            await correlate_alerts(request.company_id)
+        except Exception as e:
+            logger.error(f"Auto-correlation error: {e}")
+    
+    return {
+        "message": f"Generated {created_count} demo alerts",
+        "count": created_count,
+        "company_id": request.company_id,
+        "alerts_sample": created_alerts[:10]  # Return first 10 as sample
+    }
+
+@api_router.get("/demo/script")
+async def get_demo_script(company_id: str):
+    """Get Python script for external testing"""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    webhook_security = await db.webhook_security.find_one({"company_id": company_id})
+    
+    backend_url = os.getenv("BACKEND_URL", "http://localhost:8001")
+    api_key = company.get("api_key", "")
+    hmac_secret = webhook_security.get("hmac_secret", "") if webhook_security and webhook_security.get("enabled") else None
+    
+    script = f'''#!/usr/bin/env python3
+"""
+Alert Whisperer - External Testing Script
+Sends test alerts to your webhook endpoint every 30 seconds
+"""
+import requests
+import time
+import hmac
+import hashlib
+import json
+from datetime import datetime
+
+# Configuration
+WEBHOOK_URL = "{backend_url}/api/webhooks/alerts"
+API_KEY = "{api_key}"
+HMAC_SECRET = "{hmac_secret}"  # Leave empty if HMAC is disabled
+HMAC_ENABLED = {"true" if hmac_secret else "false"}
+
+# Alert templates
+ALERT_TEMPLATES = [
+    {{"asset_name": "server-01", "signature": "high_cpu_usage", "severity": "critical", 
+      "message": "CPU usage above 95%", "tool_source": "External Test"}},
+    {{"asset_name": "db-01", "signature": "database_connection_timeout", "severity": "high",
+      "message": "Database connection timeout detected", "tool_source": "External Test"}},
+    {{"asset_name": "web-01", "signature": "api_response_slow", "severity": "medium",
+      "message": "API response time exceeded threshold", "tool_source": "External Test"}},
+]
+
+def compute_hmac_signature(payload, timestamp):
+    """Compute HMAC-SHA256 signature"""
+    if not HMAC_ENABLED or not HMAC_SECRET:
+        return None
+    message = f"{{timestamp}}.{{payload}}"
+    signature = hmac.new(
+        HMAC_SECRET.encode(),
+        message.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return f"sha256={{signature}}"
+
+def send_alert(alert_data):
+    """Send alert to webhook"""
+    payload = json.dumps(alert_data)
+    timestamp = str(int(time.time()))
+    
+    headers = {{"Content-Type": "application/json"}}
+    
+    # Add HMAC headers if enabled
+    if HMAC_ENABLED and HMAC_SECRET:
+        signature = compute_hmac_signature(payload, timestamp)
+        headers["X-Signature"] = signature
+        headers["X-Timestamp"] = timestamp
+    
+    url = f"{{WEBHOOK_URL}}?api_key={{API_KEY}}"
+    
+    try:
+        response = requests.post(url, data=payload, headers=headers)
+        if response.status_code == 200:
+            print(f"✅ Alert sent: {{alert_data['signature']}} - {{response.json()}}")
+        else:
+            print(f"❌ Failed: {{response.status_code}} - {{response.text}}")
+    except Exception as e:
+        print(f"❌ Error: {{e}}")
+
+if __name__ == "__main__":
+    print("🚀 Starting external alert testing...")
+    print(f"Webhook URL: {{WEBHOOK_URL}}")
+    print(f"HMAC Enabled: {{HMAC_ENABLED}}")
+    print("Sending alerts every 30 seconds (Press Ctrl+C to stop)\\n")
+    
+    count = 0
+    try:
+        while True:
+            # Cycle through alert templates
+            alert = ALERT_TEMPLATES[count % len(ALERT_TEMPLATES)]
+            send_alert(alert)
+            count += 1
+            time.sleep(30)  # Wait 30 seconds
+    except KeyboardInterrupt:
+        print(f"\\n🛑 Stopped after {{count}} alerts")
+'''
+    
+    return {
+        "script": script,
+        "filename": "alert_test_script.py",
+        "instructions": [
+            "1. Copy the script above to a file named 'alert_test_script.py'",
+            "2. Make it executable: chmod +x alert_test_script.py",
+            "3. Install requests: pip install requests",
+            "4. Run the script: python3 alert_test_script.py",
+            "5. The script will send test alerts every 30 seconds",
+            "6. Press Ctrl+C to stop the script"
+        ]
+    }
+
+@api_router.get("/auto-correlation/config")
+async def get_auto_correlation_config(company_id: str):
+    """Get auto-correlation configuration"""
+    config = await db.auto_correlation_config.find_one({"company_id": company_id}, {"_id": 0})
+    if not config:
+        # Return default config
+        return {
+            "company_id": company_id,
+            "enabled": True,
+            "interval_minutes": 2,
+            "last_run": None
+        }
+    return config
+
+@api_router.put("/auto-correlation/config")
+async def update_auto_correlation_config(config: AutoCorrelationConfig):
+    """Update auto-correlation configuration"""
+    if config.interval_minutes not in [1, 2, 5]:
+        raise HTTPException(status_code=400, detail="Interval must be 1, 2, or 5 minutes")
+    
+    await db.auto_correlation_config.update_one(
+        {"company_id": config.company_id},
+        {"$set": config.model_dump()},
+        upsert=True
+    )
+    
+    return config
+
+@api_router.post("/auto-correlation/run")
+async def run_auto_correlation(company_id: str):
+    """Manually trigger correlation and return statistics"""
+    try:
+        # Get uncorrelated alerts
+        alerts_before = await db.alerts.count_documents({
+            "company_id": company_id,
+            "status": "active"
+        })
+        
+        # Run correlation
+        result = await correlate_alerts(company_id)
+        
+        # Get alerts after correlation
+        alerts_after = await db.alerts.count_documents({
+            "company_id": company_id,
+            "status": "active"
+        })
+        
+        incidents_created = result.get("incidents_created", 0)
+        
+        # Calculate statistics
+        alerts_correlated = alerts_before - alerts_after
+        noise_removed = alerts_correlated
+        
+        # Check for duplicates (alerts with same signature)
+        pipeline = [
+            {"$match": {"company_id": company_id}},
+            {"$group": {"_id": "$signature", "count": {"$sum": 1}}},
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+        duplicates = await db.alerts.aggregate(pipeline).to_list(100)
+        duplicate_count = sum([d["count"] - 1 for d in duplicates])
+        
+        stats = {
+            "alerts_before": alerts_before,
+            "alerts_after": alerts_after,
+            "incidents_created": incidents_created,
+            "alerts_correlated": alerts_correlated,
+            "noise_removed": noise_removed,
+            "duplicates_found": duplicate_count,
+            "duplicate_groups": len(duplicates),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Update last run timestamp
+        await db.auto_correlation_config.update_one(
+            {"company_id": company_id},
+            {"$set": {"last_run": datetime.now(timezone.utc).isoformat()}},
+            upsert=True
+        )
+        
+        return stats
+    except Exception as e:
+        logger.error(f"Auto-correlation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============= Global Variables for Services =============
 # Initialize services (will be done in startup event)
 auth_service = None
 memory_service = None
