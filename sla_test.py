@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://alert-runbook-mgmt.preview.emergentagent.com/api"
+BACKEND_URL = "https://incident-hub-10.preview.emergentagent.com/api"
 
 class SLATester:
     def __init__(self):
