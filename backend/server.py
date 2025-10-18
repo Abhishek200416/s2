@@ -1275,11 +1275,29 @@ async def get_users(current_user: User = Depends(get_current_user)):
     users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
     return users
 
+@api_router.get("/technician-categories")
+async def get_technician_categories():
+    """Get available technician categories for MSP"""
+    return {
+        "categories": [
+            "Network",
+            "Database", 
+            "Security",
+            "Server",
+            "Application",
+            "Storage",
+            "Cloud",
+            "Custom"
+        ],
+        "description": "MSP standard technician specialization categories"
+    }
+
 class UserCreateRequest(BaseModel):
     name: str
     email: str
     password: str
     role: str = "technician"
+    category: Optional[str] = None  # For technicians
 
 @api_router.post("/users", response_model=User)
 async def create_user(user_data: UserCreateRequest, current_user: User = Depends(get_current_user)):
