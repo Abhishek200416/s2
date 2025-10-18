@@ -592,13 +592,20 @@ const CompanyManagement = ({ onCompanyChange }) => {
         </DialogContent>
       </Dialog>
 
-      {/* MSP-Style Onboarding Dialog */}
+      {/* Company Onboarding Dialog */}
       <Dialog open={showOnboardingDialog} onOpenChange={setShowOnboardingDialog}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-700">
-          <MSPOnboardingWizard
-            onSuccess={handleOnboardingSuccess}
-            onCancel={() => setShowOnboardingDialog(false)}
-          />
+          {useSimplifiedOnboarding ? (
+            <SimplifiedCompanyOnboarding
+              onSuccess={handleOnboardingSuccess}
+              onCancel={() => setShowOnboardingDialog(false)}
+            />
+          ) : (
+            <MSPOnboardingWizard
+              onSuccess={handleOnboardingSuccess}
+              onCancel={() => setShowOnboardingDialog(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
