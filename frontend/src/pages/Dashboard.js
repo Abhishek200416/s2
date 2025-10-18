@@ -33,6 +33,7 @@ import CompanyManagement from '../components/CompanyManagement';
 import ActivityFeed from '../components/ActivityFeed';
 import AgentHealthDashboard from '../components/AgentHealthDashboard';
 import AssetInventory from '../components/AssetInventory';
+import CustomRunbookManager from './CustomRunbookManager';
 
 const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
