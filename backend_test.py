@@ -20,8 +20,17 @@ import os
 from datetime import datetime
 import time
 
-# Use production backend URL as specified in review request
-BACKEND_URL = "https://security-hub-14.preview.emergentagent.com/api"
+# Get backend URL from frontend .env file
+try:
+    with open('/app/frontend/.env', 'r') as f:
+        for line in f:
+            if line.startswith('REACT_APP_BACKEND_URL='):
+                BACKEND_URL = line.split('=', 1)[1].strip()
+                break
+        else:
+            BACKEND_URL = "http://localhost:8001/api"
+except:
+    BACKEND_URL = "http://localhost:8001/api"
 
 class AlertWhispererTester:
     def __init__(self):
