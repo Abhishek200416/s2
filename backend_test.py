@@ -1561,13 +1561,15 @@ class AlertWhispererTester:
         response = self.make_request('GET', '/companies/comp-acme/sla-config')
         if response and response.status_code == 200:
             sla_config = response.json()
-            response_sla = sla_config.get('response_sla', {})
-            resolution_sla = sla_config.get('resolution_sla', {})
+            response_time = sla_config.get('response_time_minutes', {})
+            resolution_time = sla_config.get('resolution_time_minutes', {})
+            enabled = sla_config.get('enabled', False)
+            escalation_enabled = sla_config.get('escalation_enabled', False)
             
-            if response_sla and resolution_sla:
-                self.log_result("Get SLA Configuration", True, f"SLA config retrieved - Response SLA: {response_sla}, Resolution SLA: {resolution_sla}")
+            if response_time and resolution_time:
+                self.log_result("Get SLA Configuration", True, f"SLA config retrieved - Enabled: {enabled}, Response times: {response_time}, Resolution times: {resolution_time}, Escalation: {escalation_enabled}")
             else:
-                self.log_result("Get SLA Configuration", False, "SLA config missing response_sla or resolution_sla")
+                self.log_result("Get SLA Configuration", False, "SLA config missing response_time_minutes or resolution_time_minutes")
         else:
             self.log_result("Get SLA Configuration", False, f"Failed to get SLA config: {response.status_code if response else 'No response'}")
     
