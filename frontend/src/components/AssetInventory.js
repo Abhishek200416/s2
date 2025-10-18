@@ -12,8 +12,6 @@ const AssetInventory = ({ companyId }) => {
   const [assets, setAssets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all'); // all, running, stopped
-  const [filterSSM, setFilterSSM] = useState('all'); // all, enabled, disabled
 
   useEffect(() => {
     loadAssets();
