@@ -23,8 +23,41 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
   useEffect(() => {
     if (isOpen) {
       loadDemoCompany();
+      setupWebSocket();
     }
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, [isOpen]);
+
+  const setupWebSocket = () => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+    const wsUrl = backendUrl.replace('http', 'ws').replace('/api', '') + '/ws';
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      
+      if (message.type === 'demo_progress') {
+        setProgress({
+          current: message.data.current,
+          total: message.data.total,
+          percentage: message.data.percentage
+        });
+      } else if (message.type === 'demo_status') {
+        setStatus(message.data.message);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    wsRef.current = ws;
+  };
 
   const loadDemoCompany = async () => {
     try {
