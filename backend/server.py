@@ -3567,6 +3567,28 @@ async def seed_database():
             name="TechStart Technician",
             role="technician",
             company_ids=["comp-techstart"]
+        ),
+        # Client users for each company
+        UserCreate(
+            email="client@acme.com",
+            password="client123",
+            name="Acme Client Admin",
+            role="client",
+            company_ids=["comp-acme"]
+        ),
+        UserCreate(
+            email="client@techstart.com",
+            password="client123",
+            name="TechStart Client Admin",
+            role="client",
+            company_ids=["comp-techstart"]
+        ),
+        UserCreate(
+            email="client@global.com",
+            password="client123",
+            name="Global Services Client Admin",
+            role="client",
+            company_ids=["comp-global"]
         )
     ]
     
