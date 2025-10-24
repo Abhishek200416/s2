@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AlertTriangle, Eye, CheckCircle, Clock, XCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
-const IncidentList = ({ companyId, limit }) => {
+const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   const [incidents, setIncidents] = useState([]);
   const [selectedIncident, setSelectedIncident] = useState(null);
   const [showDecisionDialog, setShowDecisionDialog] = useState(false);
@@ -18,7 +18,7 @@ const IncidentList = ({ companyId, limit }) => {
     if (companyId) {
       loadIncidents();
     }
-  }, [companyId]);
+  }, [companyId, refreshTrigger]);
 
   const loadIncidents = async () => {
     try {
