@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, Eye, CheckCircle, Clock, XCircle, Zap, Settings } from 'lucide-react';
 import { toast } from 'sonner';
-import RealTimeActivityFeed from './RealTimeActivityFeed';
 
 const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   const [incidents, setIncidents] = useState([]);
