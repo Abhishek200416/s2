@@ -2170,6 +2170,38 @@ async def get_incidents(company_id: Optional[str] = None, status: Optional[str] 
     incidents = await db.incidents.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return incidents
 
+@api_router.get("/incidents/stats")
+async def get_incident_stats(company_id: str):
+    """Get incident statistics - decided vs not-decided"""
+    total_incidents = await db.incidents.count_documents({"company_id": company_id})
+    
+    # Decided = incidents that have a decision field populated
+    decided_incidents = await db.incidents.count_documents({
+        "company_id": company_id,
+        "decision": {"$exists": True, "$ne": None}
+    })
+    
+    not_decided_incidents = total_incidents - decided_incidents
+    
+    # Get status breakdown
+    new_count = await db.incidents.count_documents({"company_id": company_id, "status": "new"})
+    in_progress_count = await db.incidents.count_documents({"company_id": company_id, "status": "in_progress"})
+    resolved_count = await db.incidents.count_documents({"company_id": company_id, "status": "resolved"})
+    escalated_count = await db.incidents.count_documents({"company_id": company_id, "status": "escalated"})
+    
+    return {
+        "total": total_incidents,
+        "decided": decided_incidents,
+        "not_decided": not_decided_incidents,
+        "decided_percentage": round((decided_incidents / total_incidents * 100) if total_incidents > 0 else 0, 1),
+        "by_status": {
+            "new": new_count,
+            "in_progress": in_progress_count,
+            "resolved": resolved_count,
+            "escalated": escalated_count
+        }
+    }
+
 @api_router.post("/incidents/correlate")
 async def correlate_alerts(company_id: str):
     """
