@@ -5231,7 +5231,7 @@ class AutoCorrelationConfig(BaseModel):
     """Auto-correlation configuration"""
     company_id: str
     enabled: bool = True
-    interval_minutes: int = 2  # 1, 2, or 5 minutes
+    interval_seconds: int = 1  # 1, 5, 10, 15, 30, 60 seconds (or 120, 300 for minutes)
     last_run: Optional[str] = None
 
 @api_router.get("/demo/company")
