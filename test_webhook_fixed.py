@@ -9,7 +9,7 @@ import datetime
 # --- CONFIGURE THESE ---
 API_KEY = "aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0"
 # FIXED: Removed double /api/api/ - now using single /api/
-WEBHOOK_URL = "https://tech-alerts.preview.emergentagent.com/api/webhooks/alerts"
+WEBHOOK_URL = "https://loadbar-alerts.preview.emergentagent.com/api/webhooks/alerts"
 
 print("=" * 60)
 print("Alert Whisperer - Webhook Test (FIXED URL)")

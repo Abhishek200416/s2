@@ -18,7 +18,7 @@ This caused 404 errors when trying to send alerts.
 **Fixed the URL** to use single `/api/`:
 
 ```
-✅ CORRECT: https://tech-alerts.preview.emergentagent.com/api/webhooks/alerts
+✅ CORRECT: https://loadbar-alerts.preview.emergentagent.com/api/webhooks/alerts
                                                         ^^^^
 ```
 
@@ -36,7 +36,7 @@ import datetime
 # --- CONFIGURE THESE ---
 API_KEY = "aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0"
 # ✅ FIXED: Single /api/ not double /api/api/
-WEBHOOK_URL = "https://tech-alerts.preview.emergentagent.com/api/webhooks/alerts"
+WEBHOOK_URL = "https://loadbar-alerts.preview.emergentagent.com/api/webhooks/alerts"
 
 # Example alert payload
 payload = {
@@ -103,12 +103,12 @@ aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0
 
 **Webhook URL** (CORRECTED):
 ```
-https://tech-alerts.preview.emergentagent.com/api/webhooks/alerts
+https://loadbar-alerts.preview.emergentagent.com/api/webhooks/alerts
 ```
 
 **cURL Example** (CORRECTED):
 ```bash
-curl -X POST "https://tech-alerts.preview.emergentagent.com/api/webhooks/alerts?api_key=aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0" \
+curl -X POST "https://loadbar-alerts.preview.emergentagent.com/api/webhooks/alerts?api_key=aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0" \
   -H "Content-Type: application/json" \
   -d '{
     "asset_name": "server-01",
@@ -156,7 +156,7 @@ When you send an alert:
 Run this one-liner to test:
 
 ```bash
-curl -X POST "https://tech-alerts.preview.emergentagent.com/api/webhooks/alerts?api_key=aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0" -H "Content-Type: application/json" -d '{"asset_name":"test-server","signature":"test_alert","severity":"high","message":"Test message","tool_source":"Manual Test"}'
+curl -X POST "https://loadbar-alerts.preview.emergentagent.com/api/webhooks/alerts?api_key=aw_7pmImwLYV7IlDEfgIX52G2IHosxnyqELNDdfie2ABn0" -H "Content-Type: application/json" -d '{"asset_name":"test-server","signature":"test_alert","severity":"high","message":"Test message","tool_source":"Manual Test"}'
 ```
 
 Expected response:
