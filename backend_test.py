@@ -25,7 +25,12 @@ try:
     with open('/app/frontend/.env', 'r') as f:
         for line in f:
             if line.startswith('REACT_APP_BACKEND_URL='):
-                BACKEND_URL = line.split('=', 1)[1].strip()
+                base_url = line.split('=', 1)[1].strip()
+                # Add /api suffix if not present
+                if not base_url.endswith('/api'):
+                    BACKEND_URL = f"{base_url}/api"
+                else:
+                    BACKEND_URL = base_url
                 break
         else:
             BACKEND_URL = "http://localhost:8001/api"
