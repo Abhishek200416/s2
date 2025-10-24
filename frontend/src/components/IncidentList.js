@@ -179,9 +179,9 @@ const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Column - Incidents List (2/3 width) */}
-      <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6">
+      {/* Incidents List (full width) */}
+      <div className="space-y-6">
         {/* Auto-Decide Configuration Card */}
         {!limit && !loadingConfig && autoDecideConfig && (
           <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30">
