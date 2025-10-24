@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Activity, Target, CheckCircle, AlertTriangle, Shield } from 'lucide-react';
 
-const KPIImpactDashboard = ({ companyId }) => {
+const KPIImpactDashboard = ({ companyId, refreshTrigger }) => {
   const [impactData, setImpactData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +12,7 @@ const KPIImpactDashboard = ({ companyId }) => {
     if (companyId) {
       loadImpactData();
     }
-  }, [companyId]);
+  }, [companyId, refreshTrigger]);
 
   const loadImpactData = async () => {
     try {
