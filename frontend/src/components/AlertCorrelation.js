@@ -21,6 +21,29 @@ const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
     loadAutoCorrelationConfig();
   }, [companyId, refreshTrigger]);
 
+  // Auto-correlation timer effect
+  useEffect(() => {
+    if (!autoCorrelationConfig || !autoCorrelationConfig.enabled || correlating) {
+      return;
+    }
+
+    const intervalMs = (autoCorrelationConfig.interval_seconds || 1) * 1000;
+    
+    const timer = setInterval(async () => {
+      if (!correlating && activeAlerts.length > 0) {
+        try {
+          const response = await api.post(`/auto-correlation/run?company_id=${companyId}`);
+          setCorrelationStats(response.data);
+          await loadAlerts();
+        } catch (error) {
+          console.error('Auto-correlation failed:', error);
+        }
+      }
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [autoCorrelationConfig, companyId, correlating, activeAlerts.length]);
+
   const loadAlerts = async () => {
     try {
       const response = await api.get(`/alerts?company_id=${companyId}&status=active`);
