@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingDown, CheckCircle, Clock, Info, ArrowRight, Calculator } from 'lucide-react';
 
-const LiveKPIProof = ({ companyId }) => {
+const LiveKPIProof = ({ companyId, refreshTrigger }) => {
   const [impactData, setImpactData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +13,7 @@ const LiveKPIProof = ({ companyId }) => {
       const interval = setInterval(loadImpactData, 30000);
       return () => clearInterval(interval);
     }
-  }, [companyId]);
+  }, [companyId, refreshTrigger]);
 
   const loadImpactData = async () => {
     try {
