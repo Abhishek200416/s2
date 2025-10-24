@@ -155,16 +155,19 @@ class AutoDecideTester:
                         "tool_source": "AutoDecideTest"
                     }
                     
-                    response = self.make_request('POST', f'/webhooks/alerts?api_key={demo_api_key}', json=webhook_payload)
-                    if response and response.status_code == 200:
-                        webhook_result = response.json()
-                        alert_id = webhook_result.get('alert_id')
-                        alerts_created.append(alert_id)
-                        print(f"  Created alert {i+1}: {alert_id}")
-                    else:
-                        print(f"  Failed to create alert {i+1}: {response.status_code if response else 'No response'}")
-                        if response:
-                            print(f"    Response: {response.text}")
+                    try:
+                        response = self.make_request('POST', f'/webhooks/alerts?api_key={demo_api_key}', json=webhook_payload)
+                        if response and response.status_code == 200:
+                            webhook_result = response.json()
+                            alert_id = webhook_result.get('alert_id')
+                            alerts_created.append(alert_id)
+                            print(f"  Created alert {i+1}: {alert_id}")
+                        else:
+                            print(f"  Failed to create alert {i+1}: {response.status_code if response else 'No response'}")
+                            if response:
+                                print(f"    Response: {response.text}")
+                    except Exception as e:
+                        print(f"  Exception creating alert {i+1}: {e}")
                 
                 if len(alerts_created) >= 3:
                     self.log_result("Create Test Alerts", True, f"Created {len(alerts_created)} test alerts")
