@@ -443,7 +443,6 @@ const IncidentList = ({ companyId, limit, refreshTrigger }) => {
           )}
         </DialogContent>
       </Dialog>
-      </div>
       
       {/* Right Column - Real-Time Activity Feed (1/3 width) */}
       {!limit && (
