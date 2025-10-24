@@ -175,7 +175,7 @@ const RunbookLibrary = () => {
       {/* Category Tabs */}
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
         <TabsList className="bg-slate-800 border-slate-700">
-          <TabsTrigger value="all" className="data-[state=active]:bg-cyan-600">
+          <TabsTrigger value="all" className="data-[state=active]:bg-purple-600">
             All ({library.total_count})
           </TabsTrigger>
           {library.category_list.map(category => {
@@ -185,7 +185,7 @@ const RunbookLibrary = () => {
               <TabsTrigger 
                 key={category} 
                 value={category}
-                className="data-[state=active]:bg-cyan-600"
+                className="data-[state=active]:bg-purple-600"
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {category.charAt(0).toUpperCase() + category.slice(1)} ({count})
