@@ -233,18 +233,18 @@ const CustomRunbookManager = ({ companyId, refreshTrigger }) => {
             const riskColor = getRiskColor(runbook.risk_level);
             
             return (
-              <Card key={runbook.id} className="bg-slate-800 border-slate-700 hover:border-cyan-500 transition-all">
+              <Card key={runbook.id} className="bg-slate-900/90 border-slate-700/50 hover:border-purple-500 transition-all">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-2">
-                    <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-cyan-400" />
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-purple-400" />
                     </div>
                     <Badge className={`bg-${riskColor}-500/20 text-${riskColor}-400 border-${riskColor}-500/30`}>
                       {runbook.risk_level}
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg text-white">{runbook.name}</CardTitle>
-                  <CardDescription className="text-slate-400 text-sm">
+                  <CardTitle className="text-lg" style={{ color: 'hsl(var(--card-foreground))' }}>{runbook.name}</CardTitle>
+                  <CardDescription className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
                     {runbook.description}
                   </CardDescription>
                 </CardHeader>
