@@ -201,7 +201,7 @@ const RunbookLibrary = () => {
               const riskColor = riskColors[runbook.risk_level] || 'slate';
               
               return (
-                <Card key={index} className="bg-slate-800 border-slate-700 hover:border-purple-500 transition-all">
+                <Card key={index} className="bg-slate-900/90 border-slate-700/50 hover:border-purple-500 transition-all">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
@@ -211,8 +211,8 @@ const RunbookLibrary = () => {
                         {runbook.risk_level}
                       </Badge>
                     </div>
-                    <CardTitle className="text-lg text-white">{runbook.name}</CardTitle>
-                    <CardDescription className="text-slate-400 text-sm">
+                    <CardTitle className="text-lg" style={{ color: 'hsl(var(--card-foreground))' }}>{runbook.name}</CardTitle>
+                    <CardDescription className="text-sm" style={{ color: 'hsl(var(--muted-foreground))' }}>
                       {runbook.description}
                     </CardDescription>
                   </CardHeader>
