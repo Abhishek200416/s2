@@ -2301,10 +2301,25 @@ async def correlate_alerts(company_id: str):
         if len(alert_group) == 0:
             continue
         
+        processed_groups += 1
         first_alert = alert_group[0]
         
         # Track unique tool sources
         tool_sources = list(set(a['tool_source'] for a in alert_group))
+        
+        # Broadcast progress periodically (every 5 incidents)
+        if processed_groups % 5 == 0 or processed_groups == total_groups:
+            await manager.broadcast({
+                "type": "correlation_progress",
+                "data": {
+                    "company_id": company_id,
+                    "status": "processing",
+                    "message": f"Processing incidents: {processed_groups}/{total_groups}",
+                    "processed": processed_groups,
+                    "total": total_groups,
+                    "percentage": round((processed_groups / total_groups) * 100, 1) if total_groups > 0 else 0
+                }
+            })
         
         # Check if incident already exists (within last 24 hours)
         cutoff_time = (now - timedelta(hours=24)).isoformat()
