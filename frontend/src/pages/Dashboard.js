@@ -482,6 +482,14 @@ const Dashboard = ({ user, onLogout }) => {
                   Incidents
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="analysis" 
+                  className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
+                  data-testid="tab-analysis"
+                >
+                  <TrendingDown className="w-4 h-4 mr-2" />
+                  Analysis
+                </TabsTrigger>
+                <TabsTrigger 
                   value="asset-inventory" 
                   className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400"
                 >
