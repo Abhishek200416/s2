@@ -1668,27 +1668,32 @@ class AlertWhispererTester:
         
         # Test 4: Create test alerts for correlation (need incidents to auto-decide)
         alerts_created = []
-        for i in range(3):
-            webhook_payload = {
-                "asset_name": "srv-auto-decide-01",
-                "signature": "auto_decide_test_alert",
-                "severity": "high",
-                "message": f"Auto-decide test alert {i+1}",
-                "tool_source": "AutoDecideTest"
-            }
+        
+        # First get or create demo company
+        demo_response = self.make_request('GET', '/demo/company')
+        if demo_response and demo_response.status_code == 200:
+            demo_company = demo_response.json()
+            demo_api_key = demo_company.get('api_key')
             
-            # Use company-demo API key (need to get it first)
-            demo_response = self.make_request('GET', '/demo/company')
-            if demo_response and demo_response.status_code == 200:
-                demo_company = demo_response.json()
-                demo_api_key = demo_company.get('api_key')
-                
-                if demo_api_key:
+            if demo_api_key:
+                for i in range(3):
+                    webhook_payload = {
+                        "asset_name": "srv-auto-decide-01",
+                        "signature": "auto_decide_test_alert",
+                        "severity": "high",
+                        "message": f"Auto-decide test alert {i+1}",
+                        "tool_source": "AutoDecideTest"
+                    }
+                    
                     response = self.make_request('POST', f'/webhooks/alerts?api_key={demo_api_key}', json=webhook_payload)
                     if response and response.status_code == 200:
                         webhook_result = response.json()
                         alert_id = webhook_result.get('alert_id')
                         alerts_created.append(alert_id)
+            else:
+                self.log_result("Auto-Decide Demo Company Setup", False, "Demo company created but no API key found")
+        else:
+            self.log_result("Auto-Decide Demo Company Setup", False, f"Failed to get/create demo company: {demo_response.status_code if demo_response else 'No response'}")
         
         if len(alerts_created) >= 3:
             self.log_result("Auto-Decide Create Test Alerts", True, f"Created {len(alerts_created)} test alerts for correlation")
