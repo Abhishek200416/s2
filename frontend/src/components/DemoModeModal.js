@@ -205,7 +205,7 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                 <Play className="w-4 h-4 mr-2" />
                 Internal Testing
               </TabsTrigger>
-              <TabsTrigger value="external" onClick={loadTestScript}>
+              <TabsTrigger value="external">
                 <Code className="w-4 h-4 mr-2" />
                 External Testing
               </TabsTrigger>
