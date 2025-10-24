@@ -104,9 +104,9 @@ const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-testid="alert-correlation">
-      {/* Left Column - Correlation Controls & Alerts (2/3 width) */}
-      <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6" data-testid="alert-correlation">
+      {/* Correlation Controls & Alerts (full width) */}
+      <div className="space-y-6">
         {/* Header with Auto-Correlation Settings */}
         <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
           <CardHeader>
