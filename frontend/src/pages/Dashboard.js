@@ -513,7 +513,8 @@ const Dashboard = ({ user, onLogout }) => {
                 
                 <RealTimeDashboard 
                   companyId={selectedCompany} 
-                  companyName={currentCompany?.name} 
+                  companyName={currentCompany?.name}
+                  refreshTrigger={refreshTrigger}
                 />
                 
                 {/* Live KPI Proof with Before/After Comparison */}
@@ -522,29 +523,29 @@ const Dashboard = ({ user, onLogout }) => {
                   <p className="text-slate-400 mb-6">
                     Real-time calculations from production data • Not estimates or ranges
                   </p>
-                  <LiveKPIProof companyId={selectedCompany} />
+                  <LiveKPIProof companyId={selectedCompany} refreshTrigger={refreshTrigger} />
                 </div>
               </TabsContent>
 
               <TabsContent value="impact" className="space-y-6">
-                <KPIImpactDashboard companyId={selectedCompany} />
+                <KPIImpactDashboard companyId={selectedCompany} refreshTrigger={refreshTrigger} />
               </TabsContent>
 
               <TabsContent value="correlation">
-                <AlertCorrelation companyId={selectedCompany} companyName={currentCompany?.name} />
+                <AlertCorrelation companyId={selectedCompany} companyName={currentCompany?.name} refreshTrigger={refreshTrigger} />
               </TabsContent>
 
               <TabsContent value="incidents">
-                <IncidentList companyId={selectedCompany} />
+                <IncidentList companyId={selectedCompany} refreshTrigger={refreshTrigger} />
               </TabsContent>
 
               <TabsContent value="asset-inventory">
-                <AssetInventory companyId={selectedCompany} />
+                <AssetInventory companyId={selectedCompany} refreshTrigger={refreshTrigger} />
               </TabsContent>
 
               <TabsContent value="runbooks">
                 <div className="space-y-6">
-                  <CustomRunbookManager companyId={selectedCompany} />
+                  <CustomRunbookManager companyId={selectedCompany} refreshTrigger={refreshTrigger} />
                   
                   <div className="border-t border-slate-700 pt-6">
                     <div className="flex items-center justify-between mb-4">
