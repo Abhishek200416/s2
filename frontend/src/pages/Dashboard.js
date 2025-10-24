@@ -45,10 +45,13 @@ const Dashboard = ({ user, onLogout }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMSPGuide, setShowMSPGuide] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     loadCompanies();
     loadUnreadCount();
+    setupWebSocket();
+    
     // Poll for unread notifications every 30 seconds
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
@@ -59,6 +62,57 @@ const Dashboard = ({ user, onLogout }) => {
       loadKPIs();
     }
   }, [selectedCompany]);
+
+  const setupWebSocket = () => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+    const wsUrl = backendUrl.replace('http', 'ws').replace('/api', '') + '/ws';
+    
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('Dashboard WebSocket connected');
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('Dashboard received WebSocket message:', message.type);
+        
+        // Trigger refresh for relevant message types
+        if (
+          message.type === 'alert_received' ||
+          message.type === 'incident_created' ||
+          message.type === 'incident_updated' ||
+          message.type === 'notification' ||
+          message.type === 'demo_progress'
+        ) {
+          // Increment refresh trigger to cause child components to reload
+          setRefreshTrigger(prev => prev + 1);
+          
+          // Reload KPIs for dashboard updates
+          if (selectedCompany) {
+            loadKPIs();
+          }
+        }
+        
+        // Handle notification updates
+        if (message.type === 'notification') {
+          loadUnreadCount();
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('Dashboard WebSocket error:', error);
+    };
+    
+    ws.onclose = () => {
+      console.log('Dashboard WebSocket disconnected, reconnecting in 3s...');
+      setTimeout(setupWebSocket, 3000);
+    };
+  };
 
   const loadUnreadCount = async () => {
     try {
