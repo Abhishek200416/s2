@@ -5813,6 +5813,97 @@ async def run_auto_correlation(company_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ============= Auto-Decide Configuration Endpoints =============
+# Auto-decide configuration model
+class AutoDecideConfig(BaseModel):
+    """Auto-decide configuration for incidents"""
+    company_id: str
+    enabled: bool = True
+    interval_seconds: int = 1  # 1, 5, 10, 15, 30, 60 seconds (or 120, 300 for minutes)
+    last_run: Optional[str] = None
+
+@api_router.get("/auto-decide/config")
+async def get_auto_decide_config(company_id: str):
+    """Get auto-decide configuration"""
+    config = await db.auto_decide_config.find_one({"company_id": company_id}, {"_id": 0})
+    
+    if not config:
+        # Return default configuration
+        config = {
+            "company_id": company_id,
+            "enabled": True,
+            "interval_seconds": 1,
+            "last_run": None
+        }
+    
+    return config
+
+@api_router.put("/auto-decide/config")
+async def update_auto_decide_config(config: AutoDecideConfig):
+    """Update auto-decide configuration"""
+    await db.auto_decide_config.update_one(
+        {"company_id": config.company_id},
+        {"$set": config.dict()},
+        upsert=True
+    )
+    return config
+
+@api_router.post("/auto-decide/run")
+async def run_auto_decide(company_id: str):
+    """Manually run auto-decide for all new incidents"""
+    try:
+        # Get all new incidents without decisions
+        incidents = await db.incidents.find({
+            "company_id": company_id,
+            "status": "new"
+        }).to_list(None)
+        
+        processed_count = 0
+        assigned_count = 0
+        executed_count = 0
+        
+        for incident in incidents:
+            try:
+                # Call the decide endpoint for this incident
+                decision_response = await generate_incident_decision(incident["id"], company_id)
+                processed_count += 1
+                
+                if decision_response.get("auto_executed"):
+                    executed_count += 1
+                elif decision_response.get("auto_assigned"):
+                    assigned_count += 1
+                    
+            except Exception as e:
+                logger.error(f"Failed to auto-decide incident {incident['id']}: {e}")
+                continue
+        
+        stats = {
+            "incidents_processed": processed_count,
+            "incidents_assigned": assigned_count,
+            "incidents_executed": executed_count,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        
+        # Update last run timestamp
+        await db.auto_decide_config.update_one(
+            {"company_id": company_id},
+            {"$set": {"last_run": datetime.now(timezone.utc).isoformat()}},
+            upsert=True
+        )
+        
+        # Broadcast completion
+        await manager.broadcast({
+            "type": "auto_decide_batch_complete",
+            "data": stats
+        })
+        
+        return stats
+    except Exception as e:
+        logger.error(f"Auto-decide error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 # ============= Include All Routers =============
 # Include the api_router with all endpoints defined above
 app.include_router(api_router)
