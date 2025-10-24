@@ -89,12 +89,15 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
   const loadTestScript = async () => {
     if (!demoCompany) return;
     
+    setLoading(true);
     try {
       const response = await api.get(`/demo/script?company_id=${demoCompany.id}`);
       setTestScript(response.data);
     } catch (error) {
       console.error('Failed to load test script:', error);
       toast.error('Failed to load test script');
+    } finally {
+      setLoading(false);
     }
   };
 
