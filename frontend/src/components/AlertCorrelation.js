@@ -312,11 +312,6 @@ const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
         </CardContent>
       </Card>
       </div>
-      
-      {/* Right Column - Real-Time Activity Feed (1/3 width) */}
-      <div className="lg:col-span-1">
-        <RealTimeActivityFeed companyId={companyId} />
-      </div>
     </div>
   );
 };
