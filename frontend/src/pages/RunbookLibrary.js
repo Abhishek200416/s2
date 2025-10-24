@@ -281,11 +281,12 @@ const RunbookLibrary = () => {
           <div className="space-y-4">
             {/* Company Selection */}
             <div>
-              <label className="text-white text-sm font-medium mb-2 block">Company</label>
+              <label className="text-sm font-medium mb-2 block" style={{ color: 'hsl(var(--card-foreground))' }}>Company</label>
               <select
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white"
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2"
+                style={{ color: 'hsl(var(--card-foreground))' }}
               >
                 {companies.map(company => (
                   <option key={company.id} value={company.id}>
