@@ -245,7 +245,7 @@ const RunbookLibrary = () => {
                     <Button
                       size="sm"
                       onClick={() => handleExecute(runbook)}
-                      className="w-full bg-cyan-600 hover:bg-cyan-700"
+                      className="w-full bg-purple-600 hover:bg-purple-700"
                     >
                       <Play className="w-4 h-4 mr-2" />
                       Execute
