@@ -522,8 +522,29 @@ const Dashboard = ({ user, onLogout }) => {
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
-                {/* How It Works Guide - Always Visible */}
-                <HowItWorksGuide />
+                {/* Button to scroll to How It Works */}
+                <Card className="bg-gradient-to-r from-cyan-900/20 to-blue-900/20 border-cyan-500/30">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold text-white mb-1">
+                          Welcome to Alert Whisperer Dashboard
+                        </h3>
+                        <p className="text-sm text-slate-400">
+                          Monitor all your alerts, incidents, and automation in real-time
+                        </p>
+                      </div>
+                      <Button 
+                        onClick={scrollToHowItWorks}
+                        variant="outline"
+                        className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                      >
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        See How It Works
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
                 
                 <RealTimeDashboard 
                   companyId={selectedCompany} 
@@ -538,6 +559,11 @@ const Dashboard = ({ user, onLogout }) => {
                     Real-time calculations from production data • Not estimates or ranges
                   </p>
                   <LiveKPIProof companyId={selectedCompany} refreshTrigger={refreshTrigger} />
+                </div>
+
+                {/* How It Works Guide - Moved to Bottom */}
+                <div ref={howItWorksRef} className="scroll-mt-6">
+                  <HowItWorksGuide />
                 </div>
               </TabsContent>
 
