@@ -231,11 +231,11 @@ class AutoDecideTester:
                 else:
                     self.log_result("Create Test Alerts", False, f"Failed to create sufficient alerts: {len(alerts_created)}/3")
             else:
-                self.log_result("Demo Company Setup", False, "Demo company created but no API key found")
+                self.log_result("Company Setup", False, "Company found but no API key")
         else:
-            self.log_result("Demo Company Setup", False, f"Failed to get demo company: {demo_response.status_code if demo_response else 'No response'}")
-            if demo_response:
-                print(f"    Response: {demo_response.text}")
+            self.log_result("Company Setup", False, f"Failed to get company: {company_response.status_code if company_response else 'No response'}")
+            if company_response:
+                print(f"    Response: {company_response.text}")
     
     def run_tests(self):
         """Run all auto-decide tests"""
