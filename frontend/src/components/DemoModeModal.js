@@ -18,6 +18,7 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
   const [status, setStatus] = useState('');
+  const [wsConnected, setWsConnected] = useState(false);
   const wsRef = useRef(null);
 
   useEffect(() => {
@@ -38,22 +39,38 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
     
     const ws = new WebSocket(wsUrl);
     
+    ws.onopen = () => {
+      console.log('WebSocket connected for demo mode');
+      setWsConnected(true);
+    };
+    
     ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      
-      if (message.type === 'demo_progress') {
-        setProgress({
-          current: message.data.current,
-          total: message.data.total,
-          percentage: message.data.percentage
-        });
-      } else if (message.type === 'demo_status') {
-        setStatus(message.data.message);
+      try {
+        const message = JSON.parse(event.data);
+        console.log('WebSocket message received:', message);
+        
+        if (message.type === 'demo_progress') {
+          setProgress({
+            current: message.data.current,
+            total: message.data.total,
+            percentage: message.data.percentage
+          });
+        } else if (message.type === 'demo_status') {
+          setStatus(message.data.message || message.data.status);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
     };
     
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      setWsConnected(false);
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setWsConnected(false);
     };
     
     wsRef.current = ws;
