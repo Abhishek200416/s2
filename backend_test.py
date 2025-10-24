@@ -1603,6 +1603,159 @@ class AlertWhispererTester:
         else:
             self.log_result("Get AWS Credentials", False, f"Failed to get AWS credentials: {response.status_code if response else 'No response'}")
 
+    def test_auto_decide_functionality(self, api_key=None):
+        """Test 10: Auto-Decide Functionality (NEW FEATURE)"""
+        print("\n=== Testing Auto-Decide Functionality ===")
+        
+        if not api_key:
+            # Get API key from companies endpoint
+            response = self.make_request('GET', '/companies/comp-acme')
+            if response and response.status_code == 200:
+                company = response.json()
+                api_key = company.get('api_key')
+        
+        if not api_key:
+            self.log_result("Auto-Decide Setup", False, "No API key available for auto-decide testing")
+            return
+        
+        # Test 1: GET /api/auto-decide/config?company_id=company-demo (default config)
+        response = self.make_request('GET', '/auto-decide/config?company_id=company-demo')
+        if response and response.status_code == 200:
+            config = response.json()
+            enabled = config.get('enabled')
+            interval_seconds = config.get('interval_seconds')
+            company_id = config.get('company_id')
+            
+            if enabled is True and interval_seconds == 1 and company_id == "company-demo":
+                self.log_result("Auto-Decide Get Default Config", True, f"Default config verified: enabled={enabled}, interval={interval_seconds}s")
+            else:
+                self.log_result("Auto-Decide Get Default Config", False, f"Config values incorrect: enabled={enabled}, interval={interval_seconds}, company={company_id}")
+        else:
+            self.log_result("Auto-Decide Get Default Config", False, f"Failed to get auto-decide config: {response.status_code if response else 'No response'}")
+        
+        # Test 2: PUT /api/auto-decide/config (update settings)
+        update_config = {
+            "company_id": "company-demo",
+            "enabled": False,
+            "interval_seconds": 5
+        }
+        
+        response = self.make_request('PUT', '/auto-decide/config', json=update_config)
+        if response and response.status_code == 200:
+            updated_config = response.json()
+            if updated_config.get('enabled') == False and updated_config.get('interval_seconds') == 5:
+                self.log_result("Auto-Decide Update Config", True, f"Config updated successfully: enabled={updated_config.get('enabled')}, interval={updated_config.get('interval_seconds')}s")
+            else:
+                self.log_result("Auto-Decide Update Config", False, "Config update didn't apply correctly")
+        else:
+            self.log_result("Auto-Decide Update Config", False, f"Failed to update auto-decide config: {response.status_code if response else 'No response'}")
+        
+        # Test 3: GET /api/auto-decide/config again to verify persistence
+        response = self.make_request('GET', '/auto-decide/config?company_id=company-demo')
+        if response and response.status_code == 200:
+            config = response.json()
+            if config.get('enabled') == False and config.get('interval_seconds') == 5:
+                self.log_result("Auto-Decide Verify Config Persistence", True, f"Config persisted correctly: enabled={config.get('enabled')}, interval={config.get('interval_seconds')}s")
+            else:
+                self.log_result("Auto-Decide Verify Config Persistence", False, f"Config not persisted: enabled={config.get('enabled')}, interval={config.get('interval_seconds')}")
+        else:
+            self.log_result("Auto-Decide Verify Config Persistence", False, f"Failed to verify config persistence: {response.status_code if response else 'No response'}")
+        
+        # Test 4: Create test alerts for correlation (need incidents to auto-decide)
+        alerts_created = []
+        for i in range(3):
+            webhook_payload = {
+                "asset_name": "srv-auto-decide-01",
+                "signature": "auto_decide_test_alert",
+                "severity": "high",
+                "message": f"Auto-decide test alert {i+1}",
+                "tool_source": "AutoDecideTest"
+            }
+            
+            # Use company-demo API key (need to get it first)
+            demo_response = self.make_request('GET', '/demo/company')
+            if demo_response and demo_response.status_code == 200:
+                demo_company = demo_response.json()
+                demo_api_key = demo_company.get('api_key')
+                
+                if demo_api_key:
+                    response = self.make_request('POST', f'/webhooks/alerts?api_key={demo_api_key}', json=webhook_payload)
+                    if response and response.status_code == 200:
+                        webhook_result = response.json()
+                        alert_id = webhook_result.get('alert_id')
+                        alerts_created.append(alert_id)
+        
+        if len(alerts_created) >= 3:
+            self.log_result("Auto-Decide Create Test Alerts", True, f"Created {len(alerts_created)} test alerts for correlation")
+            
+            # Wait for alerts to be processed
+            time.sleep(2)
+            
+            # Test 5: Run correlation to create incidents
+            response = self.make_request('POST', '/incidents/correlate?company_id=company-demo')
+            if response and response.status_code == 200:
+                correlation_result = response.json()
+                incidents_created = correlation_result.get('incidents_created', 0)
+                self.log_result("Auto-Decide Run Correlation", True, f"Correlation completed: {incidents_created} incidents created")
+                
+                # Test 6: POST /api/auto-decide/run?company_id=company-demo
+                response = self.make_request('POST', '/auto-decide/run?company_id=company-demo')
+                if response and response.status_code == 200:
+                    auto_decide_result = response.json()
+                    
+                    # Check required response fields
+                    required_fields = ['incidents_processed', 'incidents_assigned', 'incidents_executed', 'timestamp']
+                    missing_fields = [field for field in required_fields if field not in auto_decide_result]
+                    
+                    if not missing_fields:
+                        processed = auto_decide_result.get('incidents_processed', 0)
+                        assigned = auto_decide_result.get('incidents_assigned', 0)
+                        executed = auto_decide_result.get('incidents_executed', 0)
+                        
+                        self.log_result("Auto-Decide Run Endpoint", True, f"Auto-decide completed: {processed} processed, {assigned} assigned, {executed} executed")
+                        
+                        # Test 7: Verify incidents now have decisions
+                        response = self.make_request('GET', '/incidents?company_id=company-demo')
+                        if response and response.status_code == 200:
+                            incidents = response.json()
+                            
+                            # Find our test incident
+                            test_incident = None
+                            for incident in incidents:
+                                if incident.get('signature') == 'auto_decide_test_alert':
+                                    test_incident = incident
+                                    break
+                            
+                            if test_incident:
+                                decision = test_incident.get('decision')
+                                status = test_incident.get('status')
+                                assigned_to = test_incident.get('assigned_to')
+                                
+                                if decision and status != 'new':
+                                    decision_action = decision.get('action', 'unknown')
+                                    self.log_result("Auto-Decide Verify Integration", True, f"Incident has decision: action={decision_action}, status={status}, assigned={bool(assigned_to)}")
+                                else:
+                                    self.log_result("Auto-Decide Verify Integration", False, f"Incident missing decision or still 'new': decision={bool(decision)}, status={status}")
+                            else:
+                                # Check if any incident has decisions
+                                incidents_with_decisions = [inc for inc in incidents if inc.get('decision')]
+                                if incidents_with_decisions:
+                                    sample_incident = incidents_with_decisions[0]
+                                    decision = sample_incident.get('decision', {})
+                                    self.log_result("Auto-Decide Verify Integration", True, f"Found incident with decision: action={decision.get('action')}, status={sample_incident.get('status')}")
+                                else:
+                                    self.log_result("Auto-Decide Verify Integration", False, "No incidents found with decisions after auto-decide")
+                        else:
+                            self.log_result("Auto-Decide Verify Integration", False, f"Failed to get incidents for verification: {response.status_code if response else 'No response'}")
+                    else:
+                        self.log_result("Auto-Decide Run Endpoint", False, f"Auto-decide response missing fields: {missing_fields}")
+                else:
+                    self.log_result("Auto-Decide Run Endpoint", False, f"Failed to run auto-decide: {response.status_code if response else 'No response'}")
+            else:
+                self.log_result("Auto-Decide Run Correlation", False, f"Failed to run correlation: {response.status_code if response else 'No response'}")
+        else:
+            self.log_result("Auto-Decide Create Test Alerts", False, f"Failed to create sufficient test alerts: {len(alerts_created)}/3")
+
     def run_all_tests(self):
         """Run all core MSP backend tests as specified in review request"""
         print(f"🚀 Alert Whisperer MSP Platform Backend Test Suite")
