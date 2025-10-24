@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 /**
  * Custom Runbook Manager - Create, edit, and manage your own runbooks
  */
-const CustomRunbookManager = ({ companyId }) => {
+const CustomRunbookManager = ({ companyId, refreshTrigger }) => {
   const [runbooks, setRunbooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,7 +59,7 @@ const CustomRunbookManager = ({ companyId }) => {
     if (companyId) {
       loadRunbooks();
     }
-  }, [companyId]);
+  }, [companyId, refreshTrigger]);
 
   const loadRunbooks = async () => {
     try {
