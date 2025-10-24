@@ -145,12 +145,13 @@ const RunbookLibrary = () => {
             onClick={() => navigate('/dashboard')}
             variant="ghost"
             size="sm"
-            className="text-slate-400 hover:text-white hover:bg-slate-800 mb-3"
+            className="text-slate-400 hover:bg-slate-800 mb-3"
+            style={{ '--hover-color': 'hsl(var(--card-foreground))' }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
-          <h1 className="text-3xl font-bold text-white mb-2">📚 Runbook Library</h1>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'hsl(var(--card-foreground))' }}>📚 Runbook Library</h1>
           <p className="text-slate-400">
             Pre-built automation scripts for common MSP tasks. {library.total_count} runbooks available.
           </p>
