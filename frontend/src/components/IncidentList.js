@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertTriangle, Eye, CheckCircle, Clock, XCircle, Zap } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertTriangle, Eye, CheckCircle, Clock, XCircle, Zap, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import RealTimeActivityFeed from './RealTimeActivityFeed';
 
@@ -14,12 +15,65 @@ const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   const [showDecisionDialog, setShowDecisionDialog] = useState(false);
   const [decision, setDecision] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [autoDecideConfig, setAutoDecideConfig] = useState(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [autoDecideStats, setAutoDecideStats] = useState(null);
 
   useEffect(() => {
     if (companyId) {
       loadIncidents();
+      loadAutoDecideConfig();
     }
   }, [companyId, refreshTrigger]);
+
+  // Auto-decide timer effect
+  useEffect(() => {
+    if (!autoDecideConfig || !autoDecideConfig.enabled || loading || !companyId) {
+      return;
+    }
+
+    const intervalMs = (autoDecideConfig.interval_seconds || 1) * 1000;
+    
+    const timer = setInterval(async () => {
+      if (!loading) {
+        const newIncidents = incidents.filter(i => i.status === 'new' && !i.decision);
+        if (newIncidents.length > 0) {
+          try {
+            const response = await api.post(`/auto-decide/run?company_id=${companyId}`);
+            setAutoDecideStats(response.data);
+            await loadIncidents();
+          } catch (error) {
+            console.error('Auto-decide failed:', error);
+          }
+        }
+      }
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [autoDecideConfig, companyId, loading, incidents]);
+
+  const loadAutoDecideConfig = async () => {
+    try {
+      const response = await api.get(`/auto-decide/config?company_id=${companyId}`);
+      setAutoDecideConfig(response.data);
+    } catch (error) {
+      console.error('Failed to load auto-decide config:', error);
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
+
+  const updateAutoDecideConfig = async (updates) => {
+    try {
+      const updatedConfig = { ...autoDecideConfig, ...updates };
+      await api.put('/auto-decide/config', updatedConfig);
+      setAutoDecideConfig(updatedConfig);
+      toast.success('Auto-decide settings updated');
+    } catch (error) {
+      console.error('Failed to update auto-decide config:', error);
+      toast.error('Failed to update settings');
+    }
+  };
 
   const loadIncidents = async () => {
     try {
