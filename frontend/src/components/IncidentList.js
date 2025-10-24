@@ -338,6 +338,7 @@ const IncidentList = ({ companyId, limit, refreshTrigger }) => {
           )}
         </CardContent>
       </Card>
+      </div>
 
       {/* Decision Dialog */}
       <Dialog open={showDecisionDialog} onOpenChange={setShowDecisionDialog}>
