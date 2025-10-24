@@ -137,7 +137,7 @@ import requests
 # Your API key from Acme Corp (or create new company)
 API_KEY = "aw_XceHSvCuJLACTrD_O..."  # Get from /api/companies
 
-url = "https://live-incident-feed.preview.emergentagent.com/api/webhooks/alerts"
+url = "https://app-reload-1.preview.emergentagent.com/api/webhooks/alerts"
 params = {"api_key": API_KEY}
 data = {
     "asset_name": "server-01",
@@ -164,7 +164,7 @@ print(r.status_code, r.json())
 ### Using curl:
 
 ```bash
-curl -X POST "https://live-incident-feed.preview.emergentagent.com/api/webhooks/alerts?api_key=YOUR_API_KEY" \
+curl -X POST "https://app-reload-1.preview.emergentagent.com/api/webhooks/alerts?api_key=YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "asset_name": "server-01",
@@ -223,7 +223,7 @@ The WebSocket errors you see in the console are **transient connection issues** 
 
 **Your original test**:
 ```python
-url = "https://live-incident-feed.preview.emergentagent.com/api/webhooks/alerts"
+url = "https://app-reload-1.preview.emergentagent.com/api/webhooks/alerts"
 params = {"api_key":"aw_MboFL3QaaD4O6RFTkn0wwAiWTHKdgixb3F0mAKvuvjo"}
 data = {
   "asset_name":"server-01",
