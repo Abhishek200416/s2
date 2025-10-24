@@ -5551,7 +5551,7 @@ async def get_auto_correlation_config(company_id: str):
         return {
             "company_id": company_id,
             "enabled": True,
-            "interval_minutes": 2,
+            "interval_seconds": 1,
             "last_run": None
         }
     return config
@@ -5559,8 +5559,10 @@ async def get_auto_correlation_config(company_id: str):
 @api_router.put("/auto-correlation/config")
 async def update_auto_correlation_config(config: AutoCorrelationConfig):
     """Update auto-correlation configuration"""
-    if config.interval_minutes not in [1, 2, 5]:
-        raise HTTPException(status_code=400, detail="Interval must be 1, 2, or 5 minutes")
+    # Allow 1, 5, 10, 15, 30, 60 seconds or 120, 300 for minutes
+    valid_intervals = [1, 5, 10, 15, 30, 60, 120, 300]
+    if config.interval_seconds not in valid_intervals:
+        raise HTTPException(status_code=400, detail="Interval must be 1, 5, 10, 15, 30, 60 seconds or 120 (2min), 300 (5min)")
     
     await db.auto_correlation_config.update_one(
         {"company_id": config.company_id},
