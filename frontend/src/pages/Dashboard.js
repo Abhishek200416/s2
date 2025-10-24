@@ -28,6 +28,7 @@ import DecisionEngine from '../components/DecisionEngine';
 import KPIDashboard from '../components/KPIDashboard';
 import KPIImpactDashboard from '../components/KPIImpactDashboard';
 import LiveKPIProof from '../components/LiveKPIProof';
+import RealTimeActivityFeed from '../components/RealTimeActivityFeed';
 import CompanyManagement from '../components/CompanyManagement';
 import ActivityFeed from '../components/ActivityFeed';
 import AssetInventory from '../components/AssetInventory';
