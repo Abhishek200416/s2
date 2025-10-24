@@ -8,14 +8,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const AssetInventory = ({ companyId }) => {
+const AssetInventory = ({ companyId, refreshTrigger }) => {
   const [assets, setAssets] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadAssets();
-  }, [companyId]);
+  }, [companyId, refreshTrigger]);
 
   const loadAssets = async () => {
     setLoading(true);
