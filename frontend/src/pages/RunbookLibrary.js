@@ -201,11 +201,11 @@ const RunbookLibrary = () => {
               const riskColor = riskColors[runbook.risk_level] || 'slate';
               
               return (
-                <Card key={index} className="bg-slate-800 border-slate-700 hover:border-cyan-500 transition-all">
+                <Card key={index} className="bg-slate-800 border-slate-700 hover:border-purple-500 transition-all">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
-                      <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-cyan-400" />
+                      <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-purple-400" />
                       </div>
                       <Badge className={`bg-${riskColor}-500/20 text-${riskColor}-400 border-${riskColor}-500/30`}>
                         {runbook.risk_level}
