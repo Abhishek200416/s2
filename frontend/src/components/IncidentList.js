@@ -182,7 +182,90 @@ const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column - Incidents List (2/3 width) */}
-      <div className="lg:col-span-2">
+      <div className="lg:col-span-2 space-y-6">
+        {/* Auto-Decide Configuration Card */}
+        {!limit && !loadingConfig && autoDecideConfig && (
+          <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30">
+            <CardContent className="pt-6">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-purple-400" />
+                    <h3 className="text-white font-semibold">Auto-Decide Settings</h3>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={autoDecideConfig.enabled}
+                      onChange={(e) => updateAutoDecideConfig({ enabled: e.target.checked })}
+                      className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-slate-300">Enable Auto-Decide</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-slate-300 font-medium mb-2 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Auto-Decide Interval
+                    </label>
+                    <Select
+                      value={autoDecideConfig.interval_seconds?.toString()}
+                      onValueChange={(value) => updateAutoDecideConfig({ interval_seconds: parseInt(value) })}
+                    >
+                      <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                        <SelectItem value="1">Every 1 second (Real-time)</SelectItem>
+                        <SelectItem value="5">Every 5 seconds</SelectItem>
+                        <SelectItem value="10">Every 10 seconds</SelectItem>
+                        <SelectItem value="15">Every 15 seconds</SelectItem>
+                        <SelectItem value="30">Every 30 seconds</SelectItem>
+                        <SelectItem value="60">Every 1 minute</SelectItem>
+                        <SelectItem value="120">Every 2 minutes</SelectItem>
+                        <SelectItem value="300">Every 5 minutes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-slate-500 mt-1">
+                      How often incidents are auto-decided (assigns or executes)
+                    </p>
+                  </div>
+                  {autoDecideConfig.last_run && (
+                    <div>
+                      <label className="text-sm text-slate-300 font-medium mb-2 block">
+                        Last Run
+                      </label>
+                      <div className="text-sm text-slate-400 bg-slate-900 border border-slate-700 rounded px-3 py-2">
+                        {new Date(autoDecideConfig.last_run).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Auto-Decide Statistics */}
+                {autoDecideStats && (
+                  <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-700">
+                    <div className="text-center p-3 bg-slate-900/50 rounded-lg">
+                      <p className="text-2xl font-bold text-purple-400">{autoDecideStats.incidents_processed}</p>
+                      <p className="text-xs text-slate-400 mt-1">Processed</p>
+                    </div>
+                    <div className="text-center p-3 bg-slate-900/50 rounded-lg">
+                      <p className="text-2xl font-bold text-cyan-400">{autoDecideStats.incidents_assigned}</p>
+                      <p className="text-xs text-slate-400 mt-1">Assigned</p>
+                    </div>
+                    <div className="text-center p-3 bg-slate-900/50 rounded-lg">
+                      <p className="text-2xl font-bold text-emerald-400">{autoDecideStats.incidents_executed}</p>
+                      <p className="text-xs text-slate-400 mt-1">Auto-Executed</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="bg-slate-900/50 border-slate-800" data-testid="incident-list">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
