@@ -332,7 +332,7 @@ const RunbookLibrary = () => {
 
             {/* Script Preview */}
             <div>
-              <label className="text-white text-sm font-medium mb-2 block flex items-center gap-2">
+              <label className="text-sm font-medium mb-2 block flex items-center gap-2" style={{ color: 'hsl(var(--card-foreground))' }}>
                 <Code className="w-4 h-4" />
                 Script Preview
               </label>
