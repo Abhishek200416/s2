@@ -352,7 +352,7 @@ const RunbookLibrary = () => {
               <Button
                 onClick={executeRunbook}
                 disabled={executing || !instanceId.trim()}
-                className="bg-cyan-600 hover:bg-cyan-700"
+                className="bg-purple-600 hover:bg-purple-700"
               >
                 {executing ? (
                   <>
