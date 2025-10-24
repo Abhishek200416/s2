@@ -2213,6 +2213,16 @@ async def correlate_alerts(company_id: str):
     - Multi-tool detection
     - Priority-based incident creation
     """
+    # Broadcast correlation start
+    await manager.broadcast({
+        "type": "correlation_started",
+        "data": {
+            "company_id": company_id,
+            "status": "starting",
+            "message": "Starting alert correlation..."
+        }
+    })
+    
     # Get company for priority calculation
     company_doc = await db.companies.find_one({"id": company_id}, {"_id": 0})
     if not company_doc:
@@ -2238,6 +2248,17 @@ async def correlate_alerts(company_id: str):
         "company_id": company_id,
         "status": "active"
     }, {"_id": 0}).to_list(1000)
+    
+    # Broadcast analysis progress
+    await manager.broadcast({
+        "type": "correlation_progress",
+        "data": {
+            "company_id": company_id,
+            "status": "analyzing",
+            "message": f"Analyzing {len(alerts)} active alerts...",
+            "total_alerts": len(alerts)
+        }
+    })
     
     # Use configurable correlation window (5-15 minutes)
     correlation_window_minutes = correlation_config.get("time_window_minutes", 15)
