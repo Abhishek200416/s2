@@ -134,14 +134,14 @@ class AutoDecideTester:
         """Test the complete auto-decide workflow"""
         print("\n=== Testing Auto-Decide Workflow ===")
         
-        # Step 1: Get or create demo company
-        demo_response = self.make_request('GET', '/demo/company')
-        if demo_response and demo_response.status_code == 200:
-            demo_company = demo_response.json()
-            demo_api_key = demo_company.get('api_key')
-            company_id = demo_company.get('id')
+        # Step 1: Use existing comp-acme company instead of demo
+        company_response = self.make_request('GET', '/companies/comp-acme')
+        if company_response and company_response.status_code == 200:
+            company = company_response.json()
+            api_key = company.get('api_key')
+            company_id = company.get('id')
             
-            if demo_api_key:
+            if api_key:
                 self.log_result("Demo Company Setup", True, f"Demo company ready: {company_id}, API key: {demo_api_key[:20]}...")
                 
                 # Test webhook endpoint accessibility first
