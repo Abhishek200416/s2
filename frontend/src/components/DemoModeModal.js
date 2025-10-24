@@ -310,6 +310,111 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* External Testing Tab */}
+            <TabsContent value="external">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white">External Testing - Python Code</CardTitle>
+                  <CardDescription className="text-slate-400">
+                    Use this Python code to test webhook integration from external systems
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader className="w-8 h-8 animate-spin text-cyan-400" />
+                    </div>
+                  ) : testScript ? (
+                    <>
+                      <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-white font-semibold flex items-center gap-2">
+                            <Code className="w-4 h-4 text-cyan-400" />
+                            {testScript.filename}
+                          </h4>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => copyToClipboard(testScript.script)}
+                              className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
+                            >
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={downloadScript}
+                              className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-white"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download
+                            </Button>
+                          </div>
+                        </div>
+                        <pre className="bg-black/50 rounded p-4 overflow-x-auto max-h-96 text-xs text-slate-300 font-mono">
+                          {testScript.script}
+                        </pre>
+                      </div>
+
+                      {/* Instructions */}
+                      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                        <h4 className="text-blue-400 font-semibold mb-3 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          How to Use This Script
+                        </h4>
+                        <ol className="space-y-2 text-sm text-slate-300 list-decimal list-inside">
+                          {testScript.instructions?.map((instruction, index) => (
+                            <li key={index}>{instruction}</li>
+                          ))}
+                          {!testScript.instructions && (
+                            <>
+                              <li>Copy the code above or download the script file</li>
+                              <li>Install required packages: <code className="bg-slate-900 px-2 py-0.5 rounded text-cyan-400">pip install requests</code></li>
+                              <li>Run the script: <code className="bg-slate-900 px-2 py-0.5 rounded text-cyan-400">python {testScript.filename}</code></li>
+                              <li>The script will send test alerts to your webhook endpoint with HMAC signatures</li>
+                              <li>Check the dashboard to see alerts appearing in real-time</li>
+                            </>
+                          )}
+                        </ol>
+                      </div>
+
+                      {/* API Configuration Info */}
+                      {demoCompany && (
+                        <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
+                          <h4 className="text-white font-semibold mb-3">API Configuration</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Company ID:</span>
+                              <code className="text-cyan-400 font-mono">{demoCompany.id}</code>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">API Key:</span>
+                              <code className="text-cyan-400 font-mono truncate max-w-xs">
+                                {demoCompany.api_key || 'Not available'}
+                              </code>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Webhook URL:</span>
+                              <code className="text-cyan-400 font-mono text-xs">
+                                {process.env.REACT_APP_BACKEND_URL}/webhooks/alerts
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-12 text-slate-400">
+                      <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Click to load test script</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
