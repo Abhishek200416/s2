@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertTriangle, Eye, CheckCircle, Clock, XCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
+import RealTimeActivityFeed from './RealTimeActivityFeed';
 
 const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   const [incidents, setIncidents] = useState([]);
