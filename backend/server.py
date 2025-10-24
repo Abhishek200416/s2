@@ -5865,7 +5865,7 @@ async def run_auto_decide(company_id: str):
         for incident in incidents:
             try:
                 # Call the decide endpoint for this incident
-                decision_response = await generate_incident_decision(incident["id"], company_id)
+                decision_response = await decide_on_incident(incident["id"])
                 processed_count += 1
                 
                 if decision_response.get("auto_executed"):
