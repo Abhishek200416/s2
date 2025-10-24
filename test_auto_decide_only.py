@@ -144,6 +144,13 @@ class AutoDecideTester:
             if demo_api_key:
                 self.log_result("Demo Company Setup", True, f"Demo company ready: {company_id}, API key: {demo_api_key[:20]}...")
                 
+                # Test webhook endpoint accessibility first
+                test_response = self.make_request('GET', '/companies')
+                if test_response and test_response.status_code == 200:
+                    print("  ✅ Backend is accessible")
+                else:
+                    print(f"  ❌ Backend accessibility issue: {test_response.status_code if test_response else 'No response'}")
+                
                 # Step 2: Create test alerts
                 alerts_created = []
                 for i in range(3):
