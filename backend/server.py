@@ -2280,9 +2280,22 @@ async def correlate_alerts(company_id: str):
             incident_groups[key] = []
         incident_groups[key].append(alert)
     
+    # Broadcast grouping complete
+    await manager.broadcast({
+        "type": "correlation_progress",
+        "data": {
+            "company_id": company_id,
+            "status": "grouping_complete",
+            "message": f"Found {len(incident_groups)} incident groups",
+            "incident_groups_count": len(incident_groups)
+        }
+    })
+    
     # Create/update incidents
     created_incidents = []
     updated_incidents = []
+    total_groups = len(incident_groups)
+    processed_groups = 0
     
     for key, alert_group in incident_groups.items():
         if len(alert_group) == 0:
