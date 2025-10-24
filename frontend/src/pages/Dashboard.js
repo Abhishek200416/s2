@@ -23,6 +23,7 @@ import HowItWorksGuide from '../components/HowItWorksGuide';
 import MSPWorkflowGuide from '../components/MSPWorkflowGuide';
 import AlertCorrelation from '../components/AlertCorrelation';
 import IncidentList from '../components/IncidentList';
+import IncidentAnalysis from '../components/IncidentAnalysis';
 import DecisionEngine from '../components/DecisionEngine';
 import KPIDashboard from '../components/KPIDashboard';
 import KPIImpactDashboard from '../components/KPIImpactDashboard';
