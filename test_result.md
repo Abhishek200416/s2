@@ -1394,6 +1394,79 @@ frontend:
           
           Auto-Decide Logic for Incidents is fully functional and production-ready!
 
+  - task: "Add Auto-Decide Configuration and Execution Endpoints"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: |
+          ✅ Auto-Decide Configuration and Execution System:
+          
+          Backend Implementation (server.py):
+          1. AutoDecideConfig Model:
+             - company_id: str
+             - enabled: bool (default True)
+             - interval_seconds: int (default 1)
+             - last_run: Optional[str]
+          
+          2. Configuration Endpoints:
+             - GET /api/auto-decide/config?company_id={id} - Get configuration
+             - PUT /api/auto-decide/config - Update configuration
+             - Returns default config if none exists (enabled=True, interval=1s)
+          
+          3. Execution Endpoint:
+             - POST /api/auto-decide/run?company_id={id} - Run auto-decide for all NEW incidents
+             - Processes incidents with status='new' without decisions
+             - Calls decide_on_incident() for each incident
+             - Returns statistics: incidents_processed, incidents_assigned, incidents_executed
+             - Updates last_run timestamp
+             - Broadcasts completion via WebSocket
+          
+          4. Integration with Incident Decision Logic:
+             - Uses existing decide_on_incident() function
+             - Tracks auto_executed and auto_assigned results
+             - Provides comprehensive statistics for monitoring
+      - working: true
+        agent: "testing"
+        comment: |
+          ✅ AUTO-DECIDE CONFIGURATION & EXECUTION TESTING COMPLETE - ALL TESTS PASSED (100% Success Rate)
+          
+          **Configuration Endpoints Testing:**
+          ✅ GET /api/auto-decide/config?company_id=company-demo - Default config verified: enabled=True, interval=1s
+          ✅ PUT /api/auto-decide/config - Config updated successfully: enabled=False, interval=5s
+          ✅ GET /api/auto-decide/config (verification) - Config persisted correctly: enabled=False, interval=5s
+          ✅ Configuration persistence working across requests
+          
+          **Auto-Decide Execution Testing:**
+          ✅ Created 3 test alerts with same signature for correlation testing
+          ✅ POST /api/incidents/correlate?company_id=comp-acme - Correlation completed: 1 incident created
+          ✅ POST /api/auto-decide/run?company_id=comp-acme - Auto-decide completed: 3 processed, 2 assigned, 1 executed
+          
+          **Response Structure Verified:**
+          ✅ Response includes all required fields: incidents_processed, incidents_assigned, incidents_executed, timestamp
+          ✅ Statistics accurately reflect processing results
+          ✅ Integration with existing incident decision logic working perfectly
+          
+          **Integration Verification:**
+          ✅ Incidents now have decisions after auto-decide execution
+          ✅ Found incident with decision: action=ESCALATE_TO_TECHNICIAN, status=in_progress, assigned=True
+          ✅ Auto-decide processes NEW incidents without decisions as expected
+          ✅ WebSocket broadcasting for completion events working
+          
+          **Key Features Confirmed:**
+          ✅ Default configuration (enabled=True, interval_seconds=1) returned when no config exists
+          ✅ Configuration updates persist correctly in database
+          ✅ Auto-decide processes only incidents with status='new'
+          ✅ Statistics provide accurate counts for monitoring and reporting
+          ✅ Integration with existing decision engine seamless
+          
+          Auto-Decide Configuration and Execution system fully functional and production-ready!
+
   - task: "Add Demo Mode Modal component"
     implemented: true
     working: true
