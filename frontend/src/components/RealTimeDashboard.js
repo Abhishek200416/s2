@@ -142,7 +142,7 @@ const RealTimeDashboard = ({ companyId, companyName, refreshTrigger }) => {
       const interval = setInterval(loadData, 30000);
       return () => clearInterval(interval);
     }
-  }, [loadData, autoRefresh]);
+  }, [loadData, autoRefresh, refreshTrigger]);
 
   // Request notification permission
   useEffect(() => {
