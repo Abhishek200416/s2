@@ -124,20 +124,25 @@ const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
                     Auto-Run Interval
                   </label>
                   <Select
-                    value={autoCorrelationConfig.interval_minutes?.toString()}
-                    onValueChange={(value) => updateAutoCorrelationConfig({ interval_minutes: parseInt(value) })}
+                    value={autoCorrelationConfig.interval_seconds?.toString()}
+                    onValueChange={(value) => updateAutoCorrelationConfig({ interval_seconds: parseInt(value) })}
                   >
                     <SelectTrigger className="bg-slate-900 border-slate-700 text-white">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-900 border-slate-700 text-white">
-                      <SelectItem value="1">Every 1 minute</SelectItem>
-                      <SelectItem value="2">Every 2 minutes</SelectItem>
-                      <SelectItem value="5">Every 5 minutes</SelectItem>
+                      <SelectItem value="1">Every 1 second (Real-time)</SelectItem>
+                      <SelectItem value="5">Every 5 seconds</SelectItem>
+                      <SelectItem value="10">Every 10 seconds</SelectItem>
+                      <SelectItem value="15">Every 15 seconds</SelectItem>
+                      <SelectItem value="30">Every 30 seconds</SelectItem>
+                      <SelectItem value="60">Every 1 minute</SelectItem>
+                      <SelectItem value="120">Every 2 minutes</SelectItem>
+                      <SelectItem value="300">Every 5 minutes</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-slate-500 mt-1">
-                    How often correlation runs automatically
+                    How often correlation runs automatically (real-time analysis)
                   </p>
                 </div>
                 {autoCorrelationConfig.last_run && (
