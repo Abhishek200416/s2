@@ -547,6 +547,10 @@ const Dashboard = ({ user, onLogout }) => {
                 <IncidentList companyId={selectedCompany} refreshTrigger={refreshTrigger} />
               </TabsContent>
 
+              <TabsContent value="analysis" className="space-y-6">
+                <IncidentAnalysis companyId={selectedCompany} refreshTrigger={refreshTrigger} />
+              </TabsContent>
+
               <TabsContent value="asset-inventory">
                 <AssetInventory companyId={selectedCompany} refreshTrigger={refreshTrigger} />
               </TabsContent>
