@@ -267,9 +267,9 @@ const RunbookLibrary = () => {
 
       {/* Execute Dialog */}
       <Dialog open={showExecuteDialog} onOpenChange={setShowExecuteDialog}>
-        <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
+        <DialogContent className="bg-slate-900/95 border-slate-700/50 max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
+            <DialogTitle style={{ color: 'hsl(var(--card-foreground))' }} className="flex items-center gap-2">
               <Play className="w-5 h-5 text-cyan-400" />
               Execute Runbook
             </DialogTitle>
