@@ -82,23 +82,25 @@ const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
   };
 
   return (
-    <div className="space-y-6" data-testid="alert-correlation">
-      {/* Header with Auto-Correlation Settings */}
-      <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-white text-2xl flex items-center gap-3">
-                <Zap className="w-6 h-6 text-cyan-400" />
-                Alert Correlation Engine
-              </CardTitle>
-              <CardDescription className="text-slate-300 mt-2">
-                Reduce noise by grouping duplicate alerts into correlated incidents
-              </CardDescription>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-testid="alert-correlation">
+      {/* Left Column - Correlation Controls & Alerts (2/3 width) */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Header with Auto-Correlation Settings */}
+        <Card className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="text-white text-2xl flex items-center gap-3">
+                  <Zap className="w-6 h-6 text-cyan-400" />
+                  Alert Correlation Engine
+                </CardTitle>
+                <CardDescription className="text-slate-300 mt-2">
+                  Reduce noise by grouping duplicate alerts into correlated incidents
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </CardHeader>
+          <CardContent className="space-y-4">
           {/* Auto-Correlation Settings */}
           {!loadingConfig && autoCorrelationConfig && (
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 space-y-4">
