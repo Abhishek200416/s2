@@ -163,7 +163,9 @@ class AutoDecideTester:
                     }
                     
                     try:
-                        response = self.make_request('POST', f'/webhooks/alerts?api_key={demo_api_key}', json=webhook_payload)
+                        webhook_url = f'/webhooks/alerts?api_key={demo_api_key}'
+                        print(f"  Calling: POST {self.base_url}{webhook_url}")
+                        response = self.make_request('POST', webhook_url, json=webhook_payload, timeout=30)
                         if response and response.status_code == 200:
                             webhook_result = response.json()
                             alert_id = webhook_result.get('alert_id')
