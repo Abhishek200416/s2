@@ -36,8 +36,12 @@ db_name = os.getenv('DB_NAME', 'alertwhisperer')
 db = client[db_name]
 
 # Gemini AI Setup
-genai.configure(api_key=os.environ['GEMINI_API_KEY'])
-model = genai.GenerativeModel('gemini-2.5-pro')
+gemini_api_key = os.getenv('GEMINI_API_KEY', '')
+if gemini_api_key:
+    genai.configure(api_key=gemini_api_key)
+    model = genai.GenerativeModel('gemini-2.5-pro')
+else:
+    model = None
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
