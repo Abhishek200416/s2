@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Zap, Play, TrendingDown, CheckCircle, AlertCircle, Settings, Clock, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
-const AlertCorrelation = ({ companyId, companyName }) => {
+const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
   const [correlating, setCorrelating] = useState(false);
   const [activeAlerts, setActiveAlerts] = useState([]);
   const [correlationResult, setCorrelationResult] = useState(null);
@@ -18,7 +18,7 @@ const AlertCorrelation = ({ companyId, companyName }) => {
   useEffect(() => {
     loadAlerts();
     loadAutoCorrelationConfig();
-  }, [companyId]);
+  }, [companyId, refreshTrigger]);
 
   const loadAlerts = async () => {
     try {
