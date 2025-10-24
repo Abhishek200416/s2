@@ -117,62 +117,25 @@ const HowItWorksGuide = () => {
             Complete automation from alert reception to resolution - just like real MSPs
           </p>
         </div>
-        <Badge className="bg-green-500/20 text-green-400 border-green-500/30 px-3 py-1">
-          <CheckCircle className="w-4 h-4 mr-1" />
-          Fully Automated
-        </Badge>
-      </div>
-
-      {/* Flow Visualization */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          return (
-            <React.Fragment key={step.id}>
-              <Card className={`bg-slate-800 border-${step.color}-500/30 hover:border-${step.color}-500 transition-all relative`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className={`w-10 h-10 rounded-lg bg-${step.color}-500/20 flex items-center justify-center`}>
-                      <Icon className={`w-5 h-5 text-${step.color}-400`} />
-                    </div>
-                    <div className={`text-2xl font-bold text-${step.color}-400`}>
-                      {step.id}
-                    </div>
-                  </div>
-                  <CardTitle className="text-white text-sm">{step.title}</CardTitle>
-                  <CardDescription className="text-xs">{step.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-1">
-                    {step.details.map((detail, i) => (
-                      <li key={i} className="text-xs text-slate-400 flex items-start gap-1">
-                        <span className={`text-${step.color}-400 mt-0.5`}>•</span>
-                        <span>{detail}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {step.automated && (
-                    <Badge className="mt-2 text-xs bg-green-500/10 text-green-400">
-                      <Zap className="w-3 h-3 mr-1" />
-                      Auto
-                    </Badge>
-                  )}
-                </CardContent>
-                
-                {/* Arrow between steps */}
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <ArrowRight className="w-6 h-6 text-cyan-400" />
-                  </div>
-                )}
-              </Card>
-            </React.Fragment>
-          );
-        })}
+        <div className="flex items-center gap-3">
+          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 px-3 py-1">
+            <CheckCircle className="w-4 h-4 mr-1" />
+            Fully Automated
+          </Badge>
+          <Button 
+            onClick={scrollToWorkflow}
+            variant="outline"
+            size="sm"
+            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+          >
+            <ChevronDown className="w-4 h-4 mr-2" />
+            View Process
+          </Button>
+        </div>
       </div>
 
       {/* Key Features */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-slate-900/50 border border-cyan-500/20 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <Server className="w-5 h-5 text-cyan-400" />
@@ -208,7 +171,7 @@ const HowItWorksGuide = () => {
       </div>
 
       {/* FAQ Section */}
-      <div className="mt-6 bg-blue-900/10 border border-blue-500/20 rounded-lg p-4">
+      <div className="bg-blue-900/10 border border-blue-500/20 rounded-lg p-4 mb-6">
         <h4 className="text-blue-300 font-semibold mb-3">❓ Common Questions</h4>
         <div className="space-y-2 text-sm">
           <div>
@@ -223,6 +186,60 @@ const HowItWorksGuide = () => {
             <span className="text-white font-medium">Q: Is this how real MSPs work?</span>
             <p className="text-slate-400 ml-4">A: Yes! Real MSPs use RMM tools (ConnectWise, Datto) + monitoring + ticketing. We combine all three with AI automation.</p>
           </div>
+        </div>
+      </div>
+
+      {/* Flow Visualization - Now at the bottom */}
+      <div ref={workflowRef} className="scroll-mt-6">
+        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <ArrowRight className="w-5 h-5 text-cyan-400" />
+          Complete Workflow Process
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <React.Fragment key={step.id}>
+                <Card className={`bg-slate-800 border-${step.color}-500/30 hover:border-${step.color}-500 transition-all relative`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className={`w-10 h-10 rounded-lg bg-${step.color}-500/20 flex items-center justify-center`}>
+                        <Icon className={`w-5 h-5 text-${step.color}-400`} />
+                      </div>
+                      <div className={`text-2xl font-bold text-${step.color}-400`}>
+                        {step.id}
+                      </div>
+                    </div>
+                    <CardTitle className="text-white text-sm">{step.title}</CardTitle>
+                    <CardDescription className="text-xs">{step.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-1">
+                      {step.details.map((detail, i) => (
+                        <li key={i} className="text-xs text-slate-400 flex items-start gap-1">
+                          <span className={`text-${step.color}-400 mt-0.5`}>•</span>
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {step.automated && (
+                      <Badge className="mt-2 text-xs bg-green-500/10 text-green-400">
+                        <Zap className="w-3 h-3 mr-1" />
+                        Auto
+                      </Badge>
+                    )}
+                  </CardContent>
+                  
+                  {/* Arrow between steps */}
+                  {index < steps.length - 1 && (
+                    <div className="hidden md:block absolute -right-4 top-1/2 transform -translate-y-1/2 z-10">
+                      <ArrowRight className="w-6 h-6 text-cyan-400" />
+                    </div>
+                  )}
+                </Card>
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
     </div>
