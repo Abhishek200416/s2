@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const RealTimeDashboard = ({ companyId, companyName }) => {
+const RealTimeDashboard = ({ companyId, companyName, refreshTrigger }) => {
   const [alerts, setAlerts] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [metrics, setMetrics] = useState(null);
