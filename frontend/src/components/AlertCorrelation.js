@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Zap, Play, TrendingDown, CheckCircle, AlertCircle, Settings, Clock, Filter } from 'lucide-react';
 import { toast } from 'sonner';
+import RealTimeActivityFeed from './RealTimeActivityFeed';
 
 const AlertCorrelation = ({ companyId, companyName, refreshTrigger }) => {
   const [correlating, setCorrelating] = useState(false);
