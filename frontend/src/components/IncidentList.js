@@ -126,18 +126,20 @@ const IncidentList = ({ companyId, limit, refreshTrigger }) => {
   };
 
   return (
-    <>
-      <Card className="bg-slate-900/50 border-slate-800" data-testid="incident-list">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-            Incidents {!limit && `(${incidents.length})`}
-          </CardTitle>
-          {limit && (
-            <CardDescription className="text-slate-400">Latest incidents requiring attention</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Left Column - Incidents List (2/3 width) */}
+      <div className="lg:col-span-2">
+        <Card className="bg-slate-900/50 border-slate-800" data-testid="incident-list">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-400" />
+              Incidents {!limit && `(${incidents.length})`}
+            </CardTitle>
+            {limit && (
+              <CardDescription className="text-slate-400">Latest incidents requiring attention</CardDescription>
+            )}
+          </CardHeader>
+          <CardContent>
           {incidents.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <CheckCircle className="w-12 h-12 mx-auto mb-4 text-slate-600" />
