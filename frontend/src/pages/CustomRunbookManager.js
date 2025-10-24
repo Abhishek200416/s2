@@ -209,7 +209,7 @@ const CustomRunbookManager = ({ companyId, refreshTrigger }) => {
 
       {/* Runbooks Grid */}
       {filteredRunbooks.length === 0 ? (
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="bg-slate-900/90 border-slate-700/50">
           <CardContent className="py-12 text-center">
             <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400 mb-4">
