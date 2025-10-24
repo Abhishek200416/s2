@@ -182,7 +182,7 @@ const CustomRunbookManager = ({ companyId, refreshTrigger }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Custom Runbooks</h2>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: 'hsl(var(--card-foreground))' }}>Custom Runbooks</h2>
           <p className="text-slate-400">
             Create and manage your own custom automation scripts for your infrastructure
           </p>
