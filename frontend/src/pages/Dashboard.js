@@ -47,6 +47,11 @@ const Dashboard = ({ user, onLogout }) => {
   const [showMSPGuide, setShowMSPGuide] = useState(false);
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const howItWorksRef = React.useRef(null);
+
+  const scrollToHowItWorks = () => {
+    howItWorksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   useEffect(() => {
     loadCompanies();
