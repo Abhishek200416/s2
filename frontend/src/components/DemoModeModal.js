@@ -317,15 +317,33 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                 <CardHeader>
                   <CardTitle className="text-white">External Testing - Python Code</CardTitle>
                   <CardDescription className="text-slate-400">
-                    Use this Python code to test webhook integration from external systems
+                    Generate Python code to test webhook integration from external systems
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader className="w-8 h-8 animate-spin text-cyan-400" />
+                  {!testScript ? (
+                    <div className="text-center py-12">
+                      <Code className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                      <p className="text-slate-400 mb-6">Click the button below to generate the webhook testing script</p>
+                      <Button
+                        onClick={loadTestScript}
+                        disabled={loading || !demoCompany}
+                        className="bg-cyan-600 hover:bg-cyan-700 text-white"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader className="w-4 h-4 mr-2 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Code className="w-4 h-4 mr-2" />
+                            Generate Script Code
+                          </>
+                        )}
+                      </Button>
                     </div>
-                  ) : testScript ? (
+                  ) : (
                     <>
                       <div className="bg-slate-900 border border-slate-700 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
