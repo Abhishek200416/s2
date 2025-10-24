@@ -2510,6 +2510,20 @@ async def correlate_alerts(company_id: str):
         upsert=True
     )
     
+    # Broadcast correlation complete
+    await manager.broadcast({
+        "type": "correlation_complete",
+        "data": {
+            "company_id": company_id,
+            "status": "complete",
+            "message": f"Correlation complete! Created {len(created_incidents)} incidents, updated {len(updated_incidents)} incidents",
+            "incidents_created": len(created_incidents),
+            "incidents_updated": len(updated_incidents),
+            "noise_reduction_pct": round(noise_reduction, 2),
+            "total_alerts": total_alerts
+        }
+    })
+    
     return {
         "total_alerts": total_alerts,
         "incidents_created": len(created_incidents),
