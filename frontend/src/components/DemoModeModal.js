@@ -424,11 +424,6 @@ const DemoModeModal = ({ isOpen, onClose, onDemoCompanySelected }) => {
                         </div>
                       )}
                     </>
-                  ) : (
-                    <div className="text-center py-12 text-slate-400">
-                      <Code className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Click to load test script</p>
-                    </div>
                   )}
                 </CardContent>
               </Card>
