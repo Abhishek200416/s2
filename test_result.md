@@ -59,19 +59,45 @@
 ## agent_communication:
 ##     - agent: "main"
 ##       message: |
-##         Fixed all 5 issues reported by user:
+##         🔴 REAL-TIME VISIBILITY ENHANCEMENTS COMPLETE:
 ##         
-##         1. ✅ Technician Page Filters - Fixed category filter to handle technicians without categories
-##         2. ✅ Alert Correlation Zero Noise - Fixed noise calculation to show correct reduction percentage
-##         3. ✅ Demo Mode Progress Bar - Already working (WebSocket updates from backend)
-##         4. ✅ External File Connection - Removed External Testing tab from Demo Mode
-##         5. ✅ Auto-Decide Logic - Implemented intelligent auto-decide with:
-##            - Auto-execute low-risk runbooks
-##            - Auto-assign to technicians based on category
-##            - Fallback to Custom/no-category technicians
-##            - Real-time feedback without system lag
+##         User Issue: Progress bar not showing, auto-correlation/auto-decide not visible in real-time
 ##         
-##         All services restarted successfully. Ready for testing.
+##         ✅ BACKEND ENHANCEMENTS:
+##         1. Enhanced Correlation WebSocket Broadcasts:
+##            - correlation_started - when correlation begins
+##            - correlation_progress - periodic updates during processing (every 5 incidents)
+##            - correlation_complete - with detailed statistics
+##            - Broadcasts grouping info and percentage progress
+##         
+##         2. Enhanced Auto-Decide WebSocket Broadcasts:
+##            - auto_decide_started - when decision begins
+##            - auto_decide_progress - finding technician, analyzing
+##            - incident_auto_executed - when runbook is executed
+##            - incident_auto_assigned - when technician is assigned with full details
+##            - auto_decide_complete - final status
+##         
+##         ✅ FRONTEND ENHANCEMENTS:
+##         1. Created RealTimeActivityFeed Component:
+##            - Listens to ALL WebSocket events
+##            - Shows live activity feed with icons and colors
+##            - Displays: demo progress, correlation steps, incident creation, auto-assignment
+##            - Auto-scrolling with last 50 activities
+##            - Beautiful UI with color-coded status badges
+##         
+##         2. Integrated Activity Feed into:
+##            - Alert Correlation page (grid layout: 2/3 controls + 1/3 activity)
+##            - Incidents page (grid layout: 2/3 incidents + 1/3 activity)
+##         
+##         ✅ REAL-TIME FEATURES NOW VISIBLE:
+##         - Demo data generation progress bar (already working, now with activity feed)
+##         - Alert correlation: see each step (analyzing → grouping → processing → complete)
+##         - Incident creation: see each incident as it's created in real-time
+##         - Auto-decide: see analysis → finding technician → assignment
+##         - Auto-execution: see runbook execution in real-time
+##         - All events timestamped and color-coded
+##         
+##         All services restarted successfully. Everything now happens in real-time with full visibility!
 
 # Protocol Guidelines for Main agent
 #
