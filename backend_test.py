@@ -1639,6 +1639,9 @@ class AlertWhispererTester:
         # 9. Correlation Configuration
         self.test_correlation_configuration()
         
+        # 10. Auto-Decide Functionality
+        self.test_auto_decide_functionality(api_key)
+        
         return self.generate_summary()
     
     def print_summary(self):
