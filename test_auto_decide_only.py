@@ -142,14 +142,7 @@ class AutoDecideTester:
             company_id = company.get('id')
             
             if api_key:
-                self.log_result("Demo Company Setup", True, f"Demo company ready: {company_id}, API key: {demo_api_key[:20]}...")
-                
-                # Test webhook endpoint accessibility first
-                test_response = self.make_request('GET', '/companies')
-                if test_response and test_response.status_code == 200:
-                    print("  ✅ Backend is accessible")
-                else:
-                    print(f"  ❌ Backend accessibility issue: {test_response.status_code if test_response else 'No response'}")
+                self.log_result("Company Setup", True, f"Company ready: {company_id}, API key: {api_key[:20]}...")
                 
                 # Step 2: Create test alerts
                 alerts_created = []
@@ -163,9 +156,8 @@ class AutoDecideTester:
                     }
                     
                     try:
-                        webhook_url = f'/webhooks/alerts?api_key={demo_api_key}'
-                        print(f"  Calling: POST {self.base_url}{webhook_url}")
-                        response = self.make_request('POST', webhook_url, json=webhook_payload, timeout=30)
+                        webhook_url = f'/webhooks/alerts?api_key={api_key}'
+                        response = self.make_request('POST', webhook_url, json=webhook_payload, timeout=10)
                         if response and response.status_code == 200:
                             webhook_result = response.json()
                             alert_id = webhook_result.get('alert_id')
