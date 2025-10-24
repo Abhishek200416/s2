@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   CheckCircle, AlertCircle, ArrowRight, Server, 
-  Zap, Users, Play, TrendingUp, Shield, Bell, FileText
+  Zap, Users, Play, TrendingUp, Shield, Bell, FileText, ChevronDown
 } from 'lucide-react';
 
 /**
@@ -11,6 +12,12 @@ import {
  * This appears at the top of the dashboard explaining the automation flow
  */
 const HowItWorksGuide = () => {
+  const workflowRef = useRef(null);
+
+  const scrollToWorkflow = () => {
+    workflowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const steps = [
     {
       id: 1,
