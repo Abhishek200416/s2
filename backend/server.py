@@ -30,9 +30,10 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017/alertwhisperer')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db_name = os.getenv('DB_NAME', 'alertwhisperer')
+db = client[db_name]
 
 # Gemini AI Setup
 genai.configure(api_key=os.environ['GEMINI_API_KEY'])
