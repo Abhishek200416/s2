@@ -12,7 +12,7 @@ from datetime import datetime
 import time
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://alert-monitor-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://alert-realtime.preview.emergentagent.com/api"
 
 class MSPTester:
     def __init__(self):
