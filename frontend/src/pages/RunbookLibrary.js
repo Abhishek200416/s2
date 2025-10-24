@@ -298,12 +298,13 @@ const RunbookLibrary = () => {
 
             {/* Instance ID */}
             <div>
-              <label className="text-white text-sm font-medium mb-2 block">EC2 Instance ID</label>
+              <label className="text-sm font-medium mb-2 block" style={{ color: 'hsl(var(--card-foreground))' }}>EC2 Instance ID</label>
               <Input
                 placeholder="e.g., i-1234567890abcdef0"
                 value={instanceId}
                 onChange={(e) => setInstanceId(e.target.value)}
-                className="bg-slate-900 border-slate-700 text-white"
+                className="bg-slate-900 border-slate-700"
+                style={{ color: 'hsl(var(--card-foreground))' }}
               />
               <p className="text-slate-400 text-xs mt-1">
                 The instance must have SSM agent installed and running
