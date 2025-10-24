@@ -100,16 +100,15 @@ class RealTimeVisibilityTester:
         
         response = self.make_request('GET', '/demo/company')
         if response and response.status_code == 200:
-            demo_data = response.json()
+            company = response.json()
             
-            # Verify response structure
-            required_fields = ['company', 'assets', 'api_key']
-            missing_fields = [field for field in required_fields if field not in demo_data]
+            # Verify response structure - the endpoint returns the company object directly
+            required_fields = ['id', 'name', 'assets', 'api_key']
+            missing_fields = [field for field in required_fields if field not in company]
             
             if not missing_fields:
-                company = demo_data.get('company', {})
-                assets = demo_data.get('assets', [])
-                api_key = demo_data.get('api_key')
+                assets = company.get('assets', [])
+                api_key = company.get('api_key')
                 
                 self.demo_company_id = company.get('id')
                 self.demo_api_key = api_key
