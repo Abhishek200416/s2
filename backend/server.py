@@ -2639,6 +2639,16 @@ async def decide_on_incident(incident_id: str):
     2. If no runbook or high risk - auto-assign to technician based on category
     3. If no technician in category - assign to Custom category technicians
     """
+    # Broadcast decision start
+    await manager.broadcast({
+        "type": "auto_decide_started",
+        "data": {
+            "incident_id": incident_id,
+            "status": "analyzing",
+            "message": f"Analyzing incident {incident_id}..."
+        }
+    })
+    
     incident_doc = await db.incidents.find_one({"id": incident_id}, {"_id": 0})
     if not incident_doc:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -2657,6 +2667,17 @@ async def decide_on_incident(incident_id: str):
     
     runbook = Runbook(**runbook_doc) if runbook_doc else None
     
+    # Broadcast analysis complete
+    await manager.broadcast({
+        "type": "auto_decide_progress",
+        "data": {
+            "incident_id": incident_id,
+            "status": "decision_making",
+            "message": f"Generating decision for {incident.signature}...",
+            "has_runbook": runbook is not None
+        }
+    })
+    
     # Generate decision
     decision = await generate_decision(incident, company, runbook)
     
@@ -2670,9 +2691,31 @@ async def decide_on_incident(incident_id: str):
         new_status = "resolved"
         decision["auto_executed"] = True
         decision["execution_result"] = "Runbook executed successfully"
+        
+        # Broadcast auto-execution
+        await manager.broadcast({
+            "type": "incident_auto_executed",
+            "data": {
+                "incident_id": incident_id,
+                "status": "executed",
+                "message": f"Auto-executed runbook: {runbook.name}",
+                "runbook_name": runbook.name
+            }
+        })
     else:
         # Auto-assign to technician based on category
         recommended_category = decision.get("recommended_technician_category", "Custom")
+        
+        # Broadcast assignment search
+        await manager.broadcast({
+            "type": "auto_decide_progress",
+            "data": {
+                "incident_id": incident_id,
+                "status": "finding_technician",
+                "message": f"Finding technician for {recommended_category} category...",
+                "recommended_category": recommended_category
+            }
+        })
         
         # Find technicians with matching category
         technicians = await db.users.find({
@@ -2699,6 +2742,20 @@ async def decide_on_incident(incident_id: str):
             decision["auto_assigned"] = True
             decision["assigned_to_name"] = assigned_technician_name
             decision["assigned_category"] = assigned_tech.get("category", "Custom")
+            
+            # Broadcast auto-assignment
+            await manager.broadcast({
+                "type": "incident_auto_assigned",
+                "data": {
+                    "incident_id": incident_id,
+                    "status": "assigned",
+                    "message": f"Auto-assigned to {assigned_technician_name}",
+                    "technician_name": assigned_technician_name,
+                    "technician_category": assigned_tech.get("category", "Custom"),
+                    "incident_signature": incident.signature,
+                    "incident_severity": incident.severity
+                }
+            })
     
     # Update incident with decision and assignment
     update_data = {
