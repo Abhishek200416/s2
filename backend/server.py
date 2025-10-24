@@ -2774,7 +2774,20 @@ async def decide_on_incident(incident_id: str):
         {"$set": update_data}
     )
     
-    # Broadcast via WebSocket
+    # Broadcast via WebSocket (final decision complete)
+    await manager.broadcast({
+        "type": "auto_decide_complete",
+        "data": {
+            "incident_id": incident_id,
+            "status": new_status,
+            "assigned_to": assigned_technician_name,
+            "auto_executed": decision.get("auto_executed", False),
+            "action": decision.get("action", "unknown"),
+            "message": f"Decision complete for incident {incident_id}"
+        }
+    })
+    
+    # Also broadcast the legacy event for compatibility
     await manager.broadcast({
         "type": "incident_decided",
         "data": {
