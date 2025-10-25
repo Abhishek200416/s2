@@ -18,13 +18,8 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY server.py /app/
-COPY auth_service.py /app/
-COPY agent_service.py /app/
-COPY agent_tools.py /app/
-COPY memory_service.py /app/
-COPY db_init.py /app/
+# Copy ALL application code (including all Python modules)
+COPY *.py /app/
 COPY .env /app/
 
 # Environment variables
