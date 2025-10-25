@@ -21,8 +21,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy ALL application code (including all Python modules)
 COPY *.py /app/
 
-# Copy .env if exists (optional, env vars can be set by ECS)
-COPY .env* /app/ 2>/dev/null || true
+# Create default .env file (ECS will override with task definition env vars)
+RUN echo "# Environment variables set by ECS Task Definition" > /app/.env
 
 # Environment variables
 ENV PORT=8001
