@@ -178,6 +178,7 @@ async def seed_company_configs(companies):
         
         # Rate Limit Config
         rate_limit_config = {
+            'id': f'{company_id}_rate_limit',
             'company_id': company_id,
             'config_type': 'rate_limit',
             'config_data': {
@@ -191,6 +192,7 @@ async def seed_company_configs(companies):
         
         # SLA Config
         sla_config = {
+            'id': f'{company_id}_sla',
             'company_id': company_id,
             'config_type': 'sla',
             'config_data': {
