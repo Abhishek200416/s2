@@ -19,22 +19,20 @@ load_dotenv()
 AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN')
 TABLE_PREFIX = os.environ.get('DYNAMODB_TABLE_PREFIX', 'AlertWhisperer_')
 
-# Initialize DynamoDB client and resource
-dynamodb_client = boto3.client(
-    'dynamodb',
-    region_name=AWS_REGION,
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-)
+# Initialize DynamoDB client and resource with session token support
+client_params = {
+    'region_name': AWS_REGION,
+    'aws_access_key_id': AWS_ACCESS_KEY_ID,
+    'aws_secret_access_key': AWS_SECRET_ACCESS_KEY
+}
+if AWS_SESSION_TOKEN:
+    client_params['aws_session_token'] = AWS_SESSION_TOKEN
 
-dynamodb_resource = boto3.resource(
-    'dynamodb',
-    region_name=AWS_REGION,
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-)
+dynamodb_client = boto3.client('dynamodb', **client_params)
+dynamodb_resource = boto3.resource('dynamodb', **client_params)
 
 # Table References
 class DynamoDBTables:
