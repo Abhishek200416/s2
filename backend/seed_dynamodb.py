@@ -19,15 +19,19 @@ load_dotenv()
 AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN')
 TABLE_PREFIX = os.environ.get('DYNAMODB_TABLE_PREFIX', 'AlertWhisperer_')
 
 # Initialize DynamoDB
-dynamodb = boto3.resource(
-    'dynamodb',
-    region_name=AWS_REGION,
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
-)
+dynamodb_params = {
+    'region_name': AWS_REGION,
+    'aws_access_key_id': AWS_ACCESS_KEY_ID,
+    'aws_secret_access_key': AWS_SECRET_ACCESS_KEY
+}
+if AWS_SESSION_TOKEN:
+    dynamodb_params['aws_session_token'] = AWS_SESSION_TOKEN
+
+dynamodb = boto3.resource('dynamodb', **dynamodb_params)
 
 
 def generate_api_key():
