@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Backend URL
-BACKEND_URL = "https://mechmate-12.preview.emergentagent.com/api"
+BACKEND_URL = "https://botify-2.preview.emergentagent.com/api"
 
 class CriticalTester:
     def __init__(self):
