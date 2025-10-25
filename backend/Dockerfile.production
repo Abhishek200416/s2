@@ -20,7 +20,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy ALL application code (including all Python modules)
 COPY *.py /app/
-COPY .env /app/
+
+# Copy .env if exists (optional, env vars can be set by ECS)
+COPY .env* /app/ 2>/dev/null || true
 
 # Environment variables
 ENV PORT=8001
