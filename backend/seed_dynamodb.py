@@ -147,6 +147,7 @@ async def seed_company_configs(companies):
         
         # Webhook Security Config
         webhook_config = {
+            'id': f'{company_id}_webhook_security',
             'company_id': company_id,
             'config_type': 'webhook_security',
             'config_data': {
@@ -162,6 +163,7 @@ async def seed_company_configs(companies):
         
         # Correlation Config
         correlation_config = {
+            'id': f'{company_id}_correlation',
             'company_id': company_id,
             'config_type': 'correlation',
             'config_data': {
